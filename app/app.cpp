@@ -3,7 +3,11 @@
 #include <unordered_map>
 #include <map>
 #include <vector>
-
+//TO DO: Using vectors of pointers to object
+//Write function that compares not the pointers but the objects
+//Overload < for object comparison
+//For now eliminate the player classes and make Player a normal class
+//All virtual functions will be simplier
 using namespace std;
 
 enum M_RESULT{WIN, DRAW, LOSS};
@@ -52,32 +56,31 @@ const unordered_map<string, int> ATT_STAT_RATIO = {{}};
 //Cand o echipa este generata jucatorii for fii tot generati automat random(nu chiar)
 class Human{
 protected:
-    const string name;
+    string name, nationality;
     unsigned short age;
     double wage;
-    const string nationality;
 public:
     void Age(){age ++;}
-    Human(const string name, unsigned short age, double wage, const string nationality) : 
+    Human(const string& name, unsigned short age, double wage, const string& nationality) : 
         name(name), age(age), wage(wage), nationality(nationality){}
 
     unsigned short getAge(){return age;}
     double getWage(){return wage;}
-    string getNationality(){return nationality;}
-    string getName(){return name;}
+    const string& getNationality(){return nationality;}
+    const string& getName(){return name;}
 
     void setWage(double wage){this->wage = wage;}
     //For requirements
     void setAge(unsigned short age){this->age = age;}
-
 };
 
+//Maybe use pointers to const objects to avoid operator= issues
 class Player : public Human{
 protected:
     unsigned short s_goals = 0, s_assists = 0, s_yellow_cards = 0, s_red_cards = 0, form = 0;
     unsigned short shirt_nr, potential_OVR;
     double stamina = (double)MAX_STAMINA;
-    const string position;
+    string position;
     unordered_map<string, double> stats;
     bool transfer_eligible = true;
     bool red_carded = false;
@@ -91,10 +94,10 @@ public:
     virtual double calculateOVR() = 0;
     virtual double calculatePrice() = 0;
     
-    Player(const string name, unsigned short age, double wage, const string nationality, unordered_map<string, double> stats, unsigned short shirt_nr, unsigned short potential_OVR, double price, const string position) 
+    Player(const string& name, unsigned short age, double wage, const string& nationality, const unordered_map<string, double>& stats, unsigned short shirt_nr, unsigned short potential_OVR, double price, const string& position) 
     : Human(name, age, wage, nationality), stats(stats), shirt_nr(shirt_nr), 
-      position(position), potential_OVR(potential_OVR)
-    {}
+      position(position), potential_OVR(potential_OVR){}
+
     unsigned short getGoals(){return s_goals;}
     unsigned short getAssists(){return s_assists;}
     unsigned short getYCard(){return s_yellow_cards;}
@@ -102,8 +105,11 @@ public:
     unsigned short getForm(){return form;}
     unsigned short getShirt(){return shirt_nr;}
     unsigned short getPotential(){return potential_OVR;}
+
     double getStamina(){return stamina;}
-    unordered_map<string, double> getStats(){return stats;}
+
+    const unordered_map<string, double>& getStats(){return stats;}
+
     bool verifTransferEligible(){return transfer_eligible;}
     bool verifRedCarded(){return red_carded;}
 
@@ -130,6 +136,7 @@ public:
             this->stats[x] += rand() / RAND_MAX;
         }
     }
+    friend ostream& operator <<(ostream& op, const Player*);
 };
 
 class Defender : public Player{
@@ -146,31 +153,30 @@ class Attacker : public Player{
 
 class Team{
 private:
-    const string name;
-    //For next assignment
-    //Copy constructor that copies only the contents pointed by pointer
-    //Copy constructor that just moves the pointer
+    string name;
     double budget;
     vector<Player*> Players;
     unsigned short points = 0;
-
-    //Will be friend functions
-    void generateGoalkeepers();
-    void generateDefenders();
-    void generateMidfielders();
-    void generateAttackers();
-    void generateBudget();
+    
+    //Not implemented
+    friend void generateGoalkeepers(Team*);
+    friend void generateDefenders(Team*);
+    friend void generateMidfielders(Team*);
+    friend void generateAttackers(Team*);
+    friend void generateBudget(Team*);
 public:
-    Team(const string name) : name(name){
-        //Not implemented yet
-        generateGoalkeepers();
-        generateDefenders();
-        generateMidfielders();
-        generateAttackers();
-        generateBudget();
+    Team(const string& name) : name(name){
+        generateGoalkeepers(this);
+        generateDefenders(this);
+        generateMidfielders(this);
+        generateAttackers(this);
+        generateBudget(this);
     }
-    Team(const string name, vector<Player*>& Players) : name(name), Players(Players){}
+    Team(const string& name, const vector<Player*>& Players) : name(name), Players(Players){}
+    Team(const Team& other){*this = other;}
     ~Team();
+    void operator =(const Team& other){name = other.name, budget = other.budget, Players = other.Players, points = other.points;}
+
     unsigned short getChemestry();//Not implemented yet
     double getBudget(){return budget;}
     const string& getName(){return name;}
@@ -183,6 +189,7 @@ public:
 
     void resetSeasonStats();
     void addPoints(M_RESULT r);
+    friend ostream& operator <<(ostream& op, const Team&);
 };
 
 //When season restarts move all team* except for last 3
@@ -207,11 +214,12 @@ public:
 
     void setStage(unsigned short stage){this->stage = stage;}
     //Only for requirements
-    void setTeams(vector<Team>& Teams){this->Teams = Teams;}
+    void setTeams(const vector<Team>& Teams){this->Teams = Teams;}
     void changeTranferWindow(){this->tranfer_window = !this->tranfer_window;}
-
     //Reset stages, points, season_stats
     void resetSeason();
+
+    friend ostream& operator <<(ostream& op, const Season&);
 };
 
 class League{
@@ -226,6 +234,7 @@ public:
 
     ~League();
     void newSeason();
+    friend ostream& operator <<(ostream& op, const Season&);
 };
 
 int main(){

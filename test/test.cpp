@@ -12,10 +12,8 @@ public:
     obj(int x) : x(x){
         y = 6;
     };
-
     obj(const obj& other){
-        this->x = other.x;
-        this->y = other.y;
+        *this = other;
     }
     void setY(int y){
         this->y = y;
@@ -33,7 +31,7 @@ public:
                 break;
         }
     }
-    bool operator =(const obj other){this->x = other.x, this->y = other.y;}
+    void operator =(const obj& other){this->x = other.x, this->y = other.y; cout << "Copied" << endl;}
     friend bool Comp(const obj& o1, const obj& o2);
 };
 
@@ -46,16 +44,14 @@ private:
 public:
     obj_vec(vector<obj>& v) : v_obj(v){}
     const vector<obj>& getVector() const{return v_obj;}
-    void setVector(vector<obj>& v){v_obj = v;}
+    void setVector(const vector<obj>& v){v_obj = v;}
 };
 
 int main(){
-    obj ob1(5);
-    ob1.caseSus(c1);
-    ob1.caseSus(c2);
+    obj o1(5), o2(7), o3(25);
 
-    
-
+    o1 = o2;
+    obj o4(o3);
 
     /*
     long int v_size = 100000;

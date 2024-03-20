@@ -1,0 +1,13 @@
+GENERAL:
+#lasts 1 month(4 matches)
+#players become uneligable for transfers if they were bought/sold until next season
+#every day each team has the chance for transfer
+#with every transfer completed the chance for the next goes down
+#chosing randomly the order of team transfer chances
+#Teams will look for transfers depending on what they lack and on their budget
+
+NEGOTIATIONS:
+#A team makes an offer to another for their player(close to the actual player value)
+#Depending on the offer the team has a higher chance of accepting
+#Can't make offers for positions that don't have at least 3 players(we still need to have a starting 11)
+#The acception chance depends also on the number of back-ups available

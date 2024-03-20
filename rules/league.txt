@@ -1,0 +1,7 @@
+#Generates season when app starts
+#Every week a match will be played
+#Depending on match result points will be aquired to move on the table(real football rules)
+#Each season 3 teams get "relegated"(deleted) from the league
+#This goes on until one team remains
+#Each season will be kept in a vector
+#Not using pointers(for teams and players) for the sake of saving the season as it is

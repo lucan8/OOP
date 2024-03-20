@@ -1,0 +1,2 @@
+#Every player's stats are dependent on position
+#OVR also dependent on position

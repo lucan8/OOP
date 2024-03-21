@@ -4,9 +4,9 @@
 #include <ctime>
 #include <chrono>
 using namespace std;
-enum sus {c1, c2, c3};
+enum sus {c1 = 0, c2 = 2, c3 = 5};
 class obj{
-private:
+protected:
     int x, y = 2;
 public:
     obj(int x) : x(x){
@@ -19,22 +19,29 @@ public:
         this->y = y;
     }
     void caseSus(sus op){
-        switch(op){
-            case c1:
-                cout << 1 << endl;
-                break;
-            case c2:
-                cout << 2 << endl;
-                break;
-            case c3:
-                cout << 3 << endl;
-                break;
-        }
+        cout << op << endl;
     }
     void operator =(const obj& other){this->x = other.x, this->y = other.y; cout << "Copied" << endl;}
     friend bool Comp(const obj& o1, const obj& o2);
+    friend ostream& operator <<(ostream& op, const obj& O);
 };
 
+ostream& operator <<(ostream& op, const obj& O){
+    op << O.x << ' ' << O.y <<' ';
+    return op;
+}
+class inherit : public obj{
+private:
+    int z;
+public:
+    inherit(int x, int z) : obj(x), z(z){}
+    friend ostream& operator <<(ostream& op, const inherit& I);
+};
+ostream& operator <<(ostream& op, const inherit& I){
+    op << (obj)I;
+    op << I.z << endl;
+    return op;
+}
 bool Comp(const obj& o1, const obj& o2){
     return o1.x < o2.x;
 }
@@ -49,9 +56,10 @@ public:
 
 int main(){
     obj o1(5), o2(7), o3(25);
+    o1.caseSus(c2);
+    inherit o4(1, 2);
 
-    o1 = o2;
-    obj o4(o3);
+    
 
     /*
     long int v_size = 100000;

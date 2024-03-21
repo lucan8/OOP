@@ -7,10 +7,10 @@
 //Write function that compares not the pointers but the objects
 //Overload < for object comparison
 //For now eliminate the player classes and make Player a normal class
-//All virtual functions will be simplier
+//All virtual functions will be simpler
 using namespace std;
 
-enum M_RESULT{WIN, DRAW, LOSS};
+enum M_RESULT{WIN = 3, DRAW = 1, LOSS = 0};
 const unsigned char MAX_FORM = 10;
 const unsigned char MAX_CHEM = 11;
 
@@ -47,12 +47,12 @@ const char GK_STATS[NR_GK_STATS][4] = {"REF", "DIV", "KIC", "STA", "HAN"};
 
 const char NR_OUTFIELD_STATS = 8;
 const char OUTFIELD_STATS[NR_OUTFIELD_STATS][4] = {"PAC", "SHO", "DEF", "PHY", "STA", "DRI", "PAS", "AGG"};
-
+/*
 const unordered_map<string, int> DEF_STAT_RATIO = {{}};
 const unordered_map<string, int> MID_STAT_RATIO = {{}};
 const unordered_map<string, int> ATT_STAT_RATIO = {{}};
-
-
+*/
+const string boolToString(bool);
 //Cand o echipa este generata jucatorii for fii tot generati automat random(nu chiar)
 class Human{
 protected:
@@ -72,9 +72,12 @@ public:
     void setWage(double wage){this->wage = wage;}
     //For requirements
     void setAge(unsigned short age){this->age = age;}
+
+    friend ostream& operator <<(ostream&, const Human&);
 };
 
 //Maybe use pointers to const objects to avoid operator= issues
+//Will implement functions to compare goals, assists, yellowC, redC
 class Player : public Human{
 protected:
     unsigned short s_goals = 0, s_assists = 0, s_yellow_cards = 0, s_red_cards = 0, form = 0;
@@ -86,14 +89,13 @@ protected:
     bool red_carded = false;
 
 public:
-    virtual void train() = 0;
+    void train();
     void rest(){this->stamina = max((double)MAX_STAMINA, this->stamina + REST_STAMINA_PLUS);};
-    virtual void score(){ s_goals ++;};
-    virtual void assist(){ s_assists ++;};
+    void score(){ s_goals ++;};
+    void assist(){ s_assists ++;};
     void resetSeasonStats();
-    virtual double calculateOVR() = 0;
-    virtual double calculatePrice() = 0;
-    
+    double getOVR();
+    double getPrice();
     Player(const string& name, unsigned short age, double wage, const string& nationality, const unordered_map<string, double>& stats, unsigned short shirt_nr, unsigned short potential_OVR, double price, const string& position) 
     : Human(name, age, wage, nationality), stats(stats), shirt_nr(shirt_nr), 
       position(position), potential_OVR(potential_OVR){}
@@ -117,8 +119,15 @@ public:
     void setStamina(unsigned short stamina){this->stamina = stamina;}
     void changeTranferEligible(){this->transfer_eligible = !this->transfer_eligible;}
     void changeRedCarded(){this->red_carded = !this->red_carded;}
+
+    friend ostream& operator <<(ostream&, Player&);
+    friend bool operator <(Player&, Player&);
+    friend bool operator >(Player&, Player&);
+    friend bool operator ==(Player&, Player&);
+    friend bool operator !=(Player&, Player&);
 };
 
+/*
 class Goalkeeper : public Player{
 public:
     //Arithmetic sum of stats
@@ -136,9 +145,7 @@ public:
             this->stats[x] += rand() / RAND_MAX;
         }
     }
-    friend ostream& operator <<(ostream& op, const Player*);
 };
-
 class Defender : public Player{
     //Train pt fiecare pozitie
 };
@@ -150,7 +157,8 @@ class Midfielder : public Player{
 class Attacker : public Player{
     //Train pt fiecare pozitie
 };
-
+*/
+//Will implement functions to compare budget
 class Team{
 private:
     string name;
@@ -177,7 +185,7 @@ public:
     ~Team();
     void operator =(const Team& other){name = other.name, budget = other.budget, Players = other.Players, points = other.points;}
 
-    unsigned short getChemestry();//Not implemented yet
+    unsigned short getChemestry();//Simplified for the moment
     double getBudget(){return budget;}
     const string& getName(){return name;}
     const vector<Player*>& getPlayers(){return Players;}
@@ -189,11 +197,14 @@ public:
 
     void resetSeasonStats();
     void addPoints(M_RESULT r);
-    friend ostream& operator <<(ostream& op, const Team&);
+
+    friend ostream& operator <<(ostream& op, Team&);
+    friend bool operator <(const Team&, const Team&);
+    friend bool operator >(const Team&, const Team&);
+    friend bool operator ==(const Team&, const Team&);
+    friend bool operator !=(const Team&, const Team&);
 };
 
-//When season restarts move all team* except for last 3
-//Overload function >, < , !, == to compare teams and players
 class Season{
 private:
     vector<Team> Teams;
@@ -219,7 +230,7 @@ public:
     //Reset stages, points, season_stats
     void resetSeason();
 
-    friend ostream& operator <<(ostream& op, const Season&);
+    friend ostream& operator <<(ostream& op, Season&);
 };
 
 class League{
@@ -232,13 +243,16 @@ public:
         Seasons.push_back(new Season());
     }
 
+    //Only for testing
+    League(vector<Season*>& Seasons) : Seasons(Seasons){}
+
     ~League();
     void newSeason();
-    friend ostream& operator <<(ostream& op, const Season&);
+    friend ostream& operator <<(ostream& op, League&);
 };
 
 int main(){
-
+    
 }
 
 void League :: newSeason(){
@@ -249,10 +263,34 @@ void League :: newSeason(){
 
     //Sorts teams by points and copies all teams except relegated ones
     sort(T_start, T_end);
-    Seasons.emplace_back(T_start, T_start + T_nr - RELEGATED_NR);
+    Seasons.push_back(new Season(T_start, T_start + T_nr - RELEGATED_NR));
     Seasons.back()->resetSeason();
 }
-  
+
+//Simplified for tests
+double Player :: getOVR(){
+    double OVR = 0;
+    for (auto& x : stats){
+        OVR += x.second;
+    }
+    return OVR / stats.size();
+
+}
+
+//To be implemented
+double Player :: getPrice(){
+    return getOVR() * 10000;
+}
+//Simplied for tests
+void Player :: train(){
+    for (auto& x : stats){
+        this->stats[x.first] += rand() / RAND_MAX;
+    }
+}
+//To be implemented
+unsigned short Team :: getChemestry(){
+    return MAX_CHEM;
+}
 Season :: Season(vector<Team> :: iterator start, vector<Team> :: iterator end){
     Teams.reserve(end - start);
 
@@ -306,14 +344,96 @@ Team :: ~Team(){
 }
 
 void Team :: addPoints(M_RESULT r){
-    switch (r){
-        case WIN:
-            points += 3;
-            break;
-        case DRAW:
-            points ++;
-            break;
-        default:
-            break;
-    }
+    this->points += r;
 }
+
+ostream& operator <<(ostream& op, League& L){
+    for (int i = 0; i < L.Seasons.size(); ++i)
+        op << "Season " << i << ": \n" 
+        << L.Seasons[i] << "\n\n";
+    
+    return op;
+}
+
+ostream& operator <<(ostream& op, Season& S){
+    op << "Stage:" << S.stage <<"\nTranfer window active: " 
+    
+    << boolToString(S.tranfer_window) << "\nTeams:\n";
+
+    sort(S.Teams.begin(), S.Teams.end()); //Overload < function
+    for (auto& t : S.Teams)
+        op << t << endl << endl;
+    
+    return op;
+}
+
+ostream& operator <<(ostream& op, Team& T){
+    op << "Name: " << T.name << "\nChemestry: " << T.getChemestry()
+    << "\nBudget: " << T.budget
+    << "\nPoints: " << T.points << "\n";
+    
+    return op;
+}
+
+//Not using const Player& because I can't access member functions with that 
+ostream& operator <<(ostream& op, Player& P){
+    op << Human(P) << "\nPosition: " << P.position << "\nShirt: " 
+    << P.shirt_nr << "\nGoals: " << P.s_goals 
+    << "\nAssists: " << P.s_assists << "\nYeallow Cards: " << P.s_yellow_cards
+    <<"\nRed Cards: " << P.s_red_cards << "\nRed Carded: " << boolToString(P.red_carded)
+    << "\nForm: " << P.form << "/10\nOVR: " << P.getOVR()
+    << "\nPrice: " << P.getPrice() << "\n";
+
+    return op;
+
+}
+
+ostream& operator <<(ostream& op, const Human& H){
+    op << "Name: " << H.name << "\nAge: "
+    << H.age <<"\nNationality: " << H.nationality
+    << "\nWage" << H.wage << "\n";
+    
+    return op;
+}
+
+
+bool operator <(const Team& T1, const Team& T2){
+    return T1.points < T2.points;
+}
+
+bool operator >(const Team& T1, const Team& T2){
+    return T1.points > T2.points;
+}
+
+bool operator ==(const Team& T1, const Team& T2){
+    return T1.points == T2.points;
+}
+
+bool operator !=(const Team& T1, const Team& T2){
+    return T1.points != T2.points;
+}
+
+
+bool operator <(Player& P1, Player& P2){
+    return P1.getOVR() < P2.getOVR();
+}
+
+bool operator >(Player& P1, Player& P2){
+    return P1.getOVR() > P2.getOVR();
+}
+
+bool operator ==(Player& P1, Player& P2){
+    return P1.getOVR() == P2.getOVR();
+}
+
+bool operator !=(Player& P1, Player& P2){
+    return P1.getOVR() != P2.getOVR();
+}
+
+const string boolToString(bool B){
+    if (B)
+        return "YES";
+    else
+        return "NO";
+}
+

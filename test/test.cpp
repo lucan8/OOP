@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <ctime>
 #include <chrono>
+#include <unordered_map>
 using namespace std;
 enum sus {c1 = 0, c2 = 2, c3 = 5};
 class obj{
@@ -23,11 +24,11 @@ public:
     }
     void operator =(const obj& other){this->x = other.x, this->y = other.y; cout << "Copied" << endl;}
     friend bool Comp(const obj& o1, const obj& o2);
-    friend ostream& operator <<(ostream& op, const obj& O);
+    friend istream& operator >>(istream& op, obj& O);
 };
 
-ostream& operator <<(ostream& op, const obj& O){
-    op << O.x << ' ' << O.y <<' ';
+istream& operator >>(istream& op, obj& O){
+    op >> O.x >> O.y;
     return op;
 }
 class inherit : public obj{
@@ -35,11 +36,10 @@ private:
     int z;
 public:
     inherit(int x, int z) : obj(x), z(z){}
-    friend ostream& operator <<(ostream& op, const inherit& I);
+    friend istream& operator >>(istream& op, inherit& I);
 };
-ostream& operator <<(ostream& op, const inherit& I){
-    op << (obj)I;
-    op << I.z << endl;
+istream& operator >>(istream& op, inherit& I){
+    op >> (obj&)I >>  I.z;
     return op;
 }
 bool Comp(const obj& o1, const obj& o2){
@@ -54,10 +54,23 @@ public:
     void setVector(const vector<obj>& v){v_obj = v;}
 };
 
+const char NR_OUTFIELD_STATS = 8;
+const char OUTFIELD_STATS[NR_OUTFIELD_STATS][4] = {"PAC", "SHO", "DEF", "PHY", "STA", "DRI", "PAS", "AGG"};
+
+istream& operator >>(istream& op, unordered_map<string, double>& stats){
+    for (auto& s : OUTFIELD_STATS){
+        cout << s << ": "; op >> stats[s];
+    }
+    return op;
+}
+istream& operator >>(istream& op, vector<double>& stats){
+    for (int i = 0; i < 2; i++)
+        op >> stats[i];
+    return op;
+}
 int main(){
-    obj o1(5), o2(7), o3(25);
-    o1.caseSus(c2);
-    inherit o4(1, 2);
+    inherit x(1, 2);
+    cin >> x;
 
     
 

@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <iostream>
+#include <fstream>
 #include <unordered_map>
 #include <map>
 #include <vector>
@@ -53,6 +54,7 @@ const unordered_map<string, int> MID_STAT_RATIO = {{}};
 const unordered_map<string, int> ATT_STAT_RATIO = {{}};
 */
 const string boolToString(bool);
+istream& operator >>(istream&, unordered_map<string, double>&);
 //Cand o echipa este generata jucatorii for fii tot generati automat random(nu chiar)
 class Human{
 protected:
@@ -61,6 +63,10 @@ protected:
     double wage;
 public:
     void Age(){age ++;}
+    Human(){
+        name = nationality = "";
+        age = wage = 0;
+    }
     Human(const string& name, unsigned short age, double wage, const string& nationality) : 
         name(name), age(age), wage(wage), nationality(nationality){}
 
@@ -74,6 +80,7 @@ public:
     void setAge(unsigned short age){this->age = age;}
 
     friend ostream& operator <<(ostream&, const Human&);
+    friend istream& operator >>(istream& op, Human& H);
 };
 
 //Maybe use pointers to const objects to avoid operator= issues
@@ -96,7 +103,14 @@ public:
     void resetSeasonStats();
     double getOVR();
     double getPrice();
-    Player(const string& name, unsigned short age, double wage, const string& nationality, const unordered_map<string, double>& stats, unsigned short shirt_nr, unsigned short potential_OVR, double price, const string& position) 
+    Player(){
+        for (auto& s : OUTFIELD_STATS)
+            stats[s] = 0;
+        position = "";
+        shirt_nr = 0;
+        potential_OVR = 0;
+    }
+    Player(const string& name, unsigned short age, double wage, const string& nationality, const unordered_map<string, double>& stats, unsigned short shirt_nr, unsigned short potential_OVR, const string& position) 
     : Human(name, age, wage, nationality), stats(stats), shirt_nr(shirt_nr), 
       position(position), potential_OVR(potential_OVR){}
 
@@ -121,11 +135,13 @@ public:
     void changeRedCarded(){this->red_carded = !this->red_carded;}
 
     friend ostream& operator <<(ostream&, Player&);
+    friend istream& operator >>(istream&, Player&);
     friend bool operator <(Player&, Player&);
     friend bool operator >(Player&, Player&);
     friend bool operator ==(Player&, Player&);
     friend bool operator !=(Player&, Player&);
 };
+
 
 /*
 class Goalkeeper : public Player{
@@ -180,7 +196,7 @@ public:
         generateAttackers(this);
         generateBudget(this);
     }
-    Team(const string& name, const vector<Player*>& Players) : name(name), Players(Players){}
+    Team(const string& name, const vector<Player*>& Players, double budget) : name(name), Players(Players), budget(budget){}
     Team(const Team& other){*this = other;}
     ~Team();
     void operator =(const Team& other){name = other.name, budget = other.budget, Players = other.Players, points = other.points;}
@@ -252,7 +268,18 @@ public:
 };
 
 int main(){
-    
+    ifstream fin("input_aux.txt");
+    ofstream fout("output_aux.txt");
+    vector<Player*> AUX_TEAM;
+    for (int i = 0; i < 5; i++){
+        AUX_TEAM.push_back(new Player);
+        fin >> *(AUX_TEAM[i]);
+        fout << *(AUX_TEAM[i]) << endl;
+    }
+
+    Team Team1("team1", AUX_TEAM, 50000);
+    fout << Team1 << endl;
+
 }
 
 void League :: newSeason(){
@@ -291,6 +318,7 @@ void Player :: train(){
 unsigned short Team :: getChemestry(){
     return MAX_CHEM;
 }
+
 Season :: Season(vector<Team> :: iterator start, vector<Team> :: iterator end){
     Teams.reserve(end - start);
 
@@ -360,7 +388,7 @@ ostream& operator <<(ostream& op, Season& S){
     
     << boolToString(S.tranfer_window) << "\nTeams:\n";
 
-    sort(S.Teams.begin(), S.Teams.end()); //Overload < function
+    sort(S.Teams.begin(), S.Teams.end());
     for (auto& t : S.Teams)
         op << t << endl << endl;
     
@@ -377,7 +405,7 @@ ostream& operator <<(ostream& op, Team& T){
 
 //Not using const Player& because I can't access member functions with that 
 ostream& operator <<(ostream& op, Player& P){
-    op << Human(P) << "\nPosition: " << P.position << "\nShirt: " 
+    op << (Human&)P << "\nPosition: " << P.position << "\nShirt: "
     << P.shirt_nr << "\nGoals: " << P.s_goals 
     << "\nAssists: " << P.s_assists << "\nYeallow Cards: " << P.s_yellow_cards
     <<"\nRed Cards: " << P.s_red_cards << "\nRed Carded: " << boolToString(P.red_carded)
@@ -391,11 +419,30 @@ ostream& operator <<(ostream& op, Player& P){
 ostream& operator <<(ostream& op, const Human& H){
     op << "Name: " << H.name << "\nAge: "
     << H.age <<"\nNationality: " << H.nationality
-    << "\nWage" << H.wage << "\n";
+    << "\nWage: " << H.wage << "\n";
     
     return op;
 }
 
+
+istream& operator >>(istream& op, Player& P){
+    op >> (Human&)P >> P.position >> P.shirt_nr >> P.potential_OVR >> P.stats;
+    cout << P.name;
+
+    return op;
+}
+
+istream& operator>>(istream& op, Human& H){
+    op >> H.name >> H.age >> H.nationality >> H.wage;
+    return op;
+}
+
+istream& operator >>(istream& op, unordered_map<string, double>& stats){
+    for (auto& s : OUTFIELD_STATS){
+       op >> stats[s];
+    }
+    return op;
+}
 
 bool operator <(const Team& T1, const Team& T2){
     return T1.points < T2.points;

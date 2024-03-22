@@ -96,6 +96,13 @@ protected:
     bool red_carded = false;
 
 public:
+    Player();
+    Player(const string& name, unsigned short age, double wage, const string& nationality, const unordered_map<string, double>& stats, unsigned short shirt_nr, unsigned short potential_OVR, const string& position) 
+    : Human(name, age, wage, nationality), stats(stats), shirt_nr(shirt_nr), 
+      position(position), potential_OVR(potential_OVR){}
+    //Player(const Player& other){*this = other; cout << "Copied" << endl;}
+    ~Player(){cout << "Player Destroyed" << '\n';}
+
     void train();
     void rest(){this->stamina = max((double)MAX_STAMINA, this->stamina + REST_STAMINA_PLUS);};
     void score(){ s_goals ++;};
@@ -103,16 +110,6 @@ public:
     void resetSeasonStats();
     double getOVR();
     double getPrice();
-    Player(){
-        for (auto& s : OUTFIELD_STATS)
-            stats[s] = 0;
-        position = "";
-        shirt_nr = 0;
-        potential_OVR = 0;
-    }
-    Player(const string& name, unsigned short age, double wage, const string& nationality, const unordered_map<string, double>& stats, unsigned short shirt_nr, unsigned short potential_OVR, const string& position) 
-    : Human(name, age, wage, nationality), stats(stats), shirt_nr(shirt_nr), 
-      position(position), potential_OVR(potential_OVR){}
 
     unsigned short getGoals(){return s_goals;}
     unsigned short getAssists(){return s_assists;}
@@ -174,7 +171,7 @@ class Attacker : public Player{
     //Train pt fiecare pozitie
 };
 */
-//Will implement functions to compare budget
+
 class Team{
 private:
     string name;
@@ -188,6 +185,8 @@ private:
     friend void generateMidfielders(Team*);
     friend void generateAttackers(Team*);
     friend void generateBudget(Team*);
+    //Copies only the obj pointed at by the pointers
+    void copyPlayers(const vector<Player*>& Players);
 public:
     Team(const string& name) : name(name){
         generateGoalkeepers(this);
@@ -196,11 +195,12 @@ public:
         generateAttackers(this);
         generateBudget(this);
     }
-    Team(const string& name, const vector<Player*>& Players, double budget) : name(name), Players(Players), budget(budget){}
+    Team(const string& name, const vector<Player*>& Players, double budget) : name(name), budget(budget){
+        copyPlayers(Players);
+    }
     Team(const Team& other){*this = other;}
     ~Team();
-    void operator =(const Team& other){name = other.name, budget = other.budget, Players = other.Players, points = other.points;}
-
+    void operator =(const Team& other);
     unsigned short getChemestry();//Simplified for the moment
     double getBudget(){return budget;}
     const string& getName(){return name;}
@@ -223,25 +223,23 @@ public:
 
 class Season{
 private:
-    vector<Team> Teams;
+    vector<Team*> Teams;
     unsigned short stage = 1;
     bool tranfer_window = false;
 public:
-    Season(); //Generates teams, first season
-    Season(vector<Team> :: iterator start, vector<Team> :: iterator end);
+    Season(); //Generates teams, first season, don't use this yet
+    Season(vector<Team*> :: iterator start, vector<Team*> :: iterator end);
     ~Season();
 
     //Using these three instead of getTeams()
-    vector<Team> :: iterator getTeamsBegin(){return Teams.begin();};
-    vector<Team> :: iterator getTeamsEnd(){return Teams.end();};
+    vector<Team*> :: iterator getTeamsBegin(){return Teams.begin();};
+    vector<Team*> :: iterator getTeamsEnd(){return Teams.end();};
     unsigned short getTeamsNr(){return Teams.size();};
 
     unsigned short getStage(){return stage;}
     bool verifTWindowActive(){return tranfer_window;}
 
     void setStage(unsigned short stage){this->stage = stage;}
-    //Only for requirements
-    void setTeams(const vector<Team>& Teams){this->Teams = Teams;}
     void changeTranferWindow(){this->tranfer_window = !this->tranfer_window;}
     //Reset stages, points, season_stats
     void resetSeason();
@@ -274,18 +272,24 @@ int main(){
     for (int i = 0; i < 5; i++){
         AUX_TEAM.push_back(new Player);
         fin >> *(AUX_TEAM[i]);
-        fout << *(AUX_TEAM[i]) << endl;
+        //Bug here with cl.exe ,works with g++
     }
 
-    Team Team1("team1", AUX_TEAM, 50000);
-    fout << Team1 << endl;
+    {
+        Team Team1("team1", AUX_TEAM, 50000);
+        fout << Team1 << endl;
+        Team Team2(Team1);
+    }
+
+    for (auto& x : AUX_TEAM)
+        delete x;
 
 }
 
 void League :: newSeason(){
     //Creates new season with all teams except last 3(relegated)
-    vector<Team> :: iterator T_start = Seasons.back()->getTeamsBegin();
-    vector<Team> :: iterator T_end = Seasons.back()->getTeamsEnd();
+    vector<Team*> :: iterator T_start = Seasons.back()->getTeamsBegin();
+    vector<Team*> :: iterator T_end = Seasons.back()->getTeamsEnd();
     unsigned int T_nr = Seasons.back()->getTeamsNr();
 
     //Sorts teams by points and copies all teams except relegated ones
@@ -314,24 +318,52 @@ void Player :: train(){
         this->stats[x.first] += rand() / RAND_MAX;
     }
 }
+
+void Team :: operator=(const Team& other){
+    name = other.name, budget = other.budget, points = other.points;
+    copyPlayers(other.Players);
+}
+
+void Team :: copyPlayers(const vector<Player*>& Players){
+    this->Players.reserve(Players.size());
+    for (auto& p : Players)
+        this->Players.push_back(new Player(*p));
+}
+
 //To be implemented
 unsigned short Team :: getChemestry(){
     return MAX_CHEM;
 }
 
-Season :: Season(vector<Team> :: iterator start, vector<Team> :: iterator end){
-    Teams.reserve(end - start);
+void Team :: addPoints(M_RESULT r){
+    this->points += r;
+}
 
+Season :: Season(vector<Team*> :: iterator start, vector<Team*> :: iterator end){
+    Teams.reserve(end - start);
+    
+    //Creates new pointers to the same teams
     while (start <= end){
-        Teams.push_back(*start);
+        Teams.push_back(new Team(**start));
         start++;
     }
 }
+Player :: Player(){
+    for (auto& s : OUTFIELD_STATS)
+        stats[s] = 0;
+
+    position = "";
+    shirt_nr = 0;
+    potential_OVR = 0;
+
+    cout << "Player Created!" << endl;
+}
+
 
 void Season :: resetSeason(){
     this->stage = 1;
     for (auto& t : Teams)
-        t.resetSeasonStats();
+        t->resetSeasonStats();
 }
 
 void Team :: resetSeasonStats(){
@@ -357,7 +389,7 @@ League :: ~League(){
 
 Season :: ~Season(){
     for (auto& t : Teams)
-        t.~Team();
+        delete t;
     
     Teams.clear();
     Teams.shrink_to_fit();
@@ -371,9 +403,6 @@ Team :: ~Team(){
     Players.shrink_to_fit();
 }
 
-void Team :: addPoints(M_RESULT r){
-    this->points += r;
-}
 
 ostream& operator <<(ostream& op, League& L){
     for (int i = 0; i < L.Seasons.size(); ++i)
@@ -427,7 +456,6 @@ ostream& operator <<(ostream& op, const Human& H){
 
 istream& operator >>(istream& op, Player& P){
     op >> (Human&)P >> P.position >> P.shirt_nr >> P.potential_OVR >> P.stats;
-    cout << P.name;
 
     return op;
 }

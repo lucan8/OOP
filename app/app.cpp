@@ -6,7 +6,8 @@
 #include <vector>
 using namespace std;
 
-enum M_RESULT{WIN = 3, DRAW = 1, LOSS = 0};
+enum M_RESULT{WIN, DRAW, LOSS};
+enum M_POINTS{W_POINTS, D_POINTS, L_POINTS};
 const unsigned char MAX_FORM = 10;
 const unsigned char MAX_CHEM = 11;
 
@@ -106,30 +107,30 @@ public:
     void score(){ s_goals ++;};
     void assist(){ s_assists ++;};
     void resetSeasonStats();
-    double getOVR();
-    double getPrice();
+    double getOVR() const;
+    double getPrice() const;
 
-    unsigned short getGoals(){return s_goals;}
-    unsigned short getAssists(){return s_assists;}
-    unsigned short getYCard(){return s_yellow_cards;}
-    unsigned short getRCard(){return s_red_cards;}
-    unsigned short getForm(){return form;}
-    unsigned short getShirt(){return shirt_nr;}
-    unsigned short getPotential(){return potential_OVR;}
+    unsigned short getGoals() const{return s_goals;}
+    unsigned short getAssists() const{return s_assists;}
+    unsigned short getYCard() const{return s_yellow_cards;}
+    unsigned short getRCard() const{return s_red_cards;}
+    unsigned short getForm() const{return form;}
+    unsigned short getShirt() const{return shirt_nr;}
+    unsigned short getPotential() const{return potential_OVR;}
 
-    double getStamina(){return stamina;}
+    double getStamina() const{return stamina;}
 
-    const unordered_map<string, double>& getStats(){return stats;}
+    const unordered_map<string, double>& getStats() const{return stats;}
 
-    bool verifTransferEligible(){return transfer_eligible;}
-    bool verifRedCarded(){return red_carded;}
+    bool verifTransferEligible() const{return transfer_eligible;}
+    bool verifRedCarded() const{return red_carded;}
 
     void setShirt(unsigned short shirt_nr){this->shirt_nr = shirt_nr;}
     void setStamina(unsigned short stamina){this->stamina = stamina;}
     void changeTranferEligible(){this->transfer_eligible = !this->transfer_eligible;}
     void changeRedCarded(){this->red_carded = !this->red_carded;}
 
-    friend ostream& operator <<(ostream&, Player&);
+    friend ostream& operator <<(ostream&, const Player&);
     friend istream& operator >>(istream&, Player&);
     friend bool operator <(Player&, Player&);
     friend bool operator >(Player&, Player&);
@@ -201,22 +202,23 @@ public:
     Team(const Team& other){*this = other;}
     ~Team();
     void operator =(const Team& other);
-    unsigned short getChemestry();//Simplified for the moment
-    double getBudget(){return budget;}
-    const string& getName(){return name;}
+    unsigned short getChemestry() const;//Simplified for the moment
+    double getBudget() const{return budget;} 
+    const string& getName() const{return name;}
     //Read only vector
-    const vector<const Player*> getPlayers(){return vector<const Player*>(Players.cbegin(), Players.cend());}
+    const vector<const Player*> getPlayers() const{return vector<const Player*>(Players.cbegin(), Players.cend());}
 
     void setBudget(double budget){this->budget = budget;}
 
+    void playMatch(Team* other); //Simplified for tests
     void buyPlayer(Player*);//Not implemented yet
     void sellPlayer(Player*);//Not implemented yet
 
     void resetSeasonStats();
-    void addPoints(M_RESULT r);
+    void addPoints(M_POINTS r);
     void sortByOVR(){sort(Players.begin(), Players.end());}
 
-    friend ostream& operator <<(ostream& op, Team&);
+    friend ostream& operator <<(ostream& op, const Team&);
     friend istream& operator >>(istream&, Team&);
     friend bool operator <(const Team&, const Team&);
     friend bool operator >(const Team&, const Team&);
@@ -241,11 +243,13 @@ public:
 
     void setStage(unsigned short stage){this->stage = stage;}
     void changeTranferWindow(){this->tranfer_window = !this->tranfer_window;}
+
+    void simulateStage();
     //Reset stages, points, season_stats
     void resetSeason();
     void sortByPoints(){sort(Teams.begin(), Teams.end());}
 
-    friend ostream& operator <<(ostream& op, Season&);
+    friend ostream& operator <<(ostream& op, const Season&);
 };
 
 class League{
@@ -263,7 +267,7 @@ public:
 
     ~League();
     void newSeason();
-    friend ostream& operator <<(ostream& op, League&);
+    friend ostream& operator <<(ostream& op, const League&);
 };
 
 int main(){
@@ -275,14 +279,12 @@ int main(){
     for (int i = 0; i < 3; i++){
         Teams.push_back(new Team(5));
         fin >> *(Teams[i]);
+        Teams[i]->getPlayers()[0]->getOVR();
     }
     vector<const Team*> Teams1(Teams.cbegin(), Teams.cend());
     Season S(Teams1.cbegin(), Teams1.cbegin() + 2);
-
-    fout << S << endl;
-    
     /*
-    Team1.addPoints(WIN);
+    S.getTeams().back()->addPoints(WIN);
     Team2.addPoints(LOSS);
 
     Team2.sortByOVR();
@@ -291,7 +293,6 @@ int main(){
     for (auto& p : Team2.getPlayers())
         fout << *p << endl;
     */
-    
 
 }
 
@@ -317,7 +318,7 @@ Season :: Season(vector<const Team*> :: const_iterator start, vector<const Team*
 }
 
 //Simplified for tests
-double Player :: getOVR(){
+double Player :: getOVR() const{
     double OVR = 0;
     for (auto& x : stats){
         OVR += x.second;
@@ -327,7 +328,7 @@ double Player :: getOVR(){
 }
 
 //To be implemented
-double Player :: getPrice(){
+double Player :: getPrice() const{
     return getOVR() * 10000;
 }
 //Simplied for tests
@@ -359,12 +360,38 @@ void Team :: copyPlayers(const vector<Player*>& Players){
 }
 
 //To be implemented
-unsigned short Team :: getChemestry(){
+unsigned short Team :: getChemestry() const{
     return MAX_CHEM;
 }
 
-void Team :: addPoints(M_RESULT r){
-    this->points += r;
+//Simplified for tests
+void Season :: simulateStage(){
+    for (int i = 0; i < Teams.size() / 2; i++)
+        Teams[i]->playMatch(Teams[Teams.size() - i - 1]);
+};
+
+//Simplified for tests
+void Team :: playMatch(Team* other){
+    M_RESULT result = M_RESULT(rand() % 3);
+    switch (result)
+    {
+        case WIN:
+            this->addPoints(W_POINTS);
+            break;
+        case DRAW:
+            this->addPoints(D_POINTS);
+            other->addPoints(D_POINTS);
+            break;
+        case LOSS:
+            other->addPoints(W_POINTS);
+            break;
+        default:
+            break; //Throw error
+    }
+}
+
+void Team :: addPoints(M_POINTS p){
+    this->points += p;
 }
 
 Player :: Player(){
@@ -423,7 +450,7 @@ Team :: ~Team(){
 }
 
 
-ostream& operator <<(ostream& op, League& L){
+ostream& operator <<(ostream& op, const League& L){
     for (int i = 0; i < L.Seasons.size(); ++i)
         op << "Season " << i << ": \n" 
         << L.Seasons[i] << "\n\n";
@@ -431,15 +458,14 @@ ostream& operator <<(ostream& op, League& L){
     return op;
 }
 
-ostream& operator <<(ostream& op, Season& S){
-    S.sortByPoints();
+ostream& operator <<(ostream& op, const Season& S){
     op << "Stage:" << S.stage <<"\nTranfer window active: " 
     << boolToString(S.tranfer_window) << "\nTeams:\n";
     op << S.Teams;
     return op;
 }
 
-ostream& operator <<(ostream& op, Team& T){
+ostream& operator <<(ostream& op, const Team& T){
     op << "Name: " << T.name << "\nChemestry: " << T.getChemestry()
     << "\nBudget: " << T.budget
     << "\nPoints: " << T.points << "\n";
@@ -448,7 +474,7 @@ ostream& operator <<(ostream& op, Team& T){
 }
 
 //Not using const Player& because I can't access member functions with that 
-ostream& operator <<(ostream& op, Player& P){
+ostream& operator <<(ostream& op, const Player& P){
     op << (Human&)P << "\nPosition: " << P.position << "\nShirt: "
     << P.shirt_nr << "\nGoals: " << P.s_goals 
     << "\nAssists: " << P.s_assists << "\nYeallow Cards: " << P.s_yellow_cards

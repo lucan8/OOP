@@ -4,6 +4,7 @@
 #include <ctime>
 #include <chrono>
 #include <unordered_map>
+
 using namespace std;
 enum sus {c1 = 0, c2 = 2, c3 = 5};
 class obj{
@@ -22,8 +23,11 @@ public:
     void caseSus(sus op){
         cout << op << endl;
     }
+    ~obj(){
+        cout << "Destructor called" << endl;
+    }
     void operator =(const obj& other){this->x = other.x, this->y = other.y; cout << "Copied" << endl;}
-    friend bool Comp(const obj& o1, const obj& o2);
+    friend bool Comp(const obj* o1, const obj* o2);
     friend istream& operator >>(istream& op, obj& O);
 };
 
@@ -42,18 +46,28 @@ istream& operator >>(istream& op, inherit& I){
     op >> (obj&)I >>  I.z;
     return op;
 }
-bool Comp(const obj& o1, const obj& o2){
-    return o1.x < o2.x;
+bool Comp(const obj* o1, const obj* o2){
+    return o1->x < o2->x;
 }
 class obj_vec{
 private:
-    vector<obj> v_obj;
+    vector<obj*> v_obj;
 public:
-    obj_vec(vector<obj>& v) : v_obj(v){}
-    const vector<obj>& getVector() const{return v_obj;}
-    void setVector(const vector<obj>& v){v_obj = v;}
-};
+    obj_vec(vector<obj*>& v){
+        v_obj.reserve(v.size());
+        for (auto& x : v)
+            v_obj.push_back(new obj(*x));
+    }
+    ~obj_vec(){
+        for (auto& x : v_obj){
+            delete x;
+            v_obj.pop_back();
+        }
+    }
+    const vector<const obj*> getVector(){return vector<const obj*>(v_obj.begin(), v_obj.end());}
 
+
+};
 const char NR_OUTFIELD_STATS = 8;
 const char OUTFIELD_STATS[NR_OUTFIELD_STATS][4] = {"PAC", "SHO", "DEF", "PHY", "STA", "DRI", "PAS", "AGG"};
 
@@ -68,11 +82,10 @@ istream& operator >>(istream& op, vector<double>& stats){
         op >> stats[i];
     return op;
 }
-int main(){
-    inherit x(1, 2);
-    cin >> x;
 
-    
+int main(){ 
+    namegenplusplus::PrintSrg(length);
+
 
     /*
     long int v_size = 100000;

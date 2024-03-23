@@ -1,5 +1,19 @@
-Name: team1
+Stage:1
+Tranfer window active: NO
+Teams:
+Name: Arsenal
 Chemestry: 11
-Budget: 50000
+Budget: 100000
 Points: 0
+
+Name: Chelsea
+Chemestry: 11
+Budget: 120000
+Points: 0
+
+Name: Liverpool
+Chemestry: 11
+Budget: 130000
+Points: 0
+
 

@@ -1,5 +1,20 @@
-Alexandinho 24 Brazil 25000 ST 15 88 1 1 1 1 1 1 1 1
-Alle 26 France 25001 CF 12 85 2 2 2 2 2 2 2 2
+Arsenal 100000
+Alexandinho 24 Brazil 25000 ST 15 88 2 2 2 2 2 2 2 2
+Alle 26 France 25001 CF 12 85 1 1 1 1 1 1 1 1
 Alexandro 21 Spain 25002 LW 21 90 3 3 3 3 3 3 3 3
 Alexis 22 Italy 25003 RW 13 88 4 4 4 4 4 4 4 4
 Alex 20 England 25004 CB 4 84 5 5 5 5 5 5 5 5
+
+Chelsea 120000
+Cristinho 22 Aegetina 25000 ST 15 88 20 40 60 20 40 50 10 10
+Criste 20 France 25001 CF 12 85 15 12 14 11 19 12 13 15
+Crisi 35 Spain 25002 LW 21 90 3 3 10 26 45 32 35 37
+Christ 19 Italy 25003 RW 13 88 4 4 4 4 4 4 4 4
+Chris 27 England 25004 CB 4 84 5 5 5 5 5 5 5 5
+
+Liverpool 130000
+Darwin 22 Brazil 25000 ST 15 88 2 2 2 2 2 2 2 2
+Pierre 26 France 25001 CF 12 85 1 1 1 1 1 1 1 1
+Darmian 21 Spain 25002 LW 21 90 3 3 3 3 3 3 3 3
+Dalle 22 Italy 25003 RW 13 88 4 4 4 4 4 4 4 4
+Joe 20 England 25004 CB 4 84 5 5 5 5 5 5 5 5

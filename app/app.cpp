@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <chrono>
 #include <iostream>
 #include <fstream>
 #include <unordered_map>
@@ -7,7 +8,8 @@
 using namespace std;
 
 enum M_RESULT{WIN, DRAW, LOSS};
-enum M_POINTS{W_POINTS, D_POINTS, L_POINTS};
+enum M_POINTS{W_POINTS = 3, D_POINTS = 1, L_POINTS = 0};
+
 const unsigned char MAX_FORM = 10;
 const unsigned char MAX_CHEM = 11;
 
@@ -29,6 +31,7 @@ const unsigned char DEFAULT_TEAM_NR = 21;
 const unsigned char RELEGATED_NR = 3;
 
 const unsigned char MAX_SHIRT_NUMBER = 99;
+const unsigned char MIN_STAMINA = 10;
 const unsigned char MAX_STAMINA = 100;
 const unsigned char REST_STAMINA_PLUS = 20;
 
@@ -82,7 +85,6 @@ public:
     friend istream& operator >>(istream& op, Human& H);
 };
 
-//Maybe use pointers to const objects to avoid operator= issues
 //Will implement functions to compare goals, assists, yellowC, redC
 class Player : public Human{
 protected:
@@ -132,10 +134,6 @@ public:
 
     friend ostream& operator <<(ostream&, const Player&);
     friend istream& operator >>(istream&, Player&);
-    friend bool operator <(Player&, Player&);
-    friend bool operator >(Player&, Player&);
-    friend bool operator ==(Player&, Player&);
-    friend bool operator !=(Player&, Player&);
 };
 
 
@@ -205,8 +203,9 @@ public:
     unsigned short getChemestry() const;//Simplified for the moment
     double getBudget() const{return budget;} 
     const string& getName() const{return name;}
-    //Read only vector
-    const vector<const Player*> getPlayers() const{return vector<const Player*>(Players.cbegin(), Players.cend());}
+    unsigned short getPoints() const{return points;}
+
+    vector<const Player*> getPlayers() const{return vector<const Player*>(Players.cbegin(), Players.cend());}
 
     void setBudget(double budget){this->budget = budget;}
 
@@ -214,16 +213,22 @@ public:
     void buyPlayer(Player*);//Not implemented yet
     void sellPlayer(Player*);//Not implemented yet
 
+    void trainPlayers();
+    void restPlayers();
+
     void resetSeasonStats();
     void addPoints(M_POINTS r);
-    void sortByOVR(){sort(Players.begin(), Players.end());}
+    void sortByOVR(){sort(Players.begin(), Players.end(), compareOVR);}
+    vector<const Player*> sortedByOVR() const{
+        vector<const Player*>& aux = getPlayers();
+        sort(aux.begin(), aux.end(), compareOVR);
+        return aux;
+    }
 
     friend ostream& operator <<(ostream& op, const Team&);
     friend istream& operator >>(istream&, Team&);
-    friend bool operator <(const Team&, const Team&);
-    friend bool operator >(const Team&, const Team&);
-    friend bool operator ==(const Team&, const Team&);
-    friend bool operator !=(const Team&, const Team&);
+
+    friend bool compareOVR(const Player* P1, const Player* P2);
 };
 
 class Season{
@@ -237,33 +242,35 @@ public:
     ~Season();
 
     unsigned short getStage(){return stage;}
-    //Read only vector
-    const vector<const Team*> getTeams(){return vector<const Team*>(Teams.cbegin(), Teams.cend());}
+
+    vector<const Team*> getTeams(){return vector<const Team*>(Teams.cbegin(), Teams.cend());}
     bool verifTWindowActive(){return tranfer_window;}
 
     void setStage(unsigned short stage){this->stage = stage;}
     void changeTranferWindow(){this->tranfer_window = !this->tranfer_window;}
 
     void simulateStage();
+    void trainTeams();
+    void restTeams();
     //Reset stages, points, season_stats
     void resetSeason();
-    void sortByPoints(){sort(Teams.begin(), Teams.end());}
+    void sortByPoints(){sort(Teams.begin(), Teams.end(), comparePoints);}
 
     friend ostream& operator <<(ostream& op, const Season&);
+    friend bool comparePoints(const Team* T1, const Team* T2);
 };
 
+//Don't take this into consideration yet
 class League{
 private:
-    vector<Season*> Seasons;
+    vector<const Season*> EndedSeasons;
+    Season* ActiveSeason;
 public:
     //Also generates the first season
     League(){
-        Seasons.reserve(DEFAULT_TEAM_NR / RELEGATED_NR);
-        Seasons.push_back(new Season());
+        EndedSeasons.reserve(DEFAULT_TEAM_NR / RELEGATED_NR);
+        ActiveSeason = new Season;
     }
-
-    //Only for testing, not usefull for app
-    League(vector<Season*>& Seasons) : Seasons(Seasons){}
 
     ~League();
     void newSeason();
@@ -273,38 +280,46 @@ public:
 int main(){
     ifstream fin("input_aux.txt");
     ofstream fout("output_aux.txt");
+    //Setting the seed(simplified)
+    srand(chrono::system_clock::now().time_since_epoch().count());
 
     vector<Team*> Teams;
     Teams.reserve(3);
     for (int i = 0; i < 3; i++){
         Teams.push_back(new Team(5));
         fin >> *(Teams[i]);
-        Teams[i]->getPlayers()[0]->getOVR();
+        //fout << Teams[i]->sortedByOVR() << endl;
     }
+    //Use of copy constructor
+    Teams.push_back(new Team(*Teams.back()));
     vector<const Team*> Teams1(Teams.cbegin(), Teams.cend());
-    Season S(Teams1.cbegin(), Teams1.cbegin() + 2);
-    /*
-    S.getTeams().back()->addPoints(WIN);
-    Team2.addPoints(LOSS);
+    Season S(Teams1.cbegin(), Teams1.cbegin() + 3);
 
-    Team2.sortByOVR();
+    //S.trainTeams();
+    S.trainTeams();
+    S.restTeams();
+    S.simulateStage();
+    S.simulateStage();
+    S.simulateStage();
+    S.sortByPoints();
 
-    fout << Team1 << '\n' << Team2 << '\n';
-    for (auto& p : Team2.getPlayers())
-        fout << *p << endl;
-    */
+    fout << S << '\n';
+    for (auto& t : S.getTeams()){
+        fout << t->getName() << endl;
+        fout << t->sortedByOVR() << '\n';
+    }
+        
 
 }
 
 //Copies all teams from last season to new season except relegated ones
 void League :: newSeason(){
-    Seasons.back()->sortByPoints();
+    const vector<const Team*>& Teams = ActiveSeason->getTeams();
 
-    //Avoiding copying the returned vector
-    const vector<const Team*>& Teams = Seasons.back()->getTeams();
-
-    Seasons.push_back(new Season(Teams.begin(), Teams.begin() + Teams.size() - RELEGATED_NR));
-    Seasons.back()->resetSeason();
+    //Be careful with the last season
+    EndedSeasons.push_back(ActiveSeason);
+    ActiveSeason = (new Season(Teams.begin(), Teams.begin() + Teams.size() - RELEGATED_NR));
+    ActiveSeason->resetSeason();
 }
 
 Season :: Season(vector<const Team*> :: const_iterator start, vector<const Team*> :: const_iterator end){
@@ -317,35 +332,48 @@ Season :: Season(vector<const Team*> :: const_iterator start, vector<const Team*
     }
 }
 
-//Simplified for tests
-double Player :: getOVR() const{
-    double OVR = 0;
-    for (auto& x : stats){
-        OVR += x.second;
-    }
-    return OVR / stats.size();
-
-}
 
 //To be implemented
 double Player :: getPrice() const{
     return getOVR() * 10000;
 }
+
+void Season :: trainTeams(){
+    for (auto& t : Teams)
+        t->trainPlayers();
+}
+
+//Simplified
+void Team :: trainPlayers(){
+    for (auto& p : Players)
+        p->train();
+}
+
 //Simplied for tests
 void Player :: train(){
     for (auto& x : stats){
-        this->stats[x.first] += rand() / RAND_MAX;
+        this->stamina = max((double)MIN_STAMINA, this->stamina - 1 / stats["stamina"] * 500);
+        this->stats[x.first] += 1.0 * rand() / RAND_MAX;
     }
 }
+
+void Season :: restTeams(){
+    for (auto& t : Teams)
+        t->restPlayers();
+}
+
+void Team :: restPlayers(){
+    for (auto&p : Players)
+        p->rest();
+}
+
 //Creates team of T_size with empty players
-Team :: Team(unsigned short T_size){
+Team :: Team(unsigned short T_size) : name(""), budget(0){
     T_size = min(T_size, (unsigned short)MAX_TEAM_LENGTH);
     Players.reserve(T_size);
 
     for (int i = 0; i < T_size; i++)
         Players.push_back(new Player);
-    name = "";
-    budget = 0;
 }
 
 void Team :: operator=(const Team& other){
@@ -405,6 +433,15 @@ Player :: Player(){
     cout << "Player Created!" << endl;
 }
 
+//Simplified for tests
+double Player :: getOVR() const{
+    double OVR = 0;
+    for (auto& x : stats){
+        OVR += x.second;
+    }
+    return OVR / stats.size();
+
+}
 
 void Season :: resetSeason(){
     this->stage = 1;
@@ -426,10 +463,10 @@ void Player :: resetSeasonStats(){
 }
 
 League :: ~League(){
-    for (auto& s : Seasons)
+    for (auto& s : EndedSeasons)
         delete s;
-    Seasons.clear();
-    Seasons.shrink_to_fit();
+    EndedSeasons.clear();
+    EndedSeasons.shrink_to_fit();
 
 }
 
@@ -451,9 +488,9 @@ Team :: ~Team(){
 
 
 ostream& operator <<(ostream& op, const League& L){
-    for (int i = 0; i < L.Seasons.size(); ++i)
+    for (int i = 0; i < L.EndedSeasons.size(); ++i)
         op << "Season " << i << ": \n" 
-        << L.Seasons[i] << "\n\n";
+        << L.EndedSeasons[i] << "\n\n";
     
     return op;
 }
@@ -526,40 +563,13 @@ istream& operator >>(istream& op, unordered_map<string, double>& stats){
     }
     return op;
 }
-
-bool operator <(const Team& T1, const Team& T2){
-    return T1.points < T2.points;
+bool comparePoints(const Team* T1, const Team* T2){
+    return T1->getPoints() > T2->getPoints();
 }
 
-bool operator >(const Team& T1, const Team& T2){
-    return T1.points > T2.points;
+bool compareOVR(const Player* P1, const Player* P2){
+    return P1->getOVR() > P2->getOVR();
 }
-
-bool operator ==(const Team& T1, const Team& T2){
-    return T1.points == T2.points;
-}
-
-bool operator !=(const Team& T1, const Team& T2){
-    return T1.points != T2.points;
-}
-
-
-bool operator <(Player& P1, Player& P2){
-    return P1.getOVR() < P2.getOVR();
-}
-
-bool operator >(Player& P1, Player& P2){
-    return P1.getOVR() > P2.getOVR();
-}
-
-bool operator ==(Player& P1, Player& P2){
-    return P1.getOVR() == P2.getOVR();
-}
-
-bool operator !=(Player& P1, Player& P2){
-    return P1.getOVR() != P2.getOVR();
-}
-
 const string boolToString(bool B){
     if (B)
         return "YES";

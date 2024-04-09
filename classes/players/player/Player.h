@@ -1,11 +1,14 @@
 #pragma once
-#include "../human/human.h"
+#include "../../human/Human.h"
+
+string boolToString(bool);
+istream& operator >>(istream& op, unordered_map<string, double>& stats);
 
 class Player : public Human{
 protected:
     unsigned short s_goals = 0, s_assists = 0, s_yellow_cards = 0, s_red_cards = 0, form = 0;
     unsigned short shirt_nr, potential_OVR;
-    double stamina = (double)Constants::getVal("MAX_STAMINA");
+    double stamina = (double)Constants::getVal("MAX_STAMINA").value();
     string position;
     unordered_map<string, double> stats;
     bool transfer_eligible = true;
@@ -19,7 +22,7 @@ public:
     ~Player(){cout << "Player Destroyed" << '\n';}
 
     virtual void train();
-    void rest(){this->stamina = max((double)Constants::getVal("MAX_STAMINA"), this->stamina + Constants::getVal("REST_STAMINA_PLUS"));}
+    void rest(){this->stamina = max((double)Constants::getVal("MAX_STAMINA").value(), this->stamina + Constants::getVal("REST_STAMINA_PLUS").value());}
     virtual void score(){ s_goals ++;};
     virtual void assist(){ s_assists ++;};
     void resetSeasonStats();

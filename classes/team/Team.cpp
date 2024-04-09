@@ -1,30 +1,15 @@
 #include "Team.h"
 
-void Team :: addPoints(M_POINTS p){
+void Team :: addPoints(const unsigned char p){
     this->points += p;
 }
 
 unsigned short Team :: getChemestry() const{
-    return Constants :: getVal("MAX_CHEM");
+    return Constants :: getVal("MAX_CHEM").value();
 }
 
 void Team :: playMatch(Team* other){
-    M_RESULT result = M_RESULT(rand() % 3);
-    switch (result)
-    {
-        case WIN:
-            this->addPoints(W_POINTS);
-            break;
-        case DRAW:
-            this->addPoints(D_POINTS);
-            other->addPoints(D_POINTS);
-            break;
-        case LOSS:
-            other->addPoints(W_POINTS);
-            break;
-        default:
-            break; //Throw error
-    }
+ 
 }
 
 void Team :: resetSeasonStats(){
@@ -36,6 +21,14 @@ void Team :: resetSeasonStats(){
 void Team :: restPlayers(){
     for (auto&p : Players)
         p->rest();
+}
+
+bool comparePoints(const Team* T1, const Team* T2){
+    return T1->getPoints() < T2->getPoints();
+}
+
+void Team :: sortByOVR(){
+    sort(Players.begin(), Players.end(), compareOVR);
 }
 
 vector<const Player*> Team :: sortedByOVR() const{   
@@ -56,4 +49,23 @@ Team :: ~Team(){
 
     this->Players.clear();
     Players.shrink_to_fit();
+}
+
+bool compareOVR(const Player* P1, const Player* P2){
+    return P1->getOVR() > P2->getOVR();
+}
+
+istream& operator >>(istream& op, Team& T){
+    op >> T.name >> T.budget;
+    for (auto& p : T.Players)
+        op >> *p;
+    return op;
+}
+
+ostream& operator <<(ostream& op, const Team& T){
+    op << "Name: " << T.name << "\nChemestry: " << T.getChemestry()
+    << "\nBudget: " << T.budget
+    << "\nPoints: " << T.points << "\n";
+    
+    return op;
 }

@@ -4,6 +4,10 @@
 #include "../players/midfielder/Midfielder.h"
 #include "../players/defender/Defender.h"
 #include "../players/goalkeeper/Goalkeeper.h"
+
+template <typename T>
+ostream& operator <<(ostream& op, vector<T*> v);
+
 class Team{
 private:
     string name;
@@ -27,14 +31,15 @@ public:
         generateAttackers(this);
         generateBudget(this);
     }
-    //Only for testing
-    Team(unsigned short T_size);
+   
     Team(const string& name, const vector<Player*>& Players, double budget) : name(name), budget(budget){
         copyPlayers(Players);
     }
-    Team(const Team& other){*this = other;}//Initializer list
+    Team(const Team* other) : name(other->name), budget(other->budget){
+        copyPlayers(other->Players);
+        points = 0;
+    }
     ~Team();
-    void operator =(const Team& other);
     unsigned short getChemestry() const;//Simplified for the moment
     double getBudget() const{return budget;} 
     const string& getName() const{return name;}
@@ -52,8 +57,8 @@ public:
     void restPlayers();
 
     void resetSeasonStats();
-    //void addPoints(M_POINTS r);
-    void sortByOVR(){sort(Players.begin(), Players.end(), compareOVR);}
+    void addPoints(const unsigned char p);
+    void sortByOVR();
     vector<const Player*> sortedByOVR() const;
 
     friend ostream& operator <<(ostream& op, const Team&);

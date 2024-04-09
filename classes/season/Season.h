@@ -24,7 +24,7 @@ public:
     void restTeams();
     
     void resetSeason();
-    void sortByPoints(){sort(Teams.begin(), Teams.end(), comparePoints);}
+    void sortByPoints();
 
     friend ostream& operator <<(ostream& op, const Season&);
     friend bool comparePoints(const Team* T1, const Team* T2);

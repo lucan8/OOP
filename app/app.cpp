@@ -1,10 +1,8 @@
 #include <iostream>
-//Make printing and copying virtual for ach type of player
-#include "../classes/league/League.h"
-
+#include "../classes/constants/Constants.h"
+//Make printing and copying virtual for each type of player
+//Write splitting function
 int main(){
-    //Cmake
-    Constants :: init();  
 
 }
 
@@ -14,13 +12,6 @@ ostream& operator <<(ostream& op, vector<T*> v){
         op << *x << '\n';
     return op;
 }
-string boolToString(bool B){
-    if (B)
-        return "YES";
-    else
-        return "NO";
-}
-
 
 istream& operator >>(istream& op, unordered_map<string, double>& stats){
     for (auto& s : stats){

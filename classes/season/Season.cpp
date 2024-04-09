@@ -10,6 +10,10 @@ Season :: Season(vector<const Team*> :: const_iterator start, vector<const Team*
     }
 }
 
+bool comparePoints(const Team* T1, const Team* T2){
+    return T1->getPoints() < T2->getPoints();
+}
+
 
 void Season :: resetSeason(){
     this->stage = 1;
@@ -49,9 +53,10 @@ Season :: ~Season(){
     Teams.shrink_to_fit();
 }
 
+
 ostream& operator <<(ostream& op, const Season& S){
     op << "Stage:" << S.stage <<"\nTranfer window active: " 
-    << boolToString(S.tranfer_window) << "\nTeams:\n";
+    << boolalpha << S.tranfer_window << "\nTeams:\n";
     op << S.Teams;
     return op;
 }

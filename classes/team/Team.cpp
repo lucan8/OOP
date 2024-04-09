@@ -5,7 +5,7 @@ void Team :: addPoints(const unsigned char p){
 }
 
 unsigned short Team :: getChemestry() const{
-    return Constants :: getVal("MAX_CHEM").value();
+    return Constants :: getVal("MAX_CHEM");
 }
 
 void Team :: playMatch(Team* other){
@@ -32,7 +32,7 @@ void Team :: sortByOVR(){
 }
 
 vector<const Player*> Team :: sortedByOVR() const{   
-    vector<const Player*>& aux = getPlayers();
+    vector<const Player*> aux = getPlayers();
     sort(aux.begin(), aux.end(), compareOVR);
     return aux;
 }

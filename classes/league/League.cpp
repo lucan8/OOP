@@ -6,7 +6,7 @@ void League :: newSeason(){
 
     //Be careful with the last season
     EndedSeasons.push_back(ActiveSeason);
-    ActiveSeason = new Season(Teams.begin(), Teams.begin() + Teams.size() - Constants :: getVal("RELEGATED_NR").value());
+    ActiveSeason = new Season(Teams.begin(), Teams.begin() + Teams.size() - Constants :: getVal("RELEGATED_NR"));
     ActiveSeason->resetSeason();
 }
 

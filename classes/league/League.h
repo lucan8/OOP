@@ -9,7 +9,7 @@ private:
 public:
     //Also generates the first season
     League(){
-        EndedSeasons.reserve(Constants :: getVal("DEFAULT_TEAM_NR").value() / Constants :: getVal("RELEGATED_NR").value());
+        EndedSeasons.reserve(Constants :: getVal("DEFAULT_TEAM_NR") / Constants :: getVal("RELEGATED_NR"));
         ActiveSeason = new Season;
     }
 

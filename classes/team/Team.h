@@ -1,5 +1,4 @@
 #pragma once
-#include "../players/player/Player.h"
 #include "../players/attacker/Attacker.h"
 #include "../players/midfielder/Midfielder.h"
 #include "../players/defender/Defender.h"

@@ -1,10 +1,17 @@
 #include "Constants.h"
 
+
+unordered_map<string, uint16_t>  Constants :: values;
+unordered_map<string, vector<string>> Constants :: positions;
+unordered_map<string, vector<string>> Constants :: stats;
+unordered_map<string, unordered_map<string, uint16_t>> Constants :: stats_ratios;
+
 void Constants :: init(){
+    string input_path = filesystem :: current_path().parent_path().string() + "\\classes\\constants\\";
     try{
-        initValues("values.txt");
-        initPositions("positions.txt");
-        initStatsRatios("stats_ratios.txt");
+        initValues(input_path + "values.txt");
+        initPositions(input_path + "positions.txt");
+        initStatsRatios(input_path + "stats_ratios.txt");
     }
     catch (FileOpenException e){
         cerr << e.what() << '\n';
@@ -16,10 +23,11 @@ void Constants :: initValues(const string& file_name){
         throw FileOpenException(file_name);
 
     string const_name;
-    unsigned char const_val;
+    uint16_t const_val;
 
-    while (fin >> const_name >> const_val)
+    while (fin >> const_name >> const_val){
         values[const_name] = const_val;
+    }
 }
 
 void Constants :: initPositions(const string& file_name){
@@ -28,11 +36,12 @@ void Constants :: initPositions(const string& file_name){
         throw FileOpenException(file_name);
 
     string const_name;
-    unsigned char nr_positions;
+    uint16_t nr_positions;
 
     while (fin.peek() != EOF){
         fin >> const_name >> nr_positions;
-        positions[const_name].reserve(nr_positions);
+        //Adding key-value pair, and initializing a vector of empty string to avoid read exception
+        positions.emplace(const_name, vector<string>(nr_positions, ""));
 
         while (nr_positions-- >= 1)
             fin >> positions[const_name][nr_positions];
@@ -43,42 +52,51 @@ void Constants :: initPositions(const string& file_name){
 
 void Constants :: initStatsRatios(const string& file_name){
     ifstream fin(file_name);
+    //Checking file opening
     if (!fin.is_open())
         throw FileOpenException(file_name);
 
-    string stats_type, ratio_type, ratios, stat_name;
-    unsigned char nr_stats;
+    string stats_type, ratio_types, ratio_type, ratios, stat_name;
+    uint16_t nr_stats;
 
+    //Filling stats and ratios at the same time
     while (fin.peek() != EOF){
         fin >> stats_type >> nr_stats;
-        stats[stats_type].reserve(nr_stats);
+        fin.ignore();
 
-        fin >> ratio_type;
+        //Readding all ratio_types at once for specific position_type
+        getline(fin, ratio_types);
+
+        //Adding key-value pair, and initializing a vector of empty string to avoid read exception
+        stats.emplace(stats_type, vector<string>(nr_stats, ""));
+
+        //Iterating over the stats and setting the ratios
         while (nr_stats-- >= 1){
-            fin >> stat_name;
-            stats[stats_type].push_back(stat_name);
-
+            fin >> stats[stats_type][nr_stats];
+            stat_name = stats[stats_type][nr_stats];
+            
             getline(fin, ratios);
 
-            stringstream ratio_stream(ratios);
-            while (ratio_stream >> ratios)
-                stats_ratios[ratio_type][stat_name] = (unsigned char) ratios[0];
+            //rtype gets rewritten every iteration with the same thing
+            stringstream ratio_stream(ratios), rtype_stream(ratio_types);
+            while (ratio_stream >> ratios && rtype_stream >> ratio_type)
+                stats_ratios[ratio_type][stat_name] = stoi(ratios);
         }
         fin.ignore();
     }
 
 }
 
-optional<const unsigned char> Constants ::  getVal(const string& key){
+uint16_t Constants ::  getVal(const string& key){
     try{
-        return values.at(key);
+        return Constants :: values.at(key);
     }
     catch(out_of_range& e){
         cerr << e.what() << '\n';
-        return {};
+        return -1;
     }
 }
-optional<const vector<string>&> Constants ::getPositions(const string& key){
+const vector<string>& Constants :: getPositions(const string& key){
     try{
         return positions.at(key);
     }
@@ -88,7 +106,7 @@ optional<const vector<string>&> Constants ::getPositions(const string& key){
     }
 }
 
-optional<const vector<string>&> Constants ::getStats(const string& key){
+const vector<string>& Constants :: getStats(const string& key){
     try{
         return stats.at(key);
     }
@@ -99,7 +117,7 @@ optional<const vector<string>&> Constants ::getStats(const string& key){
 }
 
 
-optional<const unordered_map<string, unsigned char>&> Constants :: getStatsRatios(const string& key){
+const unordered_map<string, uint16_t>& Constants :: getStatsRatios(const string& key){
     try{
         return stats_ratios.at(key);
     }

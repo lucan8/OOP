@@ -1,15 +1,13 @@
 #include "Human.h"
 
 
-ostream& operator <<(ostream& op, const Human& H){
-    op << "Name: " << H.name << "\nAge: "
-    << H.age <<"\nNationality: " << H.nationality
-    << "\nWage: " << H.wage << "\n";
+void Human :: print(ostream& out) const{
+    out << "Name: " << this->name << "\nAge: "
+    << this->age <<"\nNationality: " << this->nationality
+    << "\nWage: " << this->wage << "\n";
     
-    return op;
 }
 
-istream& operator>>(istream& op, Human& H){
-    op >> H.name >> H.age >> H.nationality >> H.wage;
-    return op;
+void Human :: read(istream& in){
+    in >> this->name >> this->age >> this->nationality >> this->wage;
 }

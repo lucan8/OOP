@@ -1,15 +1,21 @@
 #pragma once
 #include <algorithm>
 #include "../constants/Constants.h"
+#include "../printable/Printable.h"
+#include "../readable/Readable.h"
 #include <iostream>
 #include <unordered_map>
+#include "../../functions/functions.h"
+#include <random>
+#include <numeric>
 
-class Human{
+class Human : public Printable, public Readable{
 protected:
     string name, nationality;
     unsigned short age;
     double wage;
 public:
+    Human(){}
     Human(const string& name, unsigned short age, double wage, const string& nationality) : 
         name(name), age(age), wage(wage), nationality(nationality){}
 
@@ -23,6 +29,6 @@ public:
     void setWage(double wage){this->wage = wage;}
     void setAge(unsigned short age){this->age = age;}
 
-    friend ostream& operator <<(ostream&, const Human&);
-    friend istream& operator >>(istream& op, Human& H);
+    virtual void read(istream&) override;
+    virtual void print(ostream&)const override;
 };

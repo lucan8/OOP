@@ -4,7 +4,7 @@
 unordered_map<string, uint16_t>  Constants :: values;
 unordered_map<string, vector<string>> Constants :: positions;
 unordered_map<string, vector<string>> Constants :: stats;
-unordered_map<string, unordered_map<string, uint16_t>> Constants :: stats_ratios;
+unordered_map<string, vector<pair<string, uint16_t>>> Constants :: stats_ratios;
 
 void Constants :: init(){
     string input_path = filesystem :: current_path().parent_path().string() + "\\classes\\constants\\";
@@ -80,11 +80,10 @@ void Constants :: initStatsRatios(const string& file_name){
             //rtype gets rewritten every iteration with the same thing
             stringstream ratio_stream(ratios), rtype_stream(ratio_types);
             while (ratio_stream >> ratios && rtype_stream >> ratio_type)
-                stats_ratios[ratio_type][stat_name] = stoi(ratios);
+                stats_ratios[ratio_type].push_back({stat_name, stoi(ratios)});
         }
         fin.ignore();
     }
-
 }
 
 uint16_t Constants ::  getVal(const string& key){
@@ -92,7 +91,7 @@ uint16_t Constants ::  getVal(const string& key){
         return Constants :: values.at(key);
     }
     catch(out_of_range& e){
-        cerr << e.what() << '\n';
+        cerr << "Error(getVal), key not found: " << key << '\n';
         return -1;
     }
 }
@@ -101,7 +100,7 @@ const vector<string>& Constants :: getPositions(const string& key){
         return positions.at(key);
     }
     catch(out_of_range& e){
-        cerr << e.what() << '\n';
+        cerr << "Error(getPositions), key not found: " << key << '\n';
         return {};
     }
 }
@@ -111,18 +110,18 @@ const vector<string>& Constants :: getStats(const string& key){
         return stats.at(key);
     }
     catch(out_of_range& e){
-        cerr << e.what() << '\n';
+        cerr << "Error(getStats), key not found: " << key << '\n';
         return {};
     }
 }
 
 
-const unordered_map<string, uint16_t>& Constants :: getStatsRatios(const string& key){
+const vector<pair<string, uint16_t>>& Constants :: getStatsRatios(const string& key){
     try{
         return stats_ratios.at(key);
     }
     catch(out_of_range& e){
-        cerr << e.what() << '\n';
+        cerr << "Error(getStatsRations), key not found: " << key << '\n';
         return {};
     }
 }

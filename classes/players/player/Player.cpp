@@ -1,10 +1,34 @@
 #include "Player.h"
 
-
-unique_ptr<Player> Player :: clone() const{
-    return make_unique<Player>(*this);
+/*
+void Player :: Age(){
+    if (this->age >= Constants :: getVal("MIN_YOUNG") && 
+        this->age >= Constants :: getVal("MAX_YOUNG"))
+        age_upgrade();
+    else if(this->age >= Constants :: getVal("MIN_OLD") && 
+            this->age >= Constants :: getVal("MAX_OLD"))
+        age_downgrade();
+    Human :: Age();
+    for (const auto& stat : Constants)
+        
 }
+*/
 
+
+void Player :: eliminateMaxes(vector<pair<string, uint16_t>>& weights) const{
+    vector<pair<string, uint16_t>> :: iterator it = weights.begin();
+    uint16_t max_stat = Constants :: getVal("MAX_STATS");
+
+    for (; it != weights.end();)
+        try{
+            if (this->stats.at(it->first) == max_stat)
+                it = weights.erase(it);
+            else
+                ++it;
+        } catch(out_of_range& e){
+            cout << "Error(eliminateMaxes): stat_name(" << it->first << ") not found\n";
+        }
+}
 
 double Player :: getOVR() const{
     double OVR = 0;
@@ -20,10 +44,12 @@ double Player :: getOVR() const{
     return OVR / weights_sum;
 }
 
-void Player :: initStats(){
-    for (const auto& stat_name : Constants :: getStats("OUTFIELD"))
-        this->stats[stat_name];
+double Player :: getTrainPlus() const{
+    double ovr = this->getOVR();
+    return this->potential_OVR / ovr * 
+        ((this->potential_OVR - ovr - this->train_nerf) / this->remaining_sessions);
 }
+
 
 void Player :: print(ostream& out) const{
     this->printBasicInfo(out);
@@ -34,9 +60,8 @@ void Player :: print(ostream& out) const{
 
 void Player :: printSeasonStats(ostream& out) const{
     out << "Season Stats:\n"
-    << "Goals: " << this->s_goals 
-    << "\nAssists: " << this->s_assists << "\nYeallow Cards: " << this->s_yellow_cards
-    <<"\nRed Cards: " << this->s_red_cards;
+    << "\nYellow Cards: " << this->s_yellow_cards
+    <<"\nRed Cards: " << this->s_red_cards << '\n';
 }
 
 void Player :: printStats(ostream& out) const{
@@ -64,14 +89,6 @@ void Player :: read(istream& in){
 }
 
 
-void Player :: resetSeasonStats(){
-    s_goals = s_assists = s_yellow_cards = s_red_cards = form = 0;
-    stamina = (double)Constants :: getVal("MAX_STAMINA");
-    transfer_eligible = true;
-    red_carded = false;
-}
-
-
 void Player :: rest(){
     this->stamina = max((double)Constants::getVal("MAX_STAMINA"), 
                         this->stamina + Constants::getVal("REST_STAMINA_PLUS"));
@@ -92,18 +109,45 @@ void Player :: readStats(istream& in){
     }
 }
 
+void Player :: setTrainNerf(){
+    this->train_nerf = (this->potential_OVR - this->getOVR()) / 
+                        Constants :: getVal("TRAIN_NERF_DISPENSER");
+}
+
+void Player :: upgradeStat(const string& stat_name, double stat_plus){
+    random_device rd;
+    mt19937 gen(rd());
+    uniform_real_distribution<double> stat_plus_dist(0, 2 * stat_plus);
+
+    uint16_t max_stat = Constants :: getVal("MAX_STATS");
+
+    try{
+        double stat = this->stats.at(stat_name);
+        stat = min(stat + stat_plus_dist(gen), (double)max_stat);
+    } catch(out_of_range& e){
+        cerr << "Error(upgradeStats), invalid stat_name: " << stat_name << '\n';
+    }
+}
 void Player :: train(){
-    const vector<pair<string, uint16_t>>& stats_ratios = Constants :: getStatsRatios(this->position);
+    double ovr_pl = this->getTrainPlus();
+
+    vector<pair<string, uint16_t>>stats_ratios = Constants :: getStatsRatios(this->position);
+    eliminateMaxes(stats_ratios);
 
     vector<uint16_t> probabilities = getValues(stats_ratios);
     random_device rd;
     mt19937 gen(rd());
 
-    discrete_distribution<> stat_distibution(probabilities.begin(), probabilities.end());
-    uniform_real_distribution<double> train_plus(0.0, 1.0);
+    for (int i = 0; i < Constants :: getVal("NR_TRAIN_STATS") && !probabilities.empty(); ++i){
+        discrete_distribution<> stat_distibution(probabilities.begin(), probabilities.end());
 
-    for (int i = 0; i < Constants :: getVal("NR_TRAIN_STATS"); ++i){
-        const string& chosen_stat = stats_ratios[stat_distibution(gen)].first;
-        this->stats.at(chosen_stat) += train_plus(gen);
+        uint16_t stat_poz = stat_distibution(gen);
+        const string& chosen_stat = stats_ratios.at(stat_poz).first;
+        upgradeStat(chosen_stat, ovr_pl);
+
+        //Removing the stat so that we don't choose it again
+        stats_ratios.erase(stats_ratios.begin() + stat_poz);
+        probabilities.erase(probabilities.begin() + stat_poz);
     }
+    this->remaining_sessions --;
 }

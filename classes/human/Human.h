@@ -16,8 +16,6 @@ protected:
     double wage;
 public:
     Human(){}
-    Human(const string& name, unsigned short age, double wage, const string& nationality) : 
-        name(name), age(age), wage(wage), nationality(nationality){}
 
     void Age(){age ++;}
     

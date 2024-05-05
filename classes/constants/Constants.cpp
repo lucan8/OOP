@@ -56,31 +56,30 @@ void Constants :: initStatsRatios(const string& file_name){
     if (!fin.is_open())
         throw FileOpenException(file_name);
 
-    string stats_type, ratio_types, ratio_type, ratios, stat_name;
-    uint16_t nr_stats;
+    string player_type, aux_player_positions, stat_name, age_related;
+    uint16_t nr_stats, stat_ratio;
 
     //Filling stats and ratios at the same time
     while (fin.peek() != EOF){
-        fin >> stats_type >> nr_stats;
+        fin >> player_type >> nr_stats;
         fin.ignore();
 
         //Readding all ratio_types at once for specific position_type
-        getline(fin, ratio_types);
-
-        //Adding key-value pair, and initializing a vector of empty string to avoid read exception
-        stats.emplace(stats_type, vector<string>(nr_stats, ""));
+        getline(fin, aux_player_positions);
+        vector<string> player_positions = split(aux_player_positions);
 
         //Iterating over the stats and setting the ratios
         while (nr_stats-- >= 1){
-            fin >> stats[stats_type][nr_stats];
-            stat_name = stats[stats_type][nr_stats];
-            
-            getline(fin, ratios);
+            fin >> stat_name >> age_related;
+            stats[player_type].push_back(stat_name);
 
-            //rtype gets rewritten every iteration with the same thing
-            stringstream ratio_stream(ratios), rtype_stream(ratio_types);
-            while (ratio_stream >> ratios && rtype_stream >> ratio_type)
-                stats_ratios[ratio_type].push_back({stat_name, stoi(ratios)});
+            if (age_related == "age_related")
+                age_stats[player_type].push_back(stat_name);
+
+            for (const auto& p_poz : player_positions){
+                fin >> stat_ratio;
+                Constants :: stats_ratios[p_poz].push_back(make_pair(stat_name, stat_ratio));
+            }
         }
         fin.ignore();
     }
@@ -111,6 +110,16 @@ const vector<string>& Constants :: getStats(const string& key){
     }
     catch(out_of_range& e){
         cerr << "Error(getStats), key not found: " << key << '\n';
+        return {};
+    }
+}
+
+const vector<string>& Constants :: getAgeRelatedStats(const string& key){
+    try{
+        return age_stats.at(key);
+    }
+    catch(out_of_range& e){
+        cerr << "Error(getAgeRelatedStats), key not found: " << key << '\n';
         return {};
     }
 }

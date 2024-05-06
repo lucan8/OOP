@@ -2,14 +2,15 @@
 
 
 unordered_map<string, uint16_t>  Constants :: values;
-unordered_map<string, vector<string>> Constants :: positions;
-unordered_map<string, vector<string>> Constants :: stats;
+unordered_map<string, unordered_map<string, uint16_t>> Constants :: p_gen;
+unordered_map<string, vector<string>> Constants :: positions, stats, age_stats;
 unordered_map<string, vector<pair<string, uint16_t>>> Constants :: stats_ratios;
 
 void Constants :: init(){
     string input_path = filesystem :: current_path().parent_path().string() + "\\classes\\constants\\";
     try{
         initValues(input_path + "values.txt");
+        initPlayerGen(input_path + "player_generaation.txt");
         initPositions(input_path + "positions.txt");
         initStatsRatios(input_path + "stats_ratios.txt");
     }
@@ -47,6 +48,25 @@ void Constants :: initPositions(const string& file_name){
             fin >> positions[const_name][nr_positions];
     }
     fin.ignore();
+}
+
+void Constants :: initPlayerGen(const string& file_name){
+    ifstream fin(file_name);
+    if (!fin.is_open())
+        throw FileOpenException(file_name);
+
+    string player_type, const_name;
+    uint16_t nr_player_type, nr_consts, const_val;
+    fin >> nr_player_type >> nr_consts;
+
+    while (nr_player_type--){
+        fin >> player_type;
+        while (nr_consts--){
+            fin >> const_name >> const_val;
+            p_gen[player_type][const_name] = const_val;
+        }
+        fin.ignore();
+    }
 }
 
 
@@ -94,6 +114,17 @@ uint16_t Constants ::  getVal(const string& key){
         return -1;
     }
 }
+
+const unordered_map<string, uint16_t>& Constants ::  getPlayerGen(const string& key){
+    try{
+        return Constants :: p_gen.at(key);
+    }
+    catch(out_of_range& e){
+        cerr << "Error(getPlayerGen), key not found: " << key << '\n';
+        return {};
+    }
+}
+
 const vector<string>& Constants :: getPositions(const string& key){
     try{
         return positions.at(key);

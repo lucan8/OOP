@@ -1,0 +1,13 @@
+#Every match will have 90 minutes
+#After each minute the player stamina decreases depending on their statistical_stamina and poz
+#Range for chances between 10, 40 per match
+#Idea: Make football pitch a matrix and players points in matrix
+#Idea: Formations will be graphs
+#In each minute of a game a few things can happen:
+    - team1/team2 has possesion
+    - team1/team2 is attacking(so the other is defending)
+    - team1/team2 commits a foul
+
+#There will be a number between (10 - 30) fauls(average number is 20 in premier league)
+#The chance of getting a yellow(or red) card grows with the number of fauls commited
+#Every match has 9 scoring oportunities(every 10 minutes a scoring chance appears)

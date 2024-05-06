@@ -25,10 +25,12 @@ public:
     static void initStatsRatios(const string& file_name);
 public:
     static void init();
+
     static uint16_t getVal(const string& key);
+    static const vector<string>& getPositions(const string& key);
 
     static const unordered_map<string, uint16_t>& getPlayerGen(const string& key);
-    static const vector<string>& getPositions(const string& key);
+    static uint16_t getGenInfo(const string& p_type, const string& key);
 
     static const vector<string>& getStats(const string& key);
     static const vector<string>& getAgeRelatedStats(const string& key);

@@ -3,14 +3,16 @@
 
 unordered_map<string, uint16_t>  Constants :: values;
 unordered_map<string, unordered_map<string, uint16_t>> Constants :: p_gen;
-unordered_map<string, vector<string>> Constants :: positions, stats, age_stats;
+unordered_map<string, vector<string>> Constants :: positions;
+unordered_map<string, vector<string>> Constants :: age_stats;
+unordered_map<string, vector<string>> Constants :: stats;
 unordered_map<string, vector<pair<string, uint16_t>>> Constants :: stats_ratios;
 
 void Constants :: init(){
     string input_path = filesystem :: current_path().parent_path().string() + "\\classes\\constants\\";
     try{
         initValues(input_path + "values.txt");
-        initPlayerGen(input_path + "player_generaation.txt");
+        initPlayerGen(input_path + "player_generation.txt");
         initPositions(input_path + "positions.txt");
         initStatsRatios(input_path + "stats_ratios.txt");
     }
@@ -98,7 +100,7 @@ void Constants :: initStatsRatios(const string& file_name){
 
             for (const auto& p_poz : player_positions){
                 fin >> stat_ratio;
-                Constants :: stats_ratios[p_poz].push_back(make_pair(stat_name, stat_ratio));
+                stats_ratios[p_poz].push_back(make_pair(stat_name, stat_ratio));
             }
         }
         fin.ignore();
@@ -107,7 +109,7 @@ void Constants :: initStatsRatios(const string& file_name){
 
 uint16_t Constants ::  getVal(const string& key){
     try{
-        return Constants :: values.at(key);
+        return values.at(key);
     }
     catch(out_of_range& e){
         cerr << "Error(getVal), key not found: " << key << '\n';
@@ -117,12 +119,23 @@ uint16_t Constants ::  getVal(const string& key){
 
 const unordered_map<string, uint16_t>& Constants ::  getPlayerGen(const string& key){
     try{
-        return Constants :: p_gen.at(key);
+        return p_gen.at(key);
     }
     catch(out_of_range& e){
         cerr << "Error(getPlayerGen), key not found: " << key << '\n';
         return {};
     }
+}
+
+uint16_t Constants :: getGenInfo(const string& p_type, const string& key){
+    try{
+        return getPlayerGen(p_type).at(key);
+    }
+    catch(out_of_range& e){
+        cerr << "Error(getPlayerGen), key not found: " << key << '\n';
+        return {};
+    }
+
 }
 
 const vector<string>& Constants :: getPositions(const string& key){

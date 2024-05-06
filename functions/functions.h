@@ -2,20 +2,46 @@
 #include <vector>
 #include <unordered_map>
 #include <string>
-#include "../classes/constants/Constants.h"
+#include <sstream>
 
 template <typename key, typename val>
-vector<key> getKeys(const unordered_map<key, val>& u_map);
+std :: vector<key> getKeys(const std :: unordered_map<key, val>& u_map){
+    std :: vector<key> keys;
+    keys.reserve(u_map.size());
+
+    for (const auto& k_v : u_map)
+        keys.push_back(k_v.first);
+    return keys;
+}
 
 template <typename key, typename val>
-vector<val> getValues(const unordered_map<key, val>& u_map);
+std :: vector<val> getValues(const std :: unordered_map<key, val>& u_map){
+    std :: vector<val> values;
+    values.reserve(u_map.size());
+
+    for (const auto& k_v : u_map)
+        values.push_back(k_v.second);
+    return values;
+}
 
 template <typename key, typename val>
-vector<key> getKeys(const vector<pair<key, val>>& u_map);
+std :: vector<key> getKeys(const std :: vector<std :: pair<key, val>>& u_map){
+    std :: vector<key> keys;
+    keys.reserve(u_map.size());
+
+    for (const auto& k_v : u_map)
+        keys.push_back(k_v.first);
+    return keys;
+}
 
 template <typename key, typename val>
-vector<val> getValues(const vector<pair<key, val>>& u_map);
+std :: vector<val> getValues(const std :: vector<std :: pair<key, val>>& u_map){
+    std :: vector<val> values;
+    values.reserve(u_map.size());
 
-pair<string, string> minStats2(const vector<pair<string, double>>& stats);
+    for (const auto& k_v : u_map)
+        values.push_back(k_v.second);
+    return values;
+}
 
-vector<string> split(const string& str, char sep = ' ');
+std :: vector<std :: string> split(const std :: string& str, char sep = ' ');

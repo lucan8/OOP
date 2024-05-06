@@ -1,0 +1,37 @@
+#Greater than OVR
+#Requirments for dynamic potential(happens mid and end season):
+    1.being in the range
+    2.being in the top 50% for given role(bottom 50% get potential decrease)
+
+1. Deciding range.
+-ovr >= potential - (Max_pot - potential) * 15%
+Explanation:getting around 15% of the diff between max and curr potentials and subtracting from the potential
+
+
+2. Deciding how potential plus is given.
+- Will have diff weights depending on poz:
+
+POZ, goal_imp, assist_imp, blocks_imp
+Striker: 85%, 15%
+Winger: 75%, 25%
+CAM: 60%, 40%
+FULL_MID: 30%, 50%, 20%
+CM: 33%, 33%, 33%
+CDM: 10%, 40%, 50%
+FULL_BACK: 0%, 30%, 70%
+CB: 0%, 10%, 90%
+GK: 100%(saves)
+
+- Potential plus depends on poz in that top 50%
+1 - 10%: 20% * (Max_pot - potential)
+11% - 20%: 15% * (Max_pot - potential)
+21 - 30%: 10% * (Max_pot - potential)
+31% - 40%: 5% * (Max_pot - potential)
+41 - 50%: 2.5% * (Max_pot - potential)
+
+
+
+
+
+
+    

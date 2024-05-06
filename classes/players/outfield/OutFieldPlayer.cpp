@@ -20,6 +20,12 @@ void OutFieldPlayer :: printSeasonStats(ostream& out) const{
     << "\nBlocks: " << this->s_blocks << '\n';
 }
 
+void OutFieldPlayer :: resetSeasonStats(){
+    Player :: resetSeasonStats();
+    this->s_goals = this->s_assists = this->s_blocks = 0;
+}
+/*
+
 void OutFieldPlayer :: score(){
     this->s_goals ++;
     pair<string, string> smallest_stats = minStats2(vector<pair<string, double>>{
@@ -54,4 +60,5 @@ void OutFieldPlayer :: block(){
     upgradeStat(smallest_stats.first);
     upgradeStat(smallest_stats.second);
 }
+*/
 

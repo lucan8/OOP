@@ -1,16 +1,27 @@
 #include "Goalkeeper.h"
 
-double Goalkeeper :: calculateOVR() const{
-        double OVR = 0;
-        for (auto& x : Constants :: getPositions("GK_STATS")){
-            OVR += this->stats.at(x);
-        }
-        return OVR / Constants :: getPositions("GK_STATS").size();
-    }
 
-//Each stat gets a plus between 0 and 1
-void Goalkeeper :: train(){
-    for (auto& x : Constants :: getPositions("GK_STATS")){
-        this->stats[x] += rand() / RAND_MAX;
-    }
+unique_ptr<Player> Goalkeeper :: clone() const{
+    return unique_ptr<Player>(new Goalkeeper(*this));
 }
+
+
+void Goalkeeper :: initStats(){
+    for (const auto& stat_name : Constants :: getStats("GK"))
+        this->stats[stat_name];
+}
+
+void Goalkeeper :: printSeasonStats(ostream& out) const{
+    out << "Saves: " << this->nr_saves << '\n';
+    Player :: printSeasonStats(out);
+}
+
+
+void Goalkeeper :: resetSeasonStats(){
+    Player :: resetSeasonStats();
+    this->nr_saves = 0;
+}
+
+
+
+

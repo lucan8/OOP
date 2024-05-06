@@ -6,7 +6,7 @@ private:
     uint16_t s_goals = 0, s_assists = 0, s_blocks = 0;
     void initStats() override;
 public:
-    OutFieldPlayer(){}
+    OutFieldPlayer(){ initStats();}
     OutFieldPlayer(const OutFieldPlayer& p) : Player(p){}
 
     void score();
@@ -18,6 +18,7 @@ public:
     uint16_t getBlocks() const{return s_blocks;}
 
     void printSeasonStats(ostream& out) const override;
+    void resetSeasonStats() override;
     unique_ptr<Player> clone() const override;
 
     ~OutFieldPlayer(){}

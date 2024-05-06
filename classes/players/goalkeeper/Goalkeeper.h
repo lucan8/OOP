@@ -2,7 +2,14 @@
 #include "../player/Player.h"
 
 class Goalkeeper : public Player{
+private:
+    uint16_t nr_saves = 0;
+    void initStats() override;
 public:
-    double calculateOVR() const;
-    void train();
+    Goalkeeper(){initStats();}
+    Goalkeeper(const Goalkeeper& gk) : Player(gk){}
+    unique_ptr<Player> clone() const override;
+    void resetSeasonStats() override;
+    void printSeasonStats(std :: ostream&) const override;
+    ~Goalkeeper(){}
 };

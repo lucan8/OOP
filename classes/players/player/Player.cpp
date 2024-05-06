@@ -14,7 +14,6 @@ void Player :: Age(){
 }
 */
 
-
 void Player :: eliminateMaxes(vector<pair<string, uint16_t>>& weights) const{
     vector<pair<string, uint16_t>> :: iterator it = weights.begin();
     uint16_t max_stat = Constants :: getVal("MAX_STATS");
@@ -30,10 +29,10 @@ void Player :: eliminateMaxes(vector<pair<string, uint16_t>>& weights) const{
         }
 }
 
-double Player :: getOVR() const{
+double Player :: getOVR(const string& p_pos) const{
     double OVR = 0;
     
-    const vector<pair<string, uint16_t>>& stats_ratios = Constants :: getStatsRatios(this->position);
+    const vector<pair<string, uint16_t>>& stats_ratios = Constants :: getStatsRatios(p_pos);
     const vector<uint16_t> ratios = getValues(stats_ratios);
     uint16_t weights_sum = reduce(ratios.begin(), ratios.end());
 
@@ -45,11 +44,25 @@ double Player :: getOVR() const{
 }
 
 double Player :: getTrainPlus() const{
-    double ovr = this->getOVR();
+    double ovr = this->getOVR(this->position);
     return this->potential_OVR / ovr * 
         ((this->potential_OVR - ovr - this->train_nerf) / this->remaining_sessions);
 }
 
+pair<string, string> Player :: minStats2() const{
+    pair<string, double> min1("", Constants :: getVal("MAX_STATS")), 
+                         min2("", Constants :: getVal("MAX_STATS"));
+
+    for (const auto& stat : this->stats)
+        if (stat.second < min1.second){
+            min2 = min1;
+            min1 = stat;
+        }
+        else if(stat.second < min2.second)
+            min2 = stat;
+    
+    return make_pair(min1.first, min2.first);
+}
 
 void Player :: print(ostream& out) const{
     this->printBasicInfo(out);
@@ -70,7 +83,7 @@ void Player :: printStats(ostream& out) const{
         out << stat.first << ": " << stat.second << '\n';
     
     out << "Potential: " << this->potential_OVR << '\n';
-    out << "OVR: " << this->getOVR() << '\n';
+    out << "OVR: " << this->getOVR(this->position) << '\n';
 }
 
 void Player :: printBasicInfo(ostream& out) const{
@@ -104,14 +117,29 @@ void Player :: readStats(istream& in){
         try{
             stats.at(stat_name) = val;
         } catch(out_of_range& e){
-            cout << "Error(readStats), ivalid stat_name: " << stat_name << '\n';
+            cerr << "Error(readStats), ivalid stat_name: " << stat_name << '\n';
         }
     }
 }
 
+void Player :: resetSeasonStats(){
+    s_yellow_cards = s_red_cards = form = 0;
+    stamina = (double)Constants::getVal("MAX_STAMINA");
+    transfer_eligible = true;
+    red_carded = false;
+}
+
 void Player :: setTrainNerf(){
-    this->train_nerf = (this->potential_OVR - this->getOVR()) / 
+    this->train_nerf = (this->potential_OVR - this->getOVR(this->position)) / 
                         Constants :: getVal("TRAIN_NERF_DISPENSER");
+}
+
+void Player :: setStat(const string& stat_name, double stat_val){
+    try{
+        this->stats.at(stat_name) = stat_val;
+    } catch(out_of_range& e){
+        cerr << "Error(setStat) invalid stat_name: " << stat_name << '\n';
+    }
 }
 
 void Player :: upgradeStat(const string& stat_name, double stat_plus){

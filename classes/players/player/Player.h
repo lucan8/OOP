@@ -5,8 +5,8 @@
 class Player : public Human{
 protected:
     uint16_t s_yellow_cards = 0, s_red_cards = 0, form = 0;
-    uint16_t shirt_nr, potential_OVR, remaining_sessions = Constants :: getVal("MAX_TRAIN_SESSIONS");
-    double stamina = (double)Constants::getVal("MAX_STAMINA"), train_nerf;
+    uint16_t shirt_nr, remaining_sessions = Constants :: getVal("MAX_TRAIN_SESSIONS");
+    double stamina = (double)Constants::getVal("MAX_STAMINA"), train_nerf, potential_OVR;
     string position;
     unordered_map<string, double> stats;
 
@@ -17,33 +17,31 @@ protected:
 
     void eliminateMaxes(vector<pair<string, uint16_t>>& weights) const;
 
-    void setTrainNerf();
     double getTrainPlus() const;
-
     void upgradeStat(const string& stat_name, double stat_plus);
 public:
-    Player() { initStats();}
+    Player() {}
     Player(const Player& p)
     : Human(p), shirt_nr(p.shirt_nr), potential_OVR(p.potential_OVR), 
       position(p.position), stats(p.stats), remaining_sessions(p.remaining_sessions), 
       train_nerf(p.train_nerf){}
 
     void train();
+    void setTrainNerf();
     void rest();
 
-    
-    void Age();
-
-    double getOVR() const;
+    //Players can play outside position as well
+    double getOVR(const string& pos) const;
     double getPrice() const; //TO DO
 
     uint16_t getYCard() const{return s_yellow_cards;}
     uint16_t getRCard() const{return s_red_cards;}
     uint16_t getForm() const{return form;}
     uint16_t getShirt() const{return shirt_nr;}
-    uint16_t getPotential() const{return potential_OVR;}
+    double getPotential() const{return potential_OVR;}
 
     double getStamina() const{return stamina;}
+    const string& getPosition() const{return position;}
 
     const unordered_map<string, double>& getStats() const{return stats;}
 
@@ -51,7 +49,12 @@ public:
     bool verifRedCarded() const{return red_carded;}
 
     void setShirt(uint16_t shirt_nr){this->shirt_nr = shirt_nr;}
-    void setStamina(uint16_t stamina){this->stamina = stamina;}
+    void setStamina(double stamina){this->stamina = stamina;}
+    void setPosition(const string& pos){this->position = pos;}
+
+    void setStat(const string& stat_name, double stat_val);
+    void setPotential(double potential){this->potential_OVR = potential;}
+
     void changeTranferEligible(){this->transfer_eligible = !this->transfer_eligible;}
     void changeRedCarded(){this->red_carded = !this->red_carded;}
 
@@ -63,6 +66,9 @@ public:
     void printBasicInfo(ostream&) const;
 
     void read(istream&) override;
+    virtual void resetSeasonStats();
 
-    virtual ~Player() = 0;
+    pair<string, string> minStats2() const;
+
+    virtual ~Player(){};
 };

@@ -2,11 +2,12 @@
 
 
 unordered_map<string, uint16_t>  Constants :: values;
-unordered_map<string, unordered_map<string, uint16_t>> Constants :: p_gen;
+unordered_map<string, unordered_map<string, uint16_t>> Constants :: age_info;
 unordered_map<string, vector<string>> Constants :: positions;
 unordered_map<string, vector<string>> Constants :: age_stats;
 unordered_map<string, vector<string>> Constants :: stats;
 unordered_map<string, vector<pair<string, uint16_t>>> Constants :: stats_ratios;
+vector<string> Constants :: team_names;
 
 void Constants :: init(){
     string input_path = filesystem :: current_path().parent_path().string() + "\\classes\\constants\\";
@@ -15,6 +16,7 @@ void Constants :: init(){
         initPlayerGen(input_path + "player_generation.txt");
         initPositions(input_path + "positions.txt");
         initStatsRatios(input_path + "stats_ratios.txt");
+        initTeamNames(input_path + "team_names.txt");
     }
     catch (FileOpenException e){
         cerr << e.what() << '\n';
@@ -63,9 +65,9 @@ void Constants :: initPlayerGen(const string& file_name){
 
     while (nr_player_type--){
         fin >> player_type;
-        while (nr_consts--){
+        for (int i = 0; i < nr_consts; ++i){
             fin >> const_name >> const_val;
-            p_gen[player_type][const_name] = const_val;
+            age_info[player_type][const_name] = const_val;
         }
         fin.ignore();
     }
@@ -107,74 +109,97 @@ void Constants :: initStatsRatios(const string& file_name){
     }
 }
 
-uint16_t Constants ::  getVal(const string& key){
+void Constants :: initTeamNames(const string& file_name){
+    
+    ifstream fin(file_name);
+    if (!fin.is_open())
+        throw FileOpenException("team_names");
+    
+    uint16_t nr_names;
+    string t_name;
+    fin >> nr_names;
+    team_names.reserve(nr_names);
+
+    while (fin >> t_name)
+        team_names.push_back(t_name);
+}
+
+optional<uint16_t> Constants ::  getVal(const string& key){
     try{
         return values.at(key);
     }
     catch(out_of_range& e){
         cerr << "Error(getVal), key not found: " << key << '\n';
-        return -1;
+        return nullopt;
     }
 }
 
-const unordered_map<string, uint16_t>& Constants ::  getPlayerGen(const string& key){
+optional<unordered_map<string, uint16_t>> Constants ::  getAllAgeInfo(const string& key){
     try{
-        return p_gen.at(key);
+        return age_info.at(key);
     }
     catch(out_of_range& e){
-        cerr << "Error(getPlayerGen), key not found: " << key << '\n';
-        return {};
+        cerr << "Error(getAllAgeInfo), key not found: " << key << '\n';
+        return nullopt;
     }
 }
 
-uint16_t Constants :: getGenInfo(const string& p_type, const string& key){
+optional<uint16_t> Constants :: getAgeInfo(const string& p_type, const string& key){
     try{
-        return getPlayerGen(p_type).at(key);
+        return getAllAgeInfo(p_type).value_or(unordered_map<string, uint16_t>()).at(key);
     }
     catch(out_of_range& e){
-        cerr << "Error(getPlayerGen), key not found: " << key << '\n';
-        return {};
+        cerr << "Error(getAgeInfo), key not found: " << key << '\n';
+        return nullopt;
     }
 
 }
 
-const vector<string>& Constants :: getPositions(const string& key){
+optional<vector<string>> Constants :: getPositions(const string& key){
     try{
         return positions.at(key);
     }
     catch(out_of_range& e){
         cerr << "Error(getPositions), key not found: " << key << '\n';
-        return {};
+        return nullopt;
     }
 }
 
-const vector<string>& Constants :: getStats(const string& key){
+optional<vector<string>> Constants :: getStats(const string& key){
     try{
         return stats.at(key);
     }
     catch(out_of_range& e){
         cerr << "Error(getStats), key not found: " << key << '\n';
-        return {};
+        return nullopt;
     }
 }
 
-const vector<string>& Constants :: getAgeRelatedStats(const string& key){
+optional<vector<string>> Constants :: getAgeRelatedStats(const string& key){
     try{
         return age_stats.at(key);
     }
     catch(out_of_range& e){
         cerr << "Error(getAgeRelatedStats), key not found: " << key << '\n';
-        return {};
+        return nullopt;
     }
 }
 
 
-const vector<pair<string, uint16_t>>& Constants :: getStatsRatios(const string& key){
+optional<vector<pair<string, uint16_t>>> Constants :: getStatsRatios(const string& key){
     try{
         return stats_ratios.at(key);
     }
     catch(out_of_range& e){
         cerr << "Error(getStatsRations), key not found: " << key << '\n';
-        return {};
+        return nullopt;
     }
 }
+
+vector<string> Constants :: getPlayerTypes(){
+        return getKeys(positions);
+    }
+
+vector<string> Constants :: getAgeTypes(){
+        return getKeys(age_info);
+    }

@@ -118,9 +118,10 @@ void Constants :: initTeamNames(const string& file_name){
     uint16_t nr_names;
     string t_name;
     fin >> nr_names;
+    fin.ignore();
     team_names.reserve(nr_names);
 
-    while (fin >> t_name)
+    while (getline(fin, t_name))
         team_names.push_back(t_name);
 }
 
@@ -191,7 +192,7 @@ optional<vector<pair<string, uint16_t>>> Constants :: getStatsRatios(const strin
         return stats_ratios.at(key);
     }
     catch(out_of_range& e){
-        cerr << "Error(getStatsRations), key not found: " << key << '\n';
+        cerr << "Error(getStatsRatios), key not found: " << key << '\n';
         return nullopt;
     }
 }

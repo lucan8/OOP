@@ -24,7 +24,7 @@ Mid season the **transfer window** emerges and teams can buy and sell players fo
 #### Implementation
 <!--
 ```plantuml
-@startuml FKHS class diagram
+@startuml FKHS_class_diagram
 interface Printable{
     + print()
 }
@@ -116,3 +116,4 @@ note top of Constants: "Used to keep constant data from files"
 @enduml
 ```
 -->
+![](FKHS_class_diagram.svg)

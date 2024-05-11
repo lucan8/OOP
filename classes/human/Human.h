@@ -1,13 +1,9 @@
 #pragma once
 #include <algorithm>
 #include "../constants/Constants.h"
-#include "../printable/Printable.h"
-#include "../readable/Readable.h"
+#include "../printable/Printable.hpp"
+#include "../readable/Readable.hpp"
 #include <iostream>
-#include <unordered_map>
-#include "../../functions/functions.h"
-#include <random>
-#include <numeric>
 
 class Human : public Printable, public Readable{
 protected:
@@ -26,6 +22,8 @@ public:
 
     void setWage(double wage){this->wage = wage;}
     void setAge(unsigned short age){this->age = age;}
+    void setNationality(const string& nationality){this->nationality = nationality;}
+    void setName(const string& name){this->name = name;}
 
     virtual void read(istream&) override;
     virtual void print(ostream&)const override;

@@ -1,26 +1,29 @@
 #include "generate_team.h"
-unique_ptr<Team> generateTeam(vector<string>& available_names){
+shared_ptr<Team> generateTeam(vector<string>& available_names){
     vector<unique_ptr<Player>> gks = generateGoalkeepers(), outfields = generateOutfields(); 
-    return make_unique<Team>(
+    //Moving the gks at the end of the outfields vector
+    outfields.insert(
+                        outfields.end(),
+                        make_move_iterator(gks.begin()), 
+                        make_move_iterator(gks.end())
+                    );
+    return make_shared<Team>(
                              generateTeamName(available_names),
-                             outfields.insert(
-                                                outfields.end(),
-                                                make_move_iterator(gks.begin()), 
-                                                make_move_iterator(gks.end())
-                                            ),
+                             move(outfields),
                              generateBudget()
                             );
 }
+
 string generateTeamName(vector<string>& available_names){
     random_device rd;
     mt19937 gen(rd());
     uniform_int_distribution<> name_dist(0, available_names.size() - 1);
 
     uint16_t name_index = name_dist(gen);
-    //Making sure the name is unavailable
+    string name = available_names[name_index];
+    
     available_names.erase(available_names.begin() + name_index);
-
-    return available_names[name_index];
+    return name;
 }
 vector<unique_ptr<Player>> generateOutfields(){
     vector<unique_ptr<Player>> outfields;
@@ -33,10 +36,7 @@ vector<unique_ptr<Player>> generateOutfields(){
                                             Constants :: getAgeInfo(age_type, "MAX_NR").value_or(0)
                                             );
         for (uint16_t i = 0; i < nr_outfields_dist(gen); ++i)
-            outfields.push_back(generatePlayer("OUTFIELD", age_type)
-                                                                    .value_or(
-                                                                    vector<unique_ptr<Player>>()
-                                                                    ));
+            outfields.push_back(generatePlayer("OUTFIELD", age_type).value_or(unique_ptr<Player>()));
     }
     return outfields;                           
 }
@@ -54,8 +54,7 @@ vector<unique_ptr<Player>> generateGoalkeepers(){
         uniform_int_distribution<> age_index_dist(0, age_types.size() - 1);
         uint16_t chosen_index = age_index_dist(gen);
 
-        gks.push_back(generatePlayer("GK", age_types[chosen_index])
-                                                                .value_or(vector<unique_ptr<Player>>()));
+        gks.push_back(generatePlayer("GK", age_types[chosen_index]).value_or(unique_ptr<Player>()));
         //Make sure the same age_type is not chosen again
         age_types.erase(age_types.begin() + chosen_index);
     }

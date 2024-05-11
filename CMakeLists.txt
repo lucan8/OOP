@@ -8,11 +8,22 @@ include(FetchContent)
 FetchContent_Declare(
     fmt
     GIT_REPOSITORY https://github.com/fmtlib/fmt
-    GIT_TAG 10.2.1
+    GIT_TAG 10.1.1
 )
+
 
 FetchContent_MakeAvailable(fmt)
 
-add_executable(fsim2 classes/constants/Constants.cpp app/app.cpp )
+add_executable(fsim3    app/app.cpp 
+                        classes/constants/Constants.cpp 
+                        random_generated/player_generation/generate_player.cpp
+                        random_generated/team_generation/generate_team.cpp
+                        functions/functions.cpp
+                        classes/human/Human.cpp
+                        classes/players/player/Player.cpp
+                        classes/players/outfield/OutFieldPlayer.cpp
+                        classes/players/goalkeeper/Goalkeeper.cpp
+                        classes/team/Team.cpp
+                        )
 
-target_link_libraries(fsim2 PRIVATE fmt::fmt)
+target_link_libraries(fsim3 PRIVATE fmt)

@@ -6,9 +6,8 @@ private:
     uint16_t s_goals = 0, s_assists = 0, s_blocks = 0;
     void initStats() override;
 public:
-    OutFieldPlayer(){ initStats();}
-    OutFieldPlayer(const OutFieldPlayer& p) : Player(p){}
-
+    OutFieldPlayer() : Player(){ initStats();}
+    
     void score();
     void assist();
     void block();
@@ -21,5 +20,5 @@ public:
     void resetSeasonStats() override;
     unique_ptr<Player> clone() const override;
 
-    ~OutFieldPlayer(){}
+    ~OutFieldPlayer(){cout << "Outfield destroyed!\n";}
 };

@@ -7,7 +7,7 @@ unique_ptr<Player> Goalkeeper :: clone() const{
 
 
 void Goalkeeper :: initStats(){
-    for (const auto& stat_name : Constants :: getStats("GK"))
+    for (const auto& stat_name : Constants :: getStats("GK").value_or(vector<string>()))
         this->stats[stat_name];
 }
 

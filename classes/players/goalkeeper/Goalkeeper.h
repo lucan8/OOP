@@ -6,10 +6,9 @@ private:
     uint16_t nr_saves = 0;
     void initStats() override;
 public:
-    Goalkeeper(){initStats();}
-    Goalkeeper(const Goalkeeper& gk) : Player(gk){}
+    Goalkeeper() : Player(){initStats();}
     unique_ptr<Player> clone() const override;
     void resetSeasonStats() override;
     void printSeasonStats(std :: ostream&) const override;
-    ~Goalkeeper(){}
+    ~Goalkeeper(){cout << "GK destroyed!\n";}
 };

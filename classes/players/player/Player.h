@@ -5,8 +5,8 @@
 class Player : public Human{
 protected:
     uint16_t s_yellow_cards = 0, s_red_cards = 0, form = 0;
-    uint16_t shirt_nr, remaining_sessions = Constants :: getVal("MAX_TRAIN_SESSIONS");
-    double stamina = (double)Constants::getVal("MAX_STAMINA"), train_nerf, potential_OVR;
+    uint16_t shirt_nr, remaining_sessions = Constants :: getVal("MAX_TRAIN_SESSIONS").value_or(0);
+    double stamina = (double)Constants::getVal("MAX_STAMINA").value_or(0), train_nerf, potential_OVR;
     string position;
     unordered_map<string, double> stats;
 
@@ -20,12 +20,6 @@ protected:
     double getTrainPlus() const;
     void upgradeStat(const string& stat_name, double stat_plus);
 public:
-    Player() {}
-    Player(const Player& p)
-    : Human(p), shirt_nr(p.shirt_nr), potential_OVR(p.potential_OVR), 
-      position(p.position), stats(p.stats), remaining_sessions(p.remaining_sessions), 
-      train_nerf(p.train_nerf){}
-
     void train();
     void setTrainNerf();
     void rest();
@@ -52,7 +46,9 @@ public:
     void setStamina(double stamina){this->stamina = stamina;}
     void setPosition(const string& pos){this->position = pos;}
 
+    void setStats(unordered_map<string, double> Stats);
     void setStat(const string& stat_name, double stat_val);
+
     void setPotential(double potential){this->potential_OVR = potential;}
 
     void changeTranferEligible(){this->transfer_eligible = !this->transfer_eligible;}
@@ -65,10 +61,12 @@ public:
     void printStats(ostream&) const;
     void printBasicInfo(ostream&) const;
 
+    void printEssentials(ostream&) const;
+
     void read(istream&) override;
     virtual void resetSeasonStats();
 
     pair<string, string> minStats2() const;
 
-    virtual ~Player(){};
+    virtual ~Player(){cout << "Player destroyed!\n";}
 };

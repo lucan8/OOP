@@ -22,7 +22,6 @@ Mid season the **transfer window** emerges and teams can buy and sell players fo
 - [ ] dynamic team determination before match
 
 #### Implementation
-<!--
 ```plantuml
 @startuml FKHS_class_diagram
 interface Printable{
@@ -115,5 +114,3 @@ note top of Readable: "Extended by every class"
 note top of Constants: "Used to keep constant data from files"
 @enduml
 ```
--->
-![](FKHS_class_diagram.svg)

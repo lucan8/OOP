@@ -1,11 +1,12 @@
 #Generating players:
-    - 6-9 will be 16-22 years, ovr: between(min_ovr, max_ovr - 29) potential: between(ovr + 10, MAX_pot)
-    - 6-12 will be 23-29 years, ovr: between(min_ovr + 20, max_ovr-19), potential: between(ovr + 5, MAX_pot)
-    - 6-9 will be 30-35 years, ovr: between(min_ovr + 40, max_ovr-9), potential: between(ovr, MAX_pot)
+    - 6-9 will be 16-22 years, stat: between(min_stat, max_stat - 29) potential: between(ovr + 10, MAX_pot)
+    - 6-12 will be 23-29 years, stat: between(min_stat + 20, max_stat-19), potential: between(ovr + 5, MAX_pot)
+    - 6-9 will be 30-35 years, stat: between(min_stat + 40, max_stat-9), potential: between(ovr, MAX_pot)
     - 2 GK randomly from the ranges above
 
 #Choosing poz:
-    - There won't actually be positions, they will be determined before the match
-    - depending on the player's ovr in each poz
+    - OVR and poz is determined after the player has been generated
+    - The poz with the highest ovr will be chosen as the main
+    - Idea: Poz is determined before match
 
 

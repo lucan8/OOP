@@ -1,10 +1,13 @@
 #pragma once
-#include <exception>
+#include "Myexception.h"
 #include <string>
-class InvalidPlayerType : public std :: exception{
+class InvalidPlayerType : public MyException{
 private:
     std :: string type; 
 public:
-    InvalidPlayerType(std :: string type) : type(type){}
-    const char* what() const  noexcept{return ("Invalid player type: " + type).c_str();}
+    InvalidPlayerType(const std :: string& func_name, const std :: string& type)
+    : MyException(func_name), type(type){}
+    const char* what() const  noexcept{
+        return ((std :: string)MyException :: what() + ("Invalid player type: " + type)).c_str();
+    }
 };

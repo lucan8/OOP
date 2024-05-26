@@ -3,29 +3,22 @@
 #include <fmt/core.h>
 #include <filesystem>
 #include <fstream>
+#include "../classes/teams/match_team/MatchTeam.h"
 #include "../random_generated/team_generation/generate_team.h"
-//External library Dasmig(see forked directory
+//External library Dasmig(see forked directory)
+//If reading from file add invalidCountry, invalidAge, invalidPoz
+//For the moment only using random_generated players and teams
 
 int main(){
     Constants :: init();
-    //vector<string> t_names = Constants :: getTeamNames();
-    unique_ptr<Player> p1 = generatePlayer("GK", "MATURE").value(),
-                       p2 = generatePlayer("OUTFIELD", "OLD").value();
-    
-    //Polimorfism la executie
-    //De asemenea upcasting la printBasicInfo de la Player
-    cout << *p1 << *p2;
-    unique_ptr<Player> p3(new OutFieldPlayer);
-    string f_name = (filesystem :: current_path().parent_path() / "app" / "input_aux.txt").string();
-    ifstream fin(f_name);
-    if (!fin)
-        cerr << "Could not open file!: " << f_name << '\n';
-    else
-        fin >> *p3;
-    //Upcasting omg
-    cout << (Human)*p3;
-
-
+    vector<string> available_names = Constants::getTeamNames();
+    try{
+        shared_ptr<Team> t1 = generateTeam(available_names), t2 = generateTeam(available_names);
+        MatchTeam m_1(move(t1->getBestFirstTeam()), t1), m_2(move(t2->getBestFirstTeam()), t2);         
+        cout << "sus" << endl;
+    } catch(exception& e){
+        cout << e.what() << endl;
+    }
 }
 
 

@@ -1,6 +1,6 @@
 #include "generate_team.h"
 shared_ptr<Team> generateTeam(vector<string>& available_names){
-    vector<unique_ptr<Player>> gks = generateGoalkeepers(), outfields = generateOutfields(); 
+    vector<shared_ptr<Player>> gks = generateGoalkeepers(), outfields = generateOutfields(); 
     //Moving the gks at the end of the outfields vector
     outfields.insert(
                         outfields.end(),
@@ -25,24 +25,24 @@ string generateTeamName(vector<string>& available_names){
     available_names.erase(available_names.begin() + name_index);
     return name;
 }
-vector<unique_ptr<Player>> generateOutfields(){
-    vector<unique_ptr<Player>> outfields;
+vector<shared_ptr<Player>> generateOutfields(){
+    vector<shared_ptr<Player>> outfields;
     random_device rd;
     mt19937 gen(rd());
 
     for (const auto& age_type : Constants :: getAgeTypes()){
         uniform_int_distribution<> nr_outfields_dist(
-                                            Constants :: getAgeInfo(age_type, "MIN_NR").value_or(0),
-                                            Constants :: getAgeInfo(age_type, "MAX_NR").value_or(0)
+                                            Constants :: getAgeInfo(age_type, "MIN_NR"),
+                                            Constants :: getAgeInfo(age_type, "MAX_NR")
                                             );
         for (uint16_t i = 0; i < nr_outfields_dist(gen); ++i)
-            outfields.push_back(generatePlayer("OUTFIELD", age_type).value_or(unique_ptr<Player>()));
+            outfields.push_back(generatePlayer("OUTFIELD", age_type));
     }
     return outfields;                           
 }
 
-vector<unique_ptr<Player>> generateGoalkeepers(){
-    vector<unique_ptr<Player>> gks;
+vector<shared_ptr<Player>> generateGoalkeepers(){
+    vector<shared_ptr<Player>> gks;
 
     random_device rd;
     mt19937 gen(rd());
@@ -54,7 +54,7 @@ vector<unique_ptr<Player>> generateGoalkeepers(){
         uniform_int_distribution<> age_index_dist(0, age_types.size() - 1);
         uint16_t chosen_index = age_index_dist(gen);
 
-        gks.push_back(generatePlayer("GK", age_types[chosen_index]).value_or(unique_ptr<Player>()));
+        gks.push_back(generatePlayer("GK", age_types[chosen_index]));
         //Make sure the same age_type is not chosen again
         age_types.erase(age_types.begin() + chosen_index);
     }

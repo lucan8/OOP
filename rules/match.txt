@@ -1,3 +1,19 @@
+#match v1
+#In a match there will be a number of chances
+#Which team will have a goal scoring change is based on these attr:
+    -PAS
+    -STA
+
+#After that it's time for the attackers and defenders to compare attributes:
+    -PHY    -PHY
+    -PAC    -AGG
+    -DRI    -DEF
+#If the attackers manage to go past the defense they need to go past the goalkeeper
+    -SHO    -AVG(REF, DIV, HAN, POS)
+
+
+
+
 #Every match will have 90 minutes
 #After each minute the player stamina decreases depending on their statistical_stamina and poz
 #Range for chances between 10, 40 per match

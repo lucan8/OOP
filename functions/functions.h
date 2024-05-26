@@ -4,6 +4,13 @@
 #include <string>
 #include <sstream>
 
+
+template <typename key, typename val>
+void initMap(std :: unordered_map<key, val>& u_map, std :: vector<key> keys){
+    for (const auto& k : keys)
+        u_map[k];
+}
+
 template <typename key, typename val>
 std :: vector<key> getKeys(const std :: unordered_map<key, val>& u_map){
     std :: vector<key> keys;

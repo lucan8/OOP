@@ -1,13 +1,18 @@
 #pragma once
 
+#include <algorithm>
 #include <filesystem>
 #include "../exceptions/FileOpenException.h"
+#include "../exceptions/InvalidPosition.h"
+#include "../exceptions/InvalidConstName.h"
+#include "../exceptions/InvalidAgeType.h"
+#include "../exceptions/InvalidPlayerType.h"
+#include "../exceptions/InvalidFormation.h"
 #include "../../functions/functions.h"
 #include <iostream>
 #include <sstream>
 #include <unordered_map>
 #include <vector>
-#include <optional>
 
 using namespace std;
 
@@ -19,6 +24,8 @@ private:
     static unordered_map<string, vector<string>> positions, stats, age_stats;
     static unordered_map<string, vector<pair<string, uint16_t>>> stats_ratios;
     static vector<string> team_names;
+    //formation_layout, pos, nr_players
+    static unordered_map<string, unordered_map<string, uint16_t>> formations;
 
     static void initValues(const string& file_name);
     static void initPositions(const string& file_name);
@@ -27,21 +34,30 @@ private:
     static void initStatsRatios(const string& file_name);
 
     static void initTeamNames(const string& file_name);
+    static void initFormations(const string& file_name);
 public:
     static void init();
 
-    static optional<uint16_t> getVal(const string& key);
-    static optional<vector<string>> getPositions(const string& key);
+    static uint16_t getVal(const string& const_name);
+    static vector<string> getPositions(const string& p_type);
+    //Retrieves all positions
+    static vector<string> getPositions();
 
-    static optional<unordered_map<string, uint16_t>> getAllAgeInfo(const string& age_type);
-    static optional<uint16_t> getAgeInfo(const string& age_type, const string& key);
+    static unordered_map<string, uint16_t> getAllAgeInfo(const string& age_type);
+    static uint16_t getAgeInfo(const string& age_type, const string& const_name);
 
-    static optional<vector<string>> getStats(const string& key);
-    static optional<vector<string>> getAgeRelatedStats(const string& key);
+    static vector<string> getStats(const string& p_type);
+    static vector<string> getAgeRelatedStats(const string& p_type);
 
     static vector<string> getPlayerTypes();
+    static vector<string> getDetailedPTypes();
+    //Returns all positions which have the same detailed player type as pos
+    static vector<string> getSameDetType(const string& pos);
     static vector<string> getAgeTypes();
 
-    static optional<vector<pair<string, uint16_t>>> getStatsRatios(const string& key);
-    static const vector<string>& getTeamNames(){return team_names;}
+    static vector<pair<string, uint16_t>> getStatsRatios(const string& p_pos);
+    static const vector<string>& getTeamNames();
+
+    static const unordered_map<string, unordered_map<string, uint16_t>>& getFormations();
+    static const unordered_map<string, uint16_t>& getFormation(const string& form_name);
 };

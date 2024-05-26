@@ -23,7 +23,8 @@ add_executable(fsim3    app/app.cpp
                         classes/players/player/Player.cpp
                         classes/players/outfield/OutFieldPlayer.cpp
                         classes/players/goalkeeper/Goalkeeper.cpp
-                        classes/team/Team.cpp
+                        classes/teams/team/Team.cpp
+                        classes/first_eleven/FirstEleven.cpp
                         )
 
 target_link_libraries(fsim3 PRIVATE fmt)

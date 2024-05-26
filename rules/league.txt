@@ -4,4 +4,8 @@
 #Each season 3 teams get "relegated"(deleted) from the league
 #This goes on until one team remains
 #Each season will be kept in a vector
-#Not using pointers(for teams and players) for the sake of saving the season as it is
+#Teams will be compared by these rules:
+    1. points
+    2. goal_diff
+    3. y_cards
+    4. r_cards

@@ -7,7 +7,6 @@ public:
 };
 
 inline std :: istream& operator >>(std :: istream& in, Readable& p){
-    cout << "Reading:" << typeid(p).name() << '\n';
     p.read(in);
     return in;
 }

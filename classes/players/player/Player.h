@@ -5,8 +5,8 @@
 class Player : public Human{
 protected:
     uint16_t s_yellow_cards = 0, s_red_cards = 0, form = 0;
-    uint16_t shirt_nr, remaining_sessions = Constants :: getVal("MAX_TRAIN_SESSIONS").value_or(0);
-    double stamina = (double)Constants::getVal("MAX_STAMINA").value_or(0), train_nerf, potential_OVR;
+    uint16_t shirt_nr, remaining_sessions = Constants :: getVal("MAX_TRAIN_SESSIONS");
+    double stamina = (double)Constants::getVal("MAX_STAMINA"), train_nerf, potential_OVR;
     string position;
     unordered_map<string, double> stats;
 
@@ -54,7 +54,7 @@ public:
     void changeTranferEligible(){this->transfer_eligible = !this->transfer_eligible;}
     void changeRedCarded(){this->red_carded = !this->red_carded;}
 
-    virtual unique_ptr<Player> clone() const = 0;
+    virtual shared_ptr<Player> clone() const = 0;
 
     void print(ostream&) const override;
     virtual void printSeasonStats(ostream&) const;
@@ -67,6 +67,10 @@ public:
     virtual void resetSeasonStats();
 
     pair<string, string> minStats2() const;
+
+    static bool compOVR(const shared_ptr<Player>& p1, const shared_ptr<Player>& p2){
+        return p1->getOVR(p1->position) < p2->getOVR(p2->position);
+    }
 
     virtual ~Player(){cout << "Player destroyed!\n";}
 };

@@ -1,14 +1,13 @@
 #include "OutFieldPlayer.h"
 
-unique_ptr<Player> OutFieldPlayer :: clone() const 
+shared_ptr<Player> OutFieldPlayer :: clone() const 
 {
-    return unique_ptr<Player>(new OutFieldPlayer(*this));
+    return shared_ptr<Player>(new OutFieldPlayer(*this));
 }
 
 
 void OutFieldPlayer :: initStats(){
-    for (const auto& stat_name : Constants :: getStats("OUTFIELD").value_or(vector<string>()))
-        this->stats[stat_name];
+    initMap(this->stats, Constants :: getStats("OUTFIELD"));
 }
 
 

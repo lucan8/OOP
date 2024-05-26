@@ -1,7 +1,7 @@
 #include "Player.h"
 #include <numeric>
 #include <random>
-
+//TO DO: make exception for stats as well
 /*
 void Player :: Age(){
     if (this->age >= Constants :: getVal("MIN_YOUNG") && 
@@ -18,7 +18,7 @@ void Player :: Age(){
 
 void Player :: eliminateMaxes(vector<pair<string, uint16_t>>& weights) const{
     vector<pair<string, uint16_t>> :: iterator it = weights.begin();
-    uint16_t max_stat = Constants :: getVal("MAX_STATS").value_or(0);
+    uint16_t max_stat = Constants :: getVal("MAX_STATS");
 
     for (; it != weights.end();)
         try{
@@ -34,9 +34,7 @@ void Player :: eliminateMaxes(vector<pair<string, uint16_t>>& weights) const{
 double Player :: getOVR(const string& p_pos) const{
     double OVR = 0;
     
-    vector<pair<string, uint16_t>>stats_ratios = Constants :: getStatsRatios(p_pos).value_or(
-                                                                vector<pair<string, uint16_t>>()
-                                                                );
+    vector<pair<string, uint16_t>>stats_ratios = Constants :: getStatsRatios(p_pos);
     const vector<uint16_t> ratios = getValues(stats_ratios);
     uint16_t weights_sum = reduce(ratios.begin(), ratios.end());
 
@@ -54,8 +52,8 @@ double Player :: getTrainPlus() const{
 }
 
 pair<string, string> Player :: minStats2() const{
-    pair<string, double> min1("", Constants :: getVal("MAX_STATS").value_or(0)), 
-                         min2("", Constants :: getVal("MAX_STATS").value_or(0));
+    pair<string, double> min1("", Constants :: getVal("MAX_STATS")), 
+                         min2("", Constants :: getVal("MAX_STATS"));
 
     for (const auto& stat : this->stats)
         if (stat.second < min1.second){
@@ -108,7 +106,7 @@ void Player :: printBasicInfo(ostream& out) const{
 
 void Player :: read(istream& in){
     //Does not work(why?)
-    //in >> Human&(*this) 
+    //in >> (Human&)*this 
     this->Human :: read(in);
     in >> this->position >> this->shirt_nr >> this->potential_OVR;
     this->readStats(in);
@@ -116,8 +114,8 @@ void Player :: read(istream& in){
 
 
 void Player :: rest(){
-    this->stamina = max((double)Constants::getVal("MAX_STAMINA").value_or(0), 
-                        this->stamina + Constants::getVal("REST_STAMINA_PLUS").value_or(0));
+    this->stamina = max((double)Constants::getVal("MAX_STAMINA"), 
+                        this->stamina + Constants::getVal("REST_STAMINA_PLUS"));
 }
 
 
@@ -130,21 +128,21 @@ void Player :: readStats(istream& in){
         try{
             stats.at(stat_name) = val;
         } catch(out_of_range& e){
-            cerr << "Error(readStats), ivalid stat_name: " << stat_name << '\n';
+            cerr << "Error(readStats), invalid stat_name: " << stat_name << '\n';
         }
     }
 }
 
 void Player :: resetSeasonStats(){
     s_yellow_cards = s_red_cards = form = 0;
-    stamina = (double)Constants::getVal("MAX_STAMINA").value_or(0);
+    stamina = (double)Constants::getVal("MAX_STAMINA");
     transfer_eligible = true;
     red_carded = false;
 }
 
 void Player :: setTrainNerf(){
     this->train_nerf = (this->potential_OVR - this->getOVR(this->position)) / 
-                        Constants :: getVal("TRAIN_NERF_DISPENSER").value_or(0);
+                        Constants :: getVal("TRAIN_NERF_DISPENSER");
 }
 
 
@@ -166,7 +164,7 @@ void Player :: upgradeStat(const string& stat_name, double stat_plus){
     mt19937 gen(rd());
     uniform_real_distribution<double> stat_plus_dist(0, 2 * stat_plus);
 
-    uint16_t max_stat = Constants :: getVal("MAX_STATS").value_or(0);
+    uint16_t max_stat = Constants :: getVal("MAX_STATS");
 
     try{
         double& stat = this->stats.at(stat_name);
@@ -178,9 +176,7 @@ void Player :: upgradeStat(const string& stat_name, double stat_plus){
 void Player :: train(){
     double ovr_pl = this->getTrainPlus();
 
-    vector<pair<string, uint16_t>>stats_ratios = Constants :: getStatsRatios(this->position).value_or(
-                                                            vector<pair<string, uint16_t>>()
-    );
+    vector<pair<string, uint16_t>>stats_ratios = Constants :: getStatsRatios(this->position);
     eliminateMaxes(stats_ratios);
 
     vector<uint16_t> probabilities = getValues(stats_ratios);

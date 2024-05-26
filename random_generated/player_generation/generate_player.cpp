@@ -1,15 +1,10 @@
 #include "generate_player.h"
 using ng = dasmig :: ng;
 
-optional<unique_ptr<Player>> generatePlayer(const string& p_type, const string& age_type){
-    unique_ptr<Player> new_player;
-    try{
-        new_player = createPlayer(p_type);
-    } catch(InvalidPlayerType& e){
-        cerr << "Error(generatePlayer): " << e.what() << '\n';
-        return nullopt;
-    }
-
+shared_ptr<Player> generatePlayer(const string& p_type, const string& age_type){
+    shared_ptr<Player> new_player;
+    new_player = createPlayer(p_type);
+    
     loadNamegenResources();
 
     ng :: culture r_culture = ng::instance().get_rand_culture();
@@ -19,44 +14,51 @@ optional<unique_ptr<Player>> generatePlayer(const string& p_type, const string& 
 
 
     new_player->setAge(generateAge(
-                                    Constants :: getAgeInfo(age_type, "MIN_AGE").value_or(0), 
-                                    Constants :: getAgeInfo(age_type, "MAX_AGE").value_or(0)
+                                    Constants :: getAgeInfo(age_type, "MIN_AGE"), 
+                                    Constants :: getAgeInfo(age_type, "MAX_AGE")
                                   ));
     new_player->setStats(generateStats(
-                                    Constants :: getStats(p_type).value_or(vector<string>()),
-                                    (double)Constants :: getAgeInfo(age_type, "MIN_STAT").value_or(0),
-                                    (double)Constants :: getAgeInfo(age_type, "MAX_STAT").value_or(0)
+                                    Constants :: getStats(p_type),
+                                    (double)Constants :: getAgeInfo(age_type, "MIN_STAT"),
+                                    (double)Constants :: getAgeInfo(age_type, "MAX_STAT")
                                     ));
     new_player->setPosition(determinePreferedPos(p_type, new_player));
 
     new_player->setPotential(generatePotential(
                                     new_player->getOVR(new_player->getPosition()) + 
-                                    (double)Constants :: getAgeInfo(age_type, "POT_MIN_PLUS").value_or(0),
-                                    (double)Constants :: getVal("MAX_STATS").value_or(0)
+                                    (double)Constants :: getAgeInfo(age_type, "POT_MIN_PLUS"),
+                                    (double)Constants :: getVal("MAX_STATS")
                                     ));
     new_player->setTrainNerf();
 
     return new_player;
 }
 
-unique_ptr<Player> createPlayer(const string& p_type){
+shared_ptr<Player> createPlayer(const string& p_type){
     if (p_type == "GK")
-        return unique_ptr<Player>(new Goalkeeper);
+        return shared_ptr<Player>(new Goalkeeper);
     else if (p_type == "OUTFIELD")
-        return unique_ptr<Player>(new OutFieldPlayer);
+        return shared_ptr<Player>(new OutFieldPlayer);
     else
-        throw InvalidPlayerType(p_type);
+        throw InvalidPlayerType(__func__, p_type);
 }
 
-string determinePreferedPos(const string&  p_type, const unique_ptr<Player>& player){
+string determinePreferedPos(const string& p_type, const shared_ptr<Player>& player){
     uint16_t max_ovr = 0;
     string pref_pos;
 
-    for (const auto& pos : Constants :: getPositions(p_type).value_or(vector<string>())){
-        uint16_t ovr = player->getOVR(pos);
-        if (ovr > max_ovr){
-            max_ovr = ovr;
-            pref_pos = pos; 
+    if (p_type == "GK")
+        return p_type;
+
+
+    //Looks only at the outfield positions, calculates ovr for that position, chooses best pos
+    for (const auto& pos : Constants :: getPositions()){
+        if (pos != "GK"){
+            uint16_t ovr = player->getOVR(pos);
+            if (ovr > max_ovr){
+                max_ovr = ovr;
+                pref_pos = pos; 
+            }
         }
     }
 

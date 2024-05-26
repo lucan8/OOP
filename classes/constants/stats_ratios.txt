@@ -1,19 +1,19 @@
 GK 6
 GK
-REF age_related 4
-DIV age_related 4
-KIC not_related 2
-STA age_related 1
-HAN not_related 4
-POS not_related 3
+REF age_related goal_related 6
+DIV age_related goal_related 6
+KIC not_related possesion_related 2
+STA age_related not_goal_related 1
+HAN not_related goal_related 5
+POS not_related goal_related 4
 
 OUTFIELD 8
 CB FULLBACK CDM CM CAM SIDEMID WINGER ST
-PAC age_related 4 5 3 4 5 7 7 5
-SHO not_related 1 1 2 5 6 4 6 7
-DEF not_related 7 5 5 3 2 2 1 1
-PHY age_related 7 4 5 3 3 4 3 5
-STA age_related 4 5 6 6 4 5 4 1
-DRI not_related 1 2 3 6 7 6 7 5
-PAS not_related 3 3 4 7 7 5 3 2
-AGG not_related 6 4 4 3 2 2 1 1
+PAC age_related breakthrough_related 4 5 3 4 5 7 7 5
+SHO not_related goal_related 1 1 2 5 6 4 6 7
+DEF not_related breakthrough_related 7 5 5 3 2 2 1 1
+PHY age_related breakthrough_related 7 4 5 3 3 4 3 5
+STA age_related possesion_related 4 5 6 6 4 5 4 1
+DRI not_related breakthrough_related 1 2 3 6 7 6 7 5
+PAS not_related possesion_related 3 3 4 7 7 5 3 2
+AGG not_related breakthrough_related 6 4 4 3 2 2 1 1

@@ -1,14 +1,13 @@
 #include "Goalkeeper.h"
 
 
-unique_ptr<Player> Goalkeeper :: clone() const{
+shared_ptr<Player> Goalkeeper :: clone() const{
     return unique_ptr<Player>(new Goalkeeper(*this));
 }
 
 
 void Goalkeeper :: initStats(){
-    for (const auto& stat_name : Constants :: getStats("GK").value_or(vector<string>()))
-        this->stats[stat_name];
+    initMap(this->stats, Constants :: getStats("GK"));
 }
 
 void Goalkeeper :: printSeasonStats(ostream& out) const{

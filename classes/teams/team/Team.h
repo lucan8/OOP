@@ -25,12 +25,16 @@ public:
     const string& getName() const{return name;}
     unsigned short getPoints() const{return points;}
 
+    shared_ptr<Team> clone() const; 
+
     const vector<shared_ptr<Player>>& getPlayers() const{return Players;}
     //Returns a map of averages calculated from the players stats
     unordered_map<string, double> getTeamStats() const;
 
     unique_ptr<FirstEleven> getFirstTeamOutfields(const string& form_name, 
                                          vector<shared_ptr<Player>> unused_players) const;
+
+    //Maybe make static class for all these functions(regarding choosing a first team)
     unique_ptr<FirstEleven> getBestFirstTeam() const;
     //Splits team by player position
     static unordered_map<string, vector<shared_ptr<Player>>> 
@@ -45,7 +49,6 @@ public:
 
     void setBudget(double budget){this->budget = budget;}
 
-    void playMatch(Team* other); //Simplified for tests
     void buyPlayer(Player*);//Not implemented yet
     void sellPlayer(Player*);//Not implemented yet
 

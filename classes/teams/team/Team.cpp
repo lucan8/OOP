@@ -4,6 +4,9 @@ void Team :: addPoints(const unsigned char p){
     this->points += p;
 }
 
+shared_ptr<Team> Team :: clone() const{
+    return make_shared<Team>(*this);
+}
 
 void Team :: clonePlayers(const vector<shared_ptr<Player>>& Players){
     this->Players.reserve(Players.size());

@@ -1,22 +1,22 @@
 #include "Season.h"
 
-Season :: Season(vector<const Team*> :: const_iterator start, vector<const Team*> :: const_iterator end){
-    Teams.reserve(end - start);
-    
-    //Creates new pointers to the same teams
-    while (start <= end){
-        Teams.push_back(new Team(*start));
-        start++;
-    }
-}
 
-bool comparePoints(const Team* T1, const Team* T2){
+bool comparePoints(const shared_ptr<Team>& T1, const shared_ptr<Team>& T2){
     return T1->getPoints() < T2->getPoints();
 }
 
+vector<shared_ptr<Team>> Season :: cloneTeams() const{
+    vector<shared_ptr<Team>> cloned_teams;
+    cloned_teams.reserve(this->Teams.size());
+
+    for (const auto& t : this->Teams)
+        cloned_teams.emplace_back(*t);
+    
+    return cloned_teams;
+}
 
 void Season :: resetSeason(){
-    this->stage = 1;
+    this->curr_stage = 1;
     for (auto& t : Teams)
         t->resetSeasonStats();
 }
@@ -29,8 +29,8 @@ void Season :: restTeams(){
 
 
 void Season :: simulateStage(){
-    for (int i = 0; i < Teams.size() / 2; i++)
-        Teams[i]->playMatch(Teams[Teams.size() - i - 1]);
+    for (auto& match : this->Stages[this->curr_stage])
+        match->play();
 }
 
 
@@ -44,20 +44,4 @@ void Season :: trainTeams(){
         t->trainPlayers();
 }
 
-
-Season :: ~Season(){
-    for (auto& t : Teams)
-        delete t;
-    
-    Teams.clear();
-    Teams.shrink_to_fit();
-}
-
-
-ostream& operator <<(ostream& op, const Season& S){
-    op << "Stage:" << S.stage <<"\nTranfer window active: " 
-    << boolalpha << S.tranfer_window << "\nTeams:\n";
-    op << S.Teams;
-    return op;
-}
 

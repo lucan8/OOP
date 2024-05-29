@@ -1,22 +1,29 @@
 #pragma once
-#include "../team/Team.h"
+#include "../match/Match.h"
 
+//Make comparator for teams
 class Season{
 private:
-    vector<Team*> Teams;
-    unsigned short stage = 1;
+    vector<shared_ptr<Team>> Teams;
+    vector<vector<unique_ptr<Match>>> Stages;
+    uint16_t curr_stage = 1;
     bool tranfer_window = false;
+
+    //Backtracking time(Maybe put in in generate Season)
+    void generateStages();
+
+    vector<shared_ptr<Team>> cloneTeams() const ;
 public:
     Season(); //Generates teams, first season, don't use this yet
-    Season(vector<const Team*> :: const_iterator start, vector<const Team*> :: const_iterator end);
+    Season(const vector<shared_ptr<Team>>& Teams) : Teams(Teams){};
     ~Season();
 
-    unsigned short getStage() const{return stage;}
+    uint16_t getStage() const{return curr_stage;}
 
-    vector<const Team*> getTeams() const{return vector<const Team*>(Teams.cbegin(), Teams.cend());}
+    const vector<shared_ptr<Team>>& getTeams() const{return Teams;}
     bool verifTWindowActive() const{return tranfer_window;}
 
-    void setStage(unsigned short stage){this->stage = stage;}
+    void setStage(uint16_t stage){this->curr_stage = stage;}
     void changeTranferWindow(){this->tranfer_window = !this->tranfer_window;}
 
     void simulateStage();
@@ -26,6 +33,5 @@ public:
     void resetSeason();
     void sortByPoints();
 
-    friend ostream& operator <<(ostream& op, const Season&);
-    friend bool comparePoints(const Team* T1, const Team* T2);
+    friend bool comparePoints(const shared_ptr<Team>& T1, const shared_ptr<Team>& T2);
 };

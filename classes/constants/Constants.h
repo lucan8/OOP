@@ -16,6 +16,9 @@
 
 using namespace std;
 
+//Adiacence matrix for player positions nodes
+typedef unordered_map<string, unordered_map<string, bool>> formation_matrix;
+
 class Constants{
 private:
     static unordered_map<string, uint16_t> values;
@@ -24,8 +27,8 @@ private:
     static unordered_map<string, vector<string>> positions, stats, age_stats;
     static unordered_map<string, vector<pair<string, uint16_t>>> stats_ratios;
     static vector<string> team_names;
-    //formation_layout, pos, nr_players
-    static unordered_map<string, unordered_map<string, uint16_t>> formations;
+    //formation_layout, adiacence_matrix for position nodes
+    static unordered_map<string, formation_matrix> formations;
 
     static void initValues(const string& file_name);
     static void initPositions(const string& file_name);
@@ -35,6 +38,7 @@ private:
 
     static void initTeamNames(const string& file_name);
     static void initFormations(const string& file_name);
+    static void initAdiacenceMatrix(ifstream& fin, formation_matrix& matrix);
 public:
     static void init();
 
@@ -58,6 +62,5 @@ public:
     static vector<pair<string, uint16_t>> getStatsRatios(const string& p_pos);
     static const vector<string>& getTeamNames();
 
-    static const unordered_map<string, unordered_map<string, uint16_t>>& getFormations();
-    static const unordered_map<string, uint16_t>& getFormation(const string& form_name);
+    static const unordered_map<string, formation_matrix>& getFormations();
 };

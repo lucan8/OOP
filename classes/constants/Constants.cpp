@@ -8,7 +8,7 @@ unordered_map<string, vector<string>> Constants :: age_stats;
 unordered_map<string, vector<string>> Constants :: stats;
 unordered_map<string, vector<pair<string, uint16_t>>> Constants :: stats_ratios;
 vector<string> Constants :: team_names;
-unordered_map<string, unordered_map<string, uint16_t>> Constants :: formations;
+unordered_map<string, formation_matrix> Constants :: formations;
 
 void Constants :: init(){
     string input_path = filesystem :: current_path().parent_path().string() + "\\classes\\constants\\";
@@ -133,14 +133,32 @@ void Constants :: initFormations(const string& file_name){
     if (!fin.is_open())
         throw FileOpenException(__func__, file_name);
     
-    string form_layout, formation_name, pos;
-    uint16_t nr_pairs, nr_players;
+    string formation_name, pos;
+    uint16_t nr_players = Constants :: getVal("MATCH_TEAM_SIZE") - 1;
 
-    while (fin >> formation_name >> nr_pairs){
-        while (nr_pairs--){
-            fin >> pos >> nr_players;
-            formations[formation_name][pos] = nr_players;
+    while (fin.peek() != EOF){
+        fin >> formation_name;
+        formations[formation_name] = formation_matrix();
+        for (int i = 0; i < nr_players; ++i){
+            fin >> pos;
+            formations[formation_name][pos] = unordered_map<string, bool>();
         }
+        initAdiacenceMatrix(fin, formations[formation_name]);
+        fin.ignore();
+    }
+}
+void Constants :: initAdiacenceMatrix(ifstream& fin, formation_matrix& matrix){
+    //Initializing matrix
+    for (const auto& l : matrix)
+        for (const auto& r : l.second)
+            matrix[l.first][r.first] = false;
+    
+    string pos1, pos2;
+    uint16_t nr_links = Constants :: getVal("NR_LINKS");
+
+    while (nr_links--){
+        fin >> pos1 >> pos2;
+        matrix[pos1][pos2] = true;
     }
 }
 
@@ -230,14 +248,6 @@ const vector<string>& Constants :: getTeamNames(){
     return team_names;
 }
 
-const unordered_map<string, unordered_map<string, uint16_t>>& Constants :: getFormations(){
+const unordered_map<string, formation_matrix>& Constants :: getFormations(){
     return formations;
-}
-
-const unordered_map<string, uint16_t>& Constants :: getFormation(const string& form_name){
-    try{
-        return formations.at(form_name);
-    }catch(out_of_range& e){
-        throw InvalidFormation(__func__, form_name);
-    }
 }

@@ -52,6 +52,8 @@ public:
     void setPotential(double potential){this->potential_OVR = potential;}
 
     void changeTranferEligible(){this->transfer_eligible = !this->transfer_eligible;}
+    void addYellowCard(){++s_yellow_cards;}
+    void addRedCard(){++s_red_cards;}
     void changeRedCarded(){this->red_carded = !this->red_carded;}
 
     virtual shared_ptr<Player> clone() const = 0;

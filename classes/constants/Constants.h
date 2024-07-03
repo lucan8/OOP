@@ -9,6 +9,7 @@
 #include "../exceptions/InvalidPlayerType.h"
 #include "../exceptions/InvalidFormation.h"
 #include "../../functions/functions.h"
+#include "../coordinates/Coordinates.h"
 #include <iostream>
 #include <sstream>
 #include <unordered_map>
@@ -17,7 +18,8 @@
 using namespace std;
 
 //Adiacence matrix for player positions nodes
-typedef unordered_map<string, unordered_map<string, bool>> formation_matrix;
+//Coordinates represent the vector to be added to pos1 coordinates in order to get pos2 coordinates
+typedef unordered_map<string, unordered_map<string, Coordinates>> formation_matrix;
 
 class Constants{
 private:

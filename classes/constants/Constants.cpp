@@ -141,7 +141,7 @@ void Constants :: initFormations(const string& file_name){
         formations[formation_name] = formation_matrix();
         for (int i = 0; i < nr_players; ++i){
             fin >> pos;
-            formations[formation_name][pos] = unordered_map<string, bool>();
+            formations[formation_name][pos] = unordered_map<string, Coordinates>();
         }
         initAdiacenceMatrix(fin, formations[formation_name]);
         fin.ignore();
@@ -151,15 +151,13 @@ void Constants :: initAdiacenceMatrix(ifstream& fin, formation_matrix& matrix){
     //Initializing matrix
     for (const auto& l : matrix)
         for (const auto& r : l.second)
-            matrix[l.first][r.first] = false;
+            matrix[l.first][r.first] = Coordinates(0, 0);
     
     string pos1, pos2;
     uint16_t nr_links = Constants :: getVal("NR_LINKS");
 
-    while (nr_links--){
-        fin >> pos1 >> pos2;
-        matrix[pos1][pos2] = true;
-    }
+    while (nr_links--)
+        fin >> pos1 >> pos2 >> matrix[pos1][pos2];
 }
 
 uint16_t Constants ::  getVal(const string& const_name){

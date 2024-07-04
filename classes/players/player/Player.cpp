@@ -94,9 +94,9 @@ void Player :: printStats(ostream& out) const{
 }
 
 void Player :: printBasicInfo(ostream& out) const{
-    //Instanta upcasting
-    out << "Player Information:\n" 
-    << (Human) (*this) << "Position: " << this->position
+    out << "Player Information:\n";
+    this->::Human :: print(out);
+    out << "Position: " << this->position
     << "\nShirt number: " << this->shirt_nr << "\nStamina: " << this->stamina << "\n"
     << "\nRed Carded: " << boolalpha << (this->red_carded)
     << "\nTransfer eligible: " << boolalpha << this->transfer_eligible
@@ -105,8 +105,6 @@ void Player :: printBasicInfo(ostream& out) const{
 
 
 void Player :: read(istream& in){
-    //Does not work(why?)
-    //in >> (Human&)*this 
     this->Human :: read(in);
     in >> this->position >> this->shirt_nr >> this->potential_OVR;
     this->readStats(in);

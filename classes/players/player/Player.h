@@ -2,6 +2,14 @@
 #include "../../human/Human.h"
 //Also think about updating the form
 //TO DO: Dynamic potential
+
+class Player;
+typedef Player* player_ptr;
+typedef shared_ptr<Player> shared_player;
+typedef unique_ptr<Player> unique_player;
+typedef vector<shared_player> shared_squad;
+typedef vector<unique_player> unique_squad;
+
 class Player : public Human{
 protected:
     uint16_t s_yellow_cards = 0, s_red_cards = 0, form = 0;
@@ -56,7 +64,7 @@ public:
     void addRedCard(){++s_red_cards;}
     void changeRedCarded(){this->red_carded = !this->red_carded;}
 
-    virtual shared_ptr<Player> clone() const = 0;
+    virtual player_ptr clone() const = 0;
 
     void print(ostream&) const override;
     virtual void printSeasonStats(ostream&) const;
@@ -70,7 +78,7 @@ public:
 
     pair<string, string> minStats2() const;
 
-    static bool compOVR(const shared_ptr<Player>& p1, const shared_ptr<Player>& p2){
+    static bool compOVR(const player_ptr p1, const player_ptr p2){
         return p1->getOVR(p1->position) < p2->getOVR(p2->position);
     }
 

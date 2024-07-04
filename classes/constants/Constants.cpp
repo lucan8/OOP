@@ -1,6 +1,5 @@
 #include "Constants.h"
 
-//Throw other exceptions when met with outside bounds
 unordered_map<string, uint16_t>  Constants :: values;
 unordered_map<string, unordered_map<string, uint16_t>> Constants :: age_info;
 unordered_map<string, vector<string>> Constants :: positions;
@@ -10,22 +9,16 @@ unordered_map<string, vector<pair<string, uint16_t>>> Constants :: stats_ratios;
 vector<string> Constants :: team_names;
 unordered_map<string, Constants :: Formation> Constants :: formations;
 
-class Constants :: Formation{
-private:
+struct Constants :: Formation{
     vector<string> positions;
     link_matrix matrix;
     players_coords coords;
-public:
+
+    Formation(){}
+
     void readLinkMatrix(ifstream& fin);
     void initPlayersCoords();
-
-    const vector<string>& getPositions(){return positions;}
-    const link_matrix& getMatrix(){return matrix;}
-    const players_coords& getCoords(){return coords;}
-
-    void setPositions(const vector<string>& positions){this->positions = positions;}
 };
-
 void Constants :: init(){
     string input_path = filesystem :: current_path().parent_path().string() + "\\classes\\constants\\";
     try{
@@ -151,11 +144,12 @@ void Constants :: initFormations(const string& file_name){
 
     while (fin.peek() != EOF){
         fin >> formation_name;
+        fin.ignore();
         formations[formation_name] = Formation();
 
         //Reading positions and setting them
         getline(fin, positions);
-        formations[formation_name].setPositions(split(positions));
+        formations[formation_name].positions = split(positions);
 
         //Reading link matrix for chemestry
         formations[formation_name].readLinkMatrix(fin);
@@ -166,11 +160,6 @@ void Constants :: initFormations(const string& file_name){
     }
 }
 void Constants :: Formation :: readLinkMatrix(ifstream& fin){
-    //Initializing matrix
-    for (const auto& l : positions)
-        for (const auto& r : positions)
-            this->matrix[l][r] = Coordinates(0, 0);
-    
     string pos1, pos2;
     uint16_t nr_links = Constants :: getVal("NR_LINKS");
 
@@ -286,6 +275,30 @@ const vector<string>& Constants :: getTeamNames(){
     return team_names;
 }
 
-const unordered_map<string, formation_matrix>& Constants :: getFormations(){
-    return formations;
+vector<string> Constants :: getFormationsNames(){
+    return getKeys(formations);
+}
+
+const link_matrix& Constants :: getLinkMatrix(const string& formation_name){
+    try{
+        return Constants :: formations.at(formation_name).matrix;
+    } catch(out_of_range& e){
+        throw InvalidFormation(__func__, formation_name);
+    }
+}
+
+const players_coords& Constants :: getPlayersCoords(const string& formation_name){
+    try{
+        return Constants :: formations.at(formation_name).coords;
+    } catch(out_of_range& e){
+        throw InvalidFormation(__func__, formation_name);
+    }
+}
+
+const vector<string>& Constants :: getFormationPositions(const string& formation_name){
+    try{
+        return Constants :: formations.at(formation_name).positions;
+    } catch(out_of_range& e){
+        throw InvalidFormation(__func__, formation_name);
+    }
 }

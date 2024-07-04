@@ -64,5 +64,9 @@ public:
     static vector<pair<string, uint16_t>> getStatsRatios(const string& p_pos);
     static const vector<string>& getTeamNames();
 
-    static const unordered_map<string, formation_matrix>& getFormations();
+    static vector<string>getFormationsNames();
+    static const link_matrix& getLinkMatrix(const string& formation_name);
+    
+    static const players_coords& getPlayersCoords(const string& formation_name);
+    static const vector<string>& getFormationPositions(const string& formation_name);
 };

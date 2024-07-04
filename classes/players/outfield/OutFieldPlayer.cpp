@@ -1,8 +1,8 @@
 #include "OutFieldPlayer.h"
 
-shared_ptr<Player> OutFieldPlayer :: clone() const 
+player_ptr OutFieldPlayer :: clone() const 
 {
-    return shared_ptr<Player>(new OutFieldPlayer(*this));
+    return new OutFieldPlayer(*this);
 }
 
 

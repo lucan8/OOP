@@ -7,7 +7,7 @@ private:
     void initStats() override;
 public:
     Goalkeeper() : Player(){initStats();}
-    shared_ptr<Player> clone() const override;
+    player_ptr clone() const override;
     void resetSeasonStats() override;
     void printSeasonStats(std :: ostream&) const override;
     ~Goalkeeper(){cout << "GK destroyed!\n";}

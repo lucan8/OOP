@@ -1,8 +1,8 @@
 #include "Goalkeeper.h"
 
 
-shared_ptr<Player> Goalkeeper :: clone() const{
-    return unique_ptr<Player>(new Goalkeeper(*this));
+player_ptr Goalkeeper :: clone() const{
+    return new Goalkeeper(*this);
 }
 
 

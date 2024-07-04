@@ -18,7 +18,7 @@ public:
 
     void printSeasonStats(ostream& out) const override;
     void resetSeasonStats() override;
-    shared_ptr<Player> clone() const override;
+    player_ptr clone() const override;
 
     ~OutFieldPlayer(){cout << "Outfield destroyed!\n";}
 };

@@ -4,20 +4,20 @@ void Team :: addPoints(const unsigned char p){
     this->points += p;
 }
 
-shared_ptr<Team> Team :: clone() const{
-    return make_shared<Team>(*this);
+team_ptr Team :: clone() const{
+    return new Team(*this);
 }
 
-void Team :: clonePlayers(const vector<shared_ptr<Player>>& Players){
+void Team :: clonePlayers(const shared_squad& Players){
     this->Players.reserve(Players.size());
     for (auto& p : Players)
-        this->Players.push_back(p->clone());
+        this->Players.push_back(shared_player(p->clone()));
 }
 
 
 unique_ptr<FirstEleven> Team :: getBestFirstTeam() const{
     unique_ptr<FirstEleven> best_first_eleven;
-    unordered_map<string, vector<shared_ptr<Player>>> split_team  = Team :: splitTeamPType(this->Players);
+    unordered_map<string, shared_squad> split_team  = Team :: splitTeamPType(this->Players);
     double best_ovr = 0;
 
     for (const auto& f : Constants :: getFormations()){
@@ -37,14 +37,14 @@ unique_ptr<FirstEleven> Team :: getBestFirstTeam() const{
 //Inneficient as we calculate the same OVR multiple times when we don't need to
 
 unique_ptr<FirstEleven> Team :: getFirstTeamOutfields(const string& form_name, 
-                                             vector<shared_ptr<Player>> unused_players) const{
-    unordered_map<string, vector<shared_ptr<Player>>> first_eleven;
+                                             shared_squad unused_players) const{
+    unordered_map<string, shared_squad> first_eleven;
 
     //Going through each position in the formation
     for (const auto& p_pos : Constants :: getFormation(form_name))
         //Getting all players needed for that position
         for (int i = 0; i < p_pos.second; ++i){
-            vector<shared_ptr<Player>> :: const_iterator best_it = Team :: getBestPlayerIt(unused_players, 
+            shared_squad :: const_iterator best_it = Team :: getBestPlayerIt(unused_players, 
                                                                                 p_pos.first);
             first_eleven[p_pos.first].push_back(*best_it);
             unused_players.erase(best_it);
@@ -54,9 +54,8 @@ unique_ptr<FirstEleven> Team :: getFirstTeamOutfields(const string& form_name,
 }
 
 
-vector<shared_ptr<Player>> :: const_iterator Team :: 
-                                                getBestPlayerIt(const vector<shared_ptr<Player>>& players, 
-                                                                const string& pos){
+shared_squad :: const_iterator Team :: getBestPlayerIt( const shared_squad& players, 
+                                                        const string& pos){
     uint16_t best_p_index;
     double best_OVR = 0;
 
@@ -70,9 +69,8 @@ vector<shared_ptr<Player>> :: const_iterator Team ::
     return players.begin() + best_p_index;
 }
 
-unordered_map<string, vector<shared_ptr<Player>>> Team :: 
-                            splitTeamPos(const vector<shared_ptr<Player>>& team){
-    unordered_map<string, vector<shared_ptr<Player>>> split_team;
+unordered_map<string, shared_squad> Team :: splitTeamPos(const shared_squad& team){
+    unordered_map<string, shared_squad> split_team;
     initMap(split_team, Constants :: getPositions());
 
     for (const auto& p : team)
@@ -81,9 +79,8 @@ unordered_map<string, vector<shared_ptr<Player>>> Team ::
     return split_team;
 }
 
-unordered_map<string, vector<shared_ptr<Player>>> Team :: 
-                            splitTeamPType(const vector<shared_ptr<Player>>& team){
-    unordered_map<string, vector<shared_ptr<Player>>> split_team;
+unordered_map<string, shared_squad> Team :: splitTeamPType(const shared_squad& team){
+    unordered_map<string, shared_squad> split_team;
     initMap(split_team, Constants :: getPlayerTypes());
 
     for (const auto& p : team)

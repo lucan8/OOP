@@ -1,17 +1,16 @@
 #pragma once
-#include "../players/outfield/OutFieldPlayer.h"
-#include "../players/goalkeeper/Goalkeeper.h"
+#include "../match_players/match_outfield/MatchOutfield.h"
+#include "../match_players/match_goalkeeper/MatchGoalkeeper.h"
 
 class FirstEleven{
 private:
     string formation;
-    unordered_map<string, vector<shared_ptr<Player>>> players;
+    vector<shared_ptr<MatchPlayer>> first_team;
+    vector<shared_ptr<MatchPlayer>> subs;
 public:
-    FirstEleven(const string& formation, const unordered_map<string, vector<shared_ptr<Player>>>& players)
-        : formation(formation), players(players){}
-    
-    FirstEleven(const string& formation, const unordered_map<string, vector<shared_ptr<Player>>>&& players)
-        : formation(formation), players(move(players)){}
+    FirstEleven(const string& formation, const vector<shared_ptr<MatchPlayer>>& first_team, 
+                const vector<shared_ptr<MatchPlayer>>& subs)
+        : formation(formation), first_team(move(first_team)), subs(move(subs)){}
     
     const string& getFormation() const{return formation;}
     const unordered_map<string, vector<shared_ptr<Player>>>& getPlayers() const{return players;}

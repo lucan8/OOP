@@ -8,7 +8,23 @@ unordered_map<string, vector<string>> Constants :: age_stats;
 unordered_map<string, vector<string>> Constants :: stats;
 unordered_map<string, vector<pair<string, uint16_t>>> Constants :: stats_ratios;
 vector<string> Constants :: team_names;
-unordered_map<string, formation_matrix> Constants :: formations;
+unordered_map<string, Constants :: Formation> Constants :: formations;
+
+class Constants :: Formation{
+private:
+    vector<string> positions;
+    link_matrix matrix;
+    players_coords coords;
+public:
+    void readLinkMatrix(ifstream& fin);
+    void initPlayersCoords();
+
+    const vector<string>& getPositions(){return positions;}
+    const link_matrix& getMatrix(){return matrix;}
+    const players_coords& getCoords(){return coords;}
+
+    void setPositions(const vector<string>& positions){this->positions = positions;}
+};
 
 void Constants :: init(){
     string input_path = filesystem :: current_path().parent_path().string() + "\\classes\\constants\\";
@@ -100,8 +116,6 @@ void Constants :: initStatsRatios(const string& file_name){
 
             if (age_related == "age_related")
                 age_stats[player_type].push_back(stat_name);
-            
-            
 
             for (const auto& p_poz : player_positions){
                 fin >> stat_ratio;
@@ -133,31 +147,57 @@ void Constants :: initFormations(const string& file_name){
     if (!fin.is_open())
         throw FileOpenException(__func__, file_name);
     
-    string formation_name, pos;
-    uint16_t nr_players = Constants :: getVal("MATCH_TEAM_SIZE") - 1;
+    string formation_name, positions;
 
     while (fin.peek() != EOF){
         fin >> formation_name;
-        formations[formation_name] = formation_matrix();
-        for (int i = 0; i < nr_players; ++i){
-            fin >> pos;
-            formations[formation_name][pos] = unordered_map<string, Coordinates>();
-        }
-        initAdiacenceMatrix(fin, formations[formation_name]);
+        formations[formation_name] = Formation();
+
+        //Reading positions and setting them
+        getline(fin, positions);
+        formations[formation_name].setPositions(split(positions));
+
+        //Reading link matrix for chemestry
+        formations[formation_name].readLinkMatrix(fin);
+        //Reading the initial coordinates for each position
+        formations[formation_name].initPlayersCoords();
+
         fin.ignore();
     }
 }
-void Constants :: initAdiacenceMatrix(ifstream& fin, formation_matrix& matrix){
+void Constants :: Formation :: readLinkMatrix(ifstream& fin){
     //Initializing matrix
-    for (const auto& l : matrix)
-        for (const auto& r : l.second)
-            matrix[l.first][r.first] = Coordinates(0, 0);
+    for (const auto& l : positions)
+        for (const auto& r : positions)
+            this->matrix[l][r] = Coordinates(0, 0);
     
     string pos1, pos2;
     uint16_t nr_links = Constants :: getVal("NR_LINKS");
 
-    while (nr_links--)
+    while (nr_links--){
         fin >> pos1 >> pos2 >> matrix[pos1][pos2];
+        this->matrix[pos2][pos1] = -matrix[pos1][pos2];
+    }
+}
+void Constants :: Formation :: initPlayersCoords(){
+    this->coords["GK"] = Coordinates(Constants :: getVal("GOAL_LINE_LENGTH") / 2,
+                                     Constants :: getVal("TOUCHLINE_LENGTH")
+                                     );
+    queue<string> p_pos;
+    p_pos.push("GK");
+    while (!p_pos.empty()){
+        string pos = p_pos.front();
+        p_pos.pop();
+        //Going through all the positions that are linked to pos
+        for (const auto& p : matrix[pos])
+            //If the position is not already in the coords map, add it
+            if (this->coords.find(p.first) == coords.end()){
+                //Adding the offset coordinates to the current position coordinates
+                //That will be the new position coordinates
+                this->coords[p.first] = this->coords[pos] + this->matrix[pos][p.first];
+                p_pos.push(p.first);
+            }
+    }
 }
 
 uint16_t Constants ::  getVal(const string& const_name){

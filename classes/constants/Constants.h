@@ -13,25 +13,26 @@
 #include <iostream>
 #include <sstream>
 #include <unordered_map>
+#include <queue>
 #include <vector>
 
 using namespace std;
 
 //Adiacence matrix for player positions nodes
 //Coordinates represent the vector to be added to pos1 coordinates in order to get pos2 coordinates
-typedef unordered_map<string, unordered_map<string, Coordinates>> formation_matrix;
-
+typedef unordered_map<string, unordered_map<string, Coordinates>> link_matrix;
+typedef unordered_map<string, Coordinates> players_coords;
 class Constants{
 private:
+    struct Formation;
     static unordered_map<string, uint16_t> values;
     static unordered_map<string, unordered_map<string, uint16_t>>age_info;
     
     static unordered_map<string, vector<string>> positions, stats, age_stats;
     static unordered_map<string, vector<pair<string, uint16_t>>> stats_ratios;
     static vector<string> team_names;
-    //formation_layout, adiacence_matrix for position nodes
-    static unordered_map<string, formation_matrix> formations;
-
+    static unordered_map<string, Formation> formations;
+    
     static void initValues(const string& file_name);
     static void initPositions(const string& file_name);
 
@@ -40,7 +41,6 @@ private:
 
     static void initTeamNames(const string& file_name);
     static void initFormations(const string& file_name);
-    static void initAdiacenceMatrix(ifstream& fin, formation_matrix& matrix);
 public:
     static void init();
 

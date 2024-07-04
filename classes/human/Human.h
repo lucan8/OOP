@@ -27,4 +27,5 @@ public:
 
     virtual void read(istream&) override;
     virtual void print(ostream&)const override;
+    virtual ~Human() = 0;
 };

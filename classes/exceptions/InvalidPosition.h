@@ -8,6 +8,6 @@ public:
     InvalidPosition(const std :: string& func_name, const std :: string& pos)
     : MyException(func_name), pos(pos){}
     const char* what() const  noexcept{
-        return ((std :: string)MyException :: what() + ("Invalid player position: " + pos)).c_str();
+        return (std :: string(MyException :: what()) + "Invalid player position: " + pos).c_str();
     }
 };

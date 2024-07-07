@@ -8,7 +8,9 @@ unordered_map<string, vector<string>> Constants :: stats;
 unordered_map<string, vector<pair<string, uint16_t>>> Constants :: stats_ratios;
 vector<string> Constants :: team_names;
 unordered_map<string, Constants :: Formation> Constants :: formations;
+unordered_map<string, string> Constants :: pos_equivalence;
 
+//Holds  match_positions, the link_matrix, and the coordinates for each position
 struct Constants :: Formation{
     vector<string> positions;
     link_matrix matrix;
@@ -28,6 +30,7 @@ void Constants :: init(){
         initStatsRatios(input_path + "stats_ratios.txt");
         initTeamNames(input_path + "team_names.txt");
         initFormations(input_path + "formations.txt");
+        initPositionEquivalence(input_path + "position_equivalence.txt");
     }
     catch (FileOpenException e){
         cerr << e.what() << '\n';
@@ -189,6 +192,16 @@ void Constants :: Formation :: initPlayersCoords(){
     }
 }
 
+void Constants :: initPositionEquivalence(const string& file_name){
+    ifstream fin(file_name);
+    if (!fin.is_open())
+        throw FileOpenException(__func__, file_name);
+
+    string match_pos, normal_pos;
+    while (fin >> match_pos >> normal_pos)
+        pos_equivalence[match_pos] = normal_pos;
+
+}
 uint16_t Constants ::  getVal(const string& const_name){
     try{
         return values.at(const_name);
@@ -302,3 +315,12 @@ const vector<string>& Constants :: getFormationPositions(const string& formation
         throw InvalidFormation(__func__, formation_name);
     }
 }
+
+const string& Constants :: getPosEquivalence(const string& m_pos){
+    try{
+        return pos_equivalence.at(m_pos);
+    } catch(out_of_range& e){
+        throw InvalidMatchPosition(__func__, m_pos);
+    }
+}
+

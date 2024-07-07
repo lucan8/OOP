@@ -83,4 +83,15 @@ vector<shared_ptr<T>> clonePtrVector(const vector<shared_ptr<T>>& vec){
         cloned_vec.emplace_back(ptr->clone());
     return cloned_vec;
 }
+
+//Convetrs a vector to an unordered map with keys being the index of the vector
+template <typename T>
+unordered_map <uint16_t, T> toUMap(const vector<T>& vec){
+    unordered_map <uint16_t, T> u_map;
+
+    for (uint16_t i = 0; i < vec.size(); ++i)
+        u_map[i] = vec[i];
+    return u_map;
+}
+
 std :: vector<std :: string> split(const std :: string& str, char sep = ' ');

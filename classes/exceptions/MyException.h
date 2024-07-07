@@ -2,7 +2,7 @@
 #include <exception>
 #include <string>
 class MyException : public std :: exception{
-private:
+protected:
     std :: string func_name;
 public:
     MyException(const std :: string& func_name) : func_name(func_name){}

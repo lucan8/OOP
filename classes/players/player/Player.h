@@ -8,7 +8,12 @@ typedef Player* player_ptr;
 typedef shared_ptr<Player> shared_player;
 typedef unique_ptr<Player> unique_player;
 typedef vector<shared_player> shared_squad;
+//vector of shared_player represented as map(for easier removal)
+typedef unordered_map<uint16_t, shared_player> shared_squad_map;
+//Usually split by player_type(or detailed player type)
+typedef unordered_map<string, shared_squad> shared_squad_split;
 typedef vector<unique_player> unique_squad;
+typedef vector<player_ptr> squad_ptr;
 
 class Player : public Human{
 protected:
@@ -33,7 +38,7 @@ public:
     void rest();
 
     //Players can play outside position as well
-    double getOVR(const string& pos) const;
+    double calculateOVR(const string& pos) const;
     double getPrice() const; //TO DO
 
     uint16_t getYCard() const{return s_yellow_cards;}
@@ -79,7 +84,7 @@ public:
     pair<string, string> minStats2() const;
 
     static bool compOVR(const player_ptr p1, const player_ptr p2){
-        return p1->getOVR(p1->position) < p2->getOVR(p2->position);
+        return p1->calculateOVR(p1->position) < p2->calculateOVR(p2->position);
     }
 
     virtual ~Player(){cout << "Player destroyed!\n";}

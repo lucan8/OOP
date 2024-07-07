@@ -31,7 +31,7 @@ void Player :: eliminateMaxes(vector<pair<string, uint16_t>>& weights) const{
         }
 }
 
-double Player :: getOVR(const string& p_pos) const{
+double Player :: calculateOVR(const string& p_pos) const{
     double OVR = 0;
     
     vector<pair<string, uint16_t>>stats_ratios = Constants :: getStatsRatios(p_pos);
@@ -46,7 +46,7 @@ double Player :: getOVR(const string& p_pos) const{
 }
 
 double Player :: getTrainPlus() const{
-    double ovr = this->getOVR(this->position);
+    double ovr = this->calculateOVR(this->position);
     return this->potential_OVR / ovr * 
         ((this->potential_OVR - ovr - this->train_nerf) / this->remaining_sessions);
 }
@@ -74,7 +74,7 @@ void Player :: print(ostream& out) const{
 
 void Player :: printEssentials(ostream& out) const{
     out << this->name << ' ' << this->age << ' '
-        << this->position << ' ' << fixed << setprecision(2) << this->getOVR(this->position)
+        << this->position << ' ' << fixed << setprecision(2) << this->calculateOVR(this->position)
         << ' ' <<  this->potential_OVR << '\n';
 }
 
@@ -90,7 +90,7 @@ void Player :: printStats(ostream& out) const{
         out << stat.first << ": " << stat.second << '\n';
     
     out << "Potential: " << this->potential_OVR << '\n';
-    out << "OVR: " << this->getOVR(this->position) << '\n';
+    out << "OVR: " << this->calculateOVR(this->position) << '\n';
 }
 
 void Player :: printBasicInfo(ostream& out) const{
@@ -139,7 +139,7 @@ void Player :: resetSeasonStats(){
 }
 
 void Player :: setTrainNerf(){
-    this->train_nerf = (this->potential_OVR - this->getOVR(this->position)) / 
+    this->train_nerf = (this->potential_OVR - this->calculateOVR(this->position)) / 
                         Constants :: getVal("TRAIN_NERF_DISPENSER");
 }
 

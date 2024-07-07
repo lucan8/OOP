@@ -8,65 +8,58 @@ team_ptr Team :: clone() const{
     return new Team(*this);
 }
 
-void Team :: clonePlayers(const shared_squad& Players){
-    this->Players.reserve(Players.size());
-    for (auto& p : Players)
-        this->Players.push_back(shared_player(p->clone()));
-}
-
-
-unique_ptr<FirstEleven> Team :: getBestFirstTeam() const{
-    unique_ptr<FirstEleven> best_first_eleven;
-    unordered_map<string, shared_squad> split_team  = Team :: splitTeamPType(this->Players);
-    double best_ovr = 0;
-
-    for (const auto& f : Constants :: getFormations()){
-        unique_ptr<FirstEleven> first_team = this->getFirstTeamOutfields(f.first, split_team["OUTFIELD"]);
-        double t_ovr = first_team->getFirstElevenOVR(first_team->getPlayers());
-
-        if (t_ovr > best_ovr){
-            best_ovr = t_ovr;
-            best_first_eleven = move(first_team);
-        }
+unique_first_team Team :: getFirstTeam() const{
+    unique_first_team best_first_team;
+    for (const auto& f_name : Constants :: getFormationsNames()){
+        unique_first_team first_team(new FirstTeam(f_name,
+                                                   this->getFirstEleven(f_name),
+                                                   this->getSubstitutes(f_name)
+                                                   ));
+        if (best_first_team == nullptr || first_team->calculateTotalStats() > best_first_team->calculateTotalStats())
+            best_first_team = move(first_team);
     }
-    best_first_eleven->setGoalkeeper(*getBestPlayerIt(split_team["GK"], "GK"));
-    return best_first_eleven;
+    return best_first_team;
 }
-//PROBLEMS:     
-//Biased towards the first positions chosen
-//Inneficient as we calculate the same OVR multiple times when we don't need to
+unique_m_squad Team :: getFirstEleven(const string& form_name) const{
+    unique_m_squad first_eleven;
+    first_eleven.reserve(Constants :: getVal("MATCH_TEAM_SIZE"));
 
-unique_ptr<FirstEleven> Team :: getFirstTeamOutfields(const string& form_name, 
-                                             shared_squad unused_players) const{
-    unordered_map<string, shared_squad> first_eleven;
+    //Splitting team by player type
+    shared_squad_split split_team  = Team :: splitTeamPType(this->Players);
 
-    //Going through each position in the formation
-    for (const auto& p_pos : Constants :: getFormation(form_name))
-        //Getting all players needed for that position
-        for (int i = 0; i < p_pos.second; ++i){
-            shared_squad :: const_iterator best_it = Team :: getBestPlayerIt(unused_players, 
-                                                                                p_pos.first);
-            first_eleven[p_pos.first].push_back(*best_it);
-            unused_players.erase(best_it);
-        }
-    
-    return make_unique<FirstEleven>(form_name, first_eleven);
+    //Creating a map for the unsused players
+    shared_squad_map unused_players = toUMap(split_team.at("OUTFIELD"));
+
+    //Going through each match position for the formation
+    for (const auto& m_pos : Constants :: getFormationPositions(form_name)){
+        //Getting the best player for that position
+        uint16_t best_index = Team :: getBestPlayerIndex(unused_players, Constants :: getPosEquivalence(m_pos));
+
+        //Adding the player to the first eleven
+        first_eleven.emplace_back(unused_players.at(best_index), m_pos);
+        unused_players.erase(best_index);
+    }
+
+    //TO DO: Adding the goalkeeper
+    return first_eleven;
 }
 
 
-shared_squad :: const_iterator Team :: getBestPlayerIt( const shared_squad& players, 
-                                                        const string& pos){
-    uint16_t best_p_index;
+uint16_t Team :: getBestPlayerIndex(const shared_squad_map& players, const string& pos){
     double best_OVR = 0;
+    uint16_t best_p_index = 0;
 
+    //Going through all players for that position
     for (uint16_t i = 0; i < players.size(); ++i){
-        double p_ovr = players[i]->getOVR(pos);
+        double p_ovr = players.at(i)->calculateOVR(pos);
+         //Keeping track of the index of the best player
         if (p_ovr > best_OVR){
             best_OVR = p_ovr;
             best_p_index = i;
         }
     }
-    return players.begin() + best_p_index;
+
+    return best_p_index; 
 }
 
 unordered_map<string, shared_squad> Team :: splitTeamPos(const shared_squad& team){
@@ -90,11 +83,6 @@ unordered_map<string, shared_squad> Team :: splitTeamPType(const shared_squad& t
             split_team.at("GK").push_back(p);
 
     return split_team;
-}
-
-//Not implemented
-uint16_t Team :: getChemestry() const{
-    return Constants :: getVal("MAX_CHEM");
 }
 
 void Team :: resetSeasonStats(){

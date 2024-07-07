@@ -1,0 +1,7 @@
+#Make constructor for MatchPlayer thata accepts only 2 params and determines the 3 based on position
+#Make function that returns a player_ptr depending on player type(for matchPlayer as well)
+#Change way team chooses best team based on new formation system
+#Change stats_ratios to stats_weights
+#Make vector<season*> unique_ptr and active season as well
+#Generate raw pointers instead of making functions for each type of smart pointers
+#Make a template function for cloning a vector

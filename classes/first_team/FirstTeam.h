@@ -20,9 +20,10 @@ public:
     const unique_m_squad& getSubs() const{return subs;}
 
     //Sums the OVR with chem
-    double calculateTotalStats()const;
+    double getTotalStats()const;
 
-    double calculateOVR() const;
-    uint16_t calculateChemestry() const;
+    //Average OVR of the first eleven
+    double getOVR() const;
+    uint16_t getChemestry() const;
     //void print(ostream&) const override;
 };

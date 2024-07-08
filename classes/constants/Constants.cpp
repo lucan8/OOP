@@ -9,6 +9,7 @@ unordered_map<string, vector<pair<string, uint16_t>>> Constants :: stats_ratios;
 vector<string> Constants :: team_names;
 unordered_map<string, Constants :: Formation> Constants :: formations;
 unordered_map<string, string> Constants :: pos_equivalence;
+unordered_map<string, uint16_t> Constants :: subs_layout;
 
 //Holds  match_positions, the link_matrix, and the coordinates for each position
 struct Constants :: Formation{
@@ -31,6 +32,7 @@ void Constants :: init(){
         initTeamNames(input_path + "team_names.txt");
         initFormations(input_path + "formations.txt");
         initPositionEquivalence(input_path + "position_equivalence.txt");
+        initSubsLayout(input_path + "subs_layout.txt");
     }
     catch (FileOpenException e){
         cerr << e.what() << '\n';
@@ -160,6 +162,19 @@ void Constants :: initFormations(const string& file_name){
         formations[formation_name].initPlayersCoords();
 
         fin.ignore();
+    }
+}
+
+void Constants :: initSubsLayout(const string& file_name){
+    ifstream fin(file_name);
+    if (!fin.is_open())
+        throw FileOpenException(__func__, file_name);
+
+    string det_p_type;
+    uint16_t nr_players;
+    //Reading the number of players for each detailed player type
+    while (fin >> det_p_type >> nr_players){
+        subs_layout[det_p_type] = nr_players;
     }
 }
 void Constants :: Formation :: readLinkMatrix(ifstream& fin){
@@ -322,5 +337,9 @@ const string& Constants :: getPosEquivalence(const string& m_pos){
     } catch(out_of_range& e){
         throw InvalidMatchPosition(__func__, m_pos);
     }
+}
+
+const unordered_map<string, uint16_t>& Constants :: getSubsLayout(){
+    return subs_layout;
 }
 

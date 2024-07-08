@@ -43,6 +43,8 @@ private:
     //match_pos, normal_pos
     //ex: "LCB"->"CB", "LCM"->"CM", "LB"->"FULLBACK"
     static unordered_map<string, string> pos_equivalence;
+
+    static unordered_map<string, uint16_t> subs_layout;
     
     static void initValues(const string& file_name);
     static void initPositions(const string& file_name);
@@ -53,8 +55,8 @@ private:
     static void initTeamNames(const string& file_name);
     static void initFormations(const string& file_name);
 
-    //TO DO:
     static void initPositionEquivalence(const string& file_name);
+    static void initSubsLayout(const string& file_name);
 public:
     static void init();
 
@@ -95,4 +97,5 @@ public:
     //Position, nr_players for that position
     //TO DO:
     static unordered_map<string, uint16_t> getSplitFormation(const string& formation_name);
+    static const unordered_map<string, uint16_t>& getSubsLayout();
 };

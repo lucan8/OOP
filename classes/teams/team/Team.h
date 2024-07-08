@@ -14,8 +14,34 @@ private:
     string name;
     double budget;
     shared_squad Players;
-    //Index is stage_nr, value is ptr to the oponent and goals scored against them
     unsigned short points = 0;
+
+    //Should only be used before getSubstitutes
+    //Returns the best first eleven for a formation from unused players
+    //Players that are part of the starting 11 are removed from the unused players
+    static unique_m_squad getFirstEleven(const string& form_name, shared_squad_map& unused_outfields,
+                                         shared_squad_map& unused_goalkeepers);
+
+    //Helper function for getFirstEleven, returns the best outfield players for a formation
+    static unique_m_squad getFirstTeamOutfields(const string& form_name, 
+                                                shared_squad_map& unused_outfields);
+                                                
+    //Returns the best goalkeeper in the form of a match player
+    static unique_m_player getBestGoalkeeper(shared_squad_map& unused_goalkeepers);
+
+    //Should only be used after getFirstEleven
+    //Returns the best substitutes from unused players
+    //Players that are part of the substitutes are removed from the unused players                                     
+    static unique_m_squad getSubstitutes(shared_squad_map& unused_outfields, shared_squad_map& unused_goalkeepers);
+
+    //Helper function for getSubstitutes, returns the best outfield substitutes
+    static unique_m_squad getSubsOutfields(shared_squad_map& unused_outfields, const string& det_p_type);
+
+    //Helper function for getSubsOutfields, returns the best two match players indexes
+    static pair<uint16_t, uint16_t> getMax2PlayersIndexes(const unique_m_squad& players);
+    
+    //Splits team by player type(OUTFIELD, GK)
+    unordered_map<string, shared_squad> splitTeamPType() const;
 public:
     Team(const string& name = "", shared_squad Players = {}, double budget = 0) : 
     name(name), Players(move(Players)), budget(budget){}
@@ -23,34 +49,19 @@ public:
     Team(const Team& other) : name(other.name), budget(other.budget),
      Players(clonePtrVector(other.Players)){}
     ~Team(){};
+
     double getBudget() const{return budget;} 
     const string& getName() const{return name;}
+
     unsigned short getPoints() const{return points;}
-
-    team_ptr clone() const; 
-
     const shared_squad& getPlayers() const{return Players;}
+
     //Returns a map of averages calculated from the players stats
     unordered_map<string, double> getTeamStats() const;
-
-    unique_first_team getFirstTeam() const;
-    unique_m_squad getFirstEleven(const string& form_name) const;
-    unique_m_squad getSubstitutes(const string& form_name) const;
-
-    unique_first_team getFirstTeamOutfields(const string& form_name, 
-                                         shared_squad unused_players) const;
-
-    //Maybe make static class for all these functions(regarding choosing a first team)
-    unique_first_team getBestFirstTeam() const;
-    //Splits team by player position
-    static unordered_map<string, shared_squad> 
-                                splitTeamPos(const shared_squad& team);
-
-    //Splits team by player type(OUTFIELD, GK)
-    static unordered_map<string, shared_squad> 
-                                splitTeamPType(const shared_squad& team);                                  
- 
+    unique_first_team getFirstTeam() const;          
+    //Returns the index of the best player for a position                    
     static uint16_t getBestPlayerIndex(const shared_squad_map& players, const string& pos);
+    team_ptr clone() const; 
 
     void setBudget(double budget){this->budget = budget;}
 

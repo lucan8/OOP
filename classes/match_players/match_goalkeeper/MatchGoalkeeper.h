@@ -3,8 +3,9 @@
 
 class MatchGoalkeeper: public MatchPlayer{
 public:
-    MatchGoalkeeper(shared_ptr<Player> player, const string& position, const Coordinates& coordinates)
-        : MatchPlayer(move(player), position, coordinates){}
+    MatchGoalkeeper(shared_player player = shared_player(),
+                    const string& position = "", double OVR = 0,const Coordinates& coordinates = Coordinates())
+        : MatchPlayer(move(player), position, OVR, coordinates){}
     void p_move() override;
     void pass() override;
     void block() override;

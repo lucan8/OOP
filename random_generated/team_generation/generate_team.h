@@ -2,8 +2,8 @@
 #include "../player_generation/generate_player.h"
 #include "../../classes/teams/team/Team.h"
 
-shared_ptr<Team> generateTeam(vector<string>& available_names);
+team_ptr generateTeam(vector<string>& available_names);
 string generateTeamName(vector<string>& available_names);
-vector<shared_ptr<Player>> generateOutfields();
-vector<shared_ptr<Player>> generateGoalkeepers();
+squad_ptr generateOutfields();
+squad_ptr generateGoalkeepers();
 double generateBudget();

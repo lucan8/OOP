@@ -1,8 +1,8 @@
 #include "generate_player.h"
 using ng = dasmig :: ng;
 
-shared_ptr<Player> generatePlayer(const string& p_type, const string& age_type){
-    shared_ptr<Player> new_player;
+player_ptr generatePlayer(const string& p_type, const string& age_type){
+    player_ptr new_player;
     new_player = createPlayer(p_type);
     
     loadNamegenResources();
@@ -25,7 +25,7 @@ shared_ptr<Player> generatePlayer(const string& p_type, const string& age_type){
     new_player->setPosition(determinePreferedPos(p_type, new_player));
 
     new_player->setPotential(generatePotential(
-                                    new_player->getOVR(new_player->getPosition()) + 
+                                    new_player->calculateOVR(new_player->getPosition()) + 
                                     (double)Constants :: getAgeInfo(age_type, "POT_MIN_PLUS"),
                                     (double)Constants :: getVal("MAX_STATS")
                                     ));
@@ -34,16 +34,16 @@ shared_ptr<Player> generatePlayer(const string& p_type, const string& age_type){
     return new_player;
 }
 
-shared_ptr<Player> createPlayer(const string& p_type){
+player_ptr createPlayer(const string& p_type){
     if (p_type == "GK")
-        return shared_ptr<Player>(new Goalkeeper);
+        return new Goalkeeper;
     else if (p_type == "OUTFIELD")
-        return shared_ptr<Player>(new OutFieldPlayer);
+        return new OutFieldPlayer;
     else
         throw InvalidPlayerType(__func__, p_type);
 }
 
-string determinePreferedPos(const string& p_type, const shared_ptr<Player>& player){
+string determinePreferedPos(const string& p_type, const player_ptr player){
     uint16_t max_ovr = 0;
     string pref_pos;
 
@@ -54,7 +54,7 @@ string determinePreferedPos(const string& p_type, const shared_ptr<Player>& play
     //Looks only at the outfield positions, calculates ovr for that position, chooses best pos
     for (const auto& pos : Constants :: getPositions()){
         if (pos != "GK"){
-            uint16_t ovr = player->getOVR(pos);
+            uint16_t ovr = player->calculateOVR(pos);
             if (ovr > max_ovr){
                 max_ovr = ovr;
                 pref_pos = pos; 

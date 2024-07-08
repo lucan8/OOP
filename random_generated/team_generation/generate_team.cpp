@@ -1,17 +1,17 @@
 #include "generate_team.h"
-shared_ptr<Team> generateTeam(vector<string>& available_names){
-    vector<shared_ptr<Player>> gks = generateGoalkeepers(), outfields = generateOutfields(); 
+team_ptr generateTeam(vector<string>& available_names){
+    squad_ptr gks = generateGoalkeepers(), outfields = generateOutfields(); 
     //Moving the gks at the end of the outfields vector
     outfields.insert(
                         outfields.end(),
                         make_move_iterator(gks.begin()), 
                         make_move_iterator(gks.end())
                     );
-    return make_shared<Team>(
-                             generateTeamName(available_names),
-                             move(outfields),
-                             generateBudget()
-                            );
+    return new Team(
+                    generateTeamName(available_names),
+                    move(toSharedVector(outfields)),
+                    generateBudget()
+                    );
 }
 
 string generateTeamName(vector<string>& available_names){
@@ -25,8 +25,8 @@ string generateTeamName(vector<string>& available_names){
     available_names.erase(available_names.begin() + name_index);
     return name;
 }
-vector<shared_ptr<Player>> generateOutfields(){
-    vector<shared_ptr<Player>> outfields;
+squad_ptr generateOutfields(){
+    squad_ptr outfields;
     random_device rd;
     mt19937 gen(rd());
 
@@ -41,8 +41,8 @@ vector<shared_ptr<Player>> generateOutfields(){
     return outfields;                           
 }
 
-vector<shared_ptr<Player>> generateGoalkeepers(){
-    vector<shared_ptr<Player>> gks;
+squad_ptr generateGoalkeepers(){
+    squad_ptr gks;
 
     random_device rd;
     mt19937 gen(rd());

@@ -9,3 +9,7 @@ void MatchPlayer :: addYellowCard(){
         player->addRedCard();
     }
 }
+
+bool MatchPlayer :: operator <(const MatchPlayer& other) const{
+    return this->OVR < other.OVR;
+}

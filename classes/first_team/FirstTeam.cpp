@@ -1,15 +1,27 @@
 #include "FirstTeam.h"
 
-double FirstTeam :: getTotalStats()const{
-    return this->getOVR() + this->getChemestry();
+double FirstTeam :: getElevenTotalStats()const{
+    return this->getElevenOVR() + this->getChemestry();
 }
-double FirstTeam :: getOVR() const{
-    double team_ovr = 0;
+
+
+double FirstTeam :: getElevenOVR() const{
+    double eleven_ovr = 0;
     for (const auto& p : this->first_eleven)
-        team_ovr += p->getOVR();
+        eleven_ovr += p->getOVR();
     
-    return team_ovr / Constants :: getVal("MATCH_TEAM_SIZE");
+    return eleven_ovr / Constants :: getVal("MATCH_TEAM_SIZE");
 }
+
+
+double FirstTeam :: getSubsOVR()const{
+     double subs_ovr = 0;
+    for (const auto& p : this->subs)
+        subs_ovr += p->getOVR();
+    
+    return subs_ovr / Constants :: getVal("NR_PLAYERS_BENCH");
+}
+
 
 //TO DO
 uint16_t FirstTeam :: getChemestry() const{

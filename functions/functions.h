@@ -3,7 +3,8 @@
 #include <unordered_map>
 #include <string>
 #include <sstream>
-
+#include <memory>
+#include <stdint.h>
 
 template <typename key, typename val>
 void initMap(std :: unordered_map<key, val>& u_map, std :: vector<key> keys){
@@ -53,8 +54,8 @@ std :: vector<val> getValues(const std :: vector<std :: pair<key, val>>& u_map){
 
 //Takes a vector of pointers and returns a vector of shared pointers
 template <typename T>
-vector<shared_ptr<T>> toSharedVector(const vector<T*>& vec){
-    vector<shared_ptr<T>> shared_vec;
+std :: vector<std :: shared_ptr<T>> toSharedVector(const std :: vector<T*>& vec){
+    std :: vector<std :: shared_ptr<T>> shared_vec;
     shared_vec.reserve(vec.size());
 
     for (const auto ptr : vec)
@@ -64,8 +65,8 @@ vector<shared_ptr<T>> toSharedVector(const vector<T*>& vec){
 
 //Takes a vector of pointers and returns a vector of unique pointers
 template <typename T>
-vector<unique_ptr<T>> toUniqueVector(const vector<T*>& vec){
-    vector<unique_ptr<T>> unique_vec;
+std :: vector<std :: unique_ptr<T>> toUniqueVector(const std :: vector<T*>& vec){
+    std :: vector<std :: unique_ptr<T>> unique_vec;
     unique_vec.reserve(vec.size());
 
     for (const auto ptr : vec)
@@ -75,8 +76,8 @@ vector<unique_ptr<T>> toUniqueVector(const vector<T*>& vec){
 
 //Only works if T has a clone method
 template <typename T>
-vector<shared_ptr<T>> clonePtrVector(const vector<shared_ptr<T>>& vec){
-    vector<shared_ptr<T>> cloned_vec;
+std :: vector<std :: shared_ptr<T>> clonePtrVector(const std :: vector<std :: shared_ptr<T>>& vec){
+    std :: vector<std :: shared_ptr<T>> cloned_vec;
     cloned_vec.reserve(vec.size());
 
     for (const auto& ptr : vec)
@@ -86,8 +87,8 @@ vector<shared_ptr<T>> clonePtrVector(const vector<shared_ptr<T>>& vec){
 
 //Convetrs a vector to an unordered map with keys being the index of the vector
 template <typename T>
-unordered_map <uint16_t, T> toUMap(const vector<T>& vec){
-    unordered_map <uint16_t, T> u_map;
+std :: unordered_map <uint16_t, T> toUMap(const std :: vector<T>& vec){
+    std :: unordered_map <uint16_t, T> u_map;
 
     for (uint16_t i = 0; i < vec.size(); ++i)
         u_map[i] = vec[i];

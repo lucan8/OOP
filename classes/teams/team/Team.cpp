@@ -18,12 +18,15 @@ unique_first_team Team :: getFirstTeam() const{
         shared_squad_map unused_outfields = toUMap(split_team.at("OUTFIELD"));
         //Creating a map for the unsused goalkeepers
         shared_squad_map unused_goalkeepers = toUMap(split_team.at("GK"));
-
+        
+        //This needs to execute before getSubstitutes
+        //because it removes players from the unused players
+        unique_m_squad first_eleven = this->getFirstEleven(f_name, unused_outfields, unused_goalkeepers);
         unique_first_team first_team(new FirstTeam(f_name,
-                                                   this->getFirstEleven(f_name, unused_outfields, unused_goalkeepers),
+                                                   move(first_eleven),
                                                    this->getSubstitutes(unused_outfields, unused_goalkeepers)
                                                    ));
-        if (best_first_team == nullptr || first_team->getTotalStats() > best_first_team->getTotalStats())
+        if (best_first_team == nullptr || first_team->getElevenTotalStats() > best_first_team->getElevenTotalStats())
             best_first_team = move(first_team);
     }
     return best_first_team;
@@ -43,12 +46,14 @@ unique_m_squad Team :: getFirstTeamOutfields(const string& form_name, shared_squ
     first_eleven.reserve(Constants :: getVal("MATCH_TEAM_SIZE"));
 
     for (const auto& m_pos : Constants :: getFormationPositions(form_name)){
+        //Getting the match position equivalence(we can't calculate OVR without it)
+        const string& pos = Constants :: getPosEquivalence(m_pos);
         //Getting the best player for that position
-        uint16_t best_index = Team :: getBestPlayerIndex(unused_outfields, Constants :: getPosEquivalence(m_pos));
+        uint16_t best_index = Team :: getBestPlayerIndex(unused_outfields, pos);
         shared_player& best_player = unused_outfields.at(best_index);
         
         //Adding the player to the first eleven
-        first_eleven.emplace_back(new MatchOutfield(best_player, m_pos, best_player->calculateOVR(m_pos)));
+        first_eleven.emplace_back(new MatchOutfield(best_player, m_pos, best_player->calculateOVR(pos)));
         //removing the player from the unused players
         unused_outfields.erase(best_index);
     }
@@ -71,13 +76,13 @@ uint16_t Team :: getBestPlayerIndex(const shared_squad_map& players, const strin
     double best_OVR = 0;
     uint16_t best_p_index = 0;
 
-    //Going through all players for that position
-    for (uint16_t i = 0; i < players.size(); ++i){
-        double p_ovr = players.at(i)->calculateOVR(pos);
+    //Going through all players for that position(first: index, second: player)
+    for (const auto& player : players){
+        double p_ovr = player.second->calculateOVR(pos);
          //Keeping track of the index of the best player
         if (p_ovr > best_OVR){
             best_OVR = p_ovr;
-            best_p_index = i;
+            best_p_index = player.first;
         }
     }
 
@@ -88,16 +93,18 @@ uint16_t Team :: getBestPlayerIndex(const shared_squad_map& players, const strin
 unique_m_squad Team :: getSubstitutes(shared_squad_map& unused_outfields, shared_squad_map& unused_goalkeepers){
     unique_m_squad substitutes(Constants :: getVal("NR_PLAYERS_BENCH"));
     substitutes[0] = move(getBestGoalkeeper(unused_goalkeepers));
-    uint16_t subs_index = 0;
+    uint16_t subs_index = 1;
 
     //Going through all the p_types for the substitutes
     for (const auto& ptype_pnr : Constants :: getSubsLayout()){
+        //Skipping the GK p_type
+        if (ptype_pnr.first == "GK")
+            continue;
         //The same players, but now in the form of match players with the best positions
         //related to the detailed player type
-        unique_m_squad players = getSubsOutfields(unused_outfields, ptype_pnr.first);
+        unique_m_squad_map players = getSubsOutfields(unused_outfields, ptype_pnr.first);
         //Getting the best two players for that p_type
-        pair<uint16_t, uint16_t> best_players = 
-                                    getMax2PlayersIndexes(getSubsOutfields(unused_outfields, ptype_pnr.first));
+        pair<uint16_t, uint16_t> best_players = getMax2PlayersIndexes(players);
 
         //Adding the players to the substitutes
         substitutes[subs_index++] = move(players.at(best_players.first));
@@ -111,10 +118,10 @@ unique_m_squad Team :: getSubstitutes(shared_squad_map& unused_outfields, shared
 }
 
 //TO DO:Name differently
-unique_m_squad Team :: getSubsOutfields(shared_squad_map& unused_outfields, const string& det_p_type){
-    unique_m_squad substitutes;
+unique_m_squad_map Team :: getSubsOutfields(shared_squad_map& unused_outfields, const string& det_p_type){
+    unique_m_squad_map possible_substitutes;
 
-    substitutes.reserve(Constants :: getVal("det_p_type"));
+    possible_substitutes.reserve(unused_outfields.size());
 
     //Going through all the outfield players(player.first is index, player.second is the actual player)
     for (const auto& player : unused_outfields){
@@ -129,41 +136,41 @@ unique_m_squad Team :: getSubsOutfields(shared_squad_map& unused_outfields, cons
                 best_pos = pos;
             }
         }
-        substitutes.emplace_back(new MatchOutfield(player.second, best_pos, best_OVR));
+        possible_substitutes.insert(make_pair(player.first, unique_m_player(new MatchOutfield(player.second, best_pos, best_OVR))));
     }
 
-    return substitutes;
+    return possible_substitutes;
 }
-pair<uint16_t, uint16_t> Team :: getMax2PlayersIndexes(const unique_m_squad& players){
+pair<uint16_t, uint16_t> Team :: getMax2PlayersIndexes(const unique_m_squad_map& players){
     //first is OVR, second is index
     pair<double, uint16_t> best_player1(0, 0), best_player2(0, 0);
 
-    for (uint16_t i = 0; i < players.size(); ++i){
-        double p_ovr = players[i]->getOVR();
+    for (const auto& player : players){
+        double p_ovr = player.second->getOVR();
         if (p_ovr > best_player1.first){
             best_player2 = best_player1;
-            best_player1 = make_pair(p_ovr, i);
+            best_player1 = make_pair(p_ovr, player.first);
         }
         else if (p_ovr > best_player2.first)
-            best_player2 = make_pair(p_ovr, i);
+            best_player2 = make_pair(p_ovr, player.first);
         }
         
     return make_pair(best_player1.second, best_player2.second);
 }
-/*
-unordered_map<string, shared_squad> Team :: splitTeamPos(const shared_squad& team){
+
+shared_squad_split Team :: splitTeamPos() const{
     unordered_map<string, shared_squad> split_team;
     initMap(split_team, Constants :: getPositions());
 
-    for (const auto& p : team)
+    for (const auto& p : this->Players)
         split_team[p->getPosition()].push_back(p);
     
     return split_team;
 }
-*/
 
-unordered_map<string, shared_squad> Team :: splitTeamPType() const{
-    unordered_map<string, shared_squad> split_team;
+
+shared_squad_split Team :: splitTeamPType() const{
+    shared_squad_split split_team;
     initMap(split_team, Constants :: getPlayerTypes());
 
     for (const auto& p : this->Players)

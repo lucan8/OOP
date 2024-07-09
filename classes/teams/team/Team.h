@@ -35,14 +35,15 @@ private:
     static unique_m_squad getSubstitutes(shared_squad_map& unused_outfields, shared_squad_map& unused_goalkeepers);
 
     //Helper function for getSubstitutes, returns the best outfield substitutes
-    static unique_m_squad getSubsOutfields(shared_squad_map& unused_outfields, const string& det_p_type);
+    static unique_m_squad_map getSubsOutfields(shared_squad_map& unused_outfields, const string& det_p_type);
 
     //Helper function for getSubsOutfields, returns the best two match players indexes
-    static pair<uint16_t, uint16_t> getMax2PlayersIndexes(const unique_m_squad& players);
+    static pair<uint16_t, uint16_t> getMax2PlayersIndexes(const unique_m_squad_map& players);
     
     //Splits team by player type(OUTFIELD, GK)
-    unordered_map<string, shared_squad> splitTeamPType() const;
+    shared_squad_split splitTeamPType() const;
 public:
+    shared_squad_split splitTeamPos() const;
     Team(const string& name = "", shared_squad Players = {}, double budget = 0) : 
     name(name), Players(move(Players)), budget(budget){}
 

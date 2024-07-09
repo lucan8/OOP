@@ -6,7 +6,8 @@ typedef MatchPlayer* m_player_ptr;
 typedef shared_ptr<MatchPlayer> shared_m_player;
 typedef unique_ptr<MatchPlayer> unique_m_player;
 typedef vector<unique_m_player> unique_m_squad;
-
+//vector of shared_player represented as map(for easier removal)
+typedef unordered_map<uint16_t, unique_m_player> unique_m_squad_map;
 class MatchPlayer {
 protected:
     shared_player player;

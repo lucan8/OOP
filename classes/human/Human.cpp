@@ -1,6 +1,6 @@
 #include "Human.h"
 
-
+Human :: ~Human(){}
 void Human :: print(ostream& out) const{
     out << "Name: " << this->name << "\nAge: "
     << this->age <<"\nNationality: " << this->nationality

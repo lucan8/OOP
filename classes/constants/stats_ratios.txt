@@ -9,11 +9,11 @@ POS not_related goal_related 4
 
 OUTFIELD 8
 CB FULLBACK CDM CM CAM SIDEMID WINGER ST
-PAC age_related breakthrough_related 4 5 3 4 5 7 7 5
-SHO not_related goal_related 1 1 2 5 6 4 6 7
-DEF not_related breakthrough_related 7 5 5 3 2 2 1 1
-PHY age_related breakthrough_related 7 4 5 3 3 4 3 5
-STA age_related possesion_related 4 5 6 6 4 5 4 1
-DRI not_related breakthrough_related 1 2 3 6 7 6 7 5
-PAS not_related possesion_related 3 3 4 7 7 5 3 2
-AGG not_related breakthrough_related 6 4 4 3 2 2 1 1
+PAC age_related breakthrough_related 4 5 4 4 5 10 10 5
+SHO not_related goal_related 1 1 2 4 7 5 8 10
+DEF not_related breakthrough_related 12 10 8 2 1 2 1 1
+PHY age_related breakthrough_related 8 5 6 4 5 5 5 5
+STA age_related possesion_related 4 5 6 8 5 6 4 3
+DRI not_related breakthrough_related 1 1 3 5 8 8 8 5
+PAS not_related possesion_related 4 4 6 12 8 8 4 2
+AGG not_related breakthrough_related 8 5 4 4 1 2 1 2

@@ -23,7 +23,7 @@ struct Constants :: Formation{
     void initPlayersCoords();
 };
 void Constants :: init(){
-    string input_path = filesystem :: current_path().parent_path().string() + "\\classes\\constants\\";
+    string input_path = (filesystem :: current_path().parent_path() / "resources" / "constants" / "").string();
     try{
         initValues(input_path + "values.txt");
         initPlayerGen(input_path + "player_generation.txt");
@@ -34,7 +34,7 @@ void Constants :: init(){
         initPositionEquivalence(input_path + "position_equivalence.txt");
         initSubsLayout(input_path + "subs_layout.txt");
     }
-    catch (FileOpenException e){
+    catch (FileOpenException& e){
         cerr << e.what() << '\n';
     }
 }
@@ -330,6 +330,12 @@ const vector<string>& Constants :: getFormationPositions(const string& formation
         throw InvalidFormation(__func__, formation_name);
     }
 }
+
+/*
+const unordered_map<string, string>& Constants :: getPosEquivalence(){
+    return pos_equivalence;
+}
+*/
 
 const string& Constants :: getPosEquivalence(const string& m_pos){
     try{

@@ -4,9 +4,9 @@
 //Coordinatex x: 15, y: 10 will be matrix[10][15] and so on
 //Also used to hold offsets from one position to another
 struct Coordinates : public Readable{
-    int x;
-    int y;
-    Coordinates(int x = 0, int y = 0): x(x), y(y){}
+    float x;
+    float y;
+    Coordinates(float x = 0, float y = 0): x(x), y(y){}
     //Due to the fact that the coordinates are used in a matrix, the x and y values are swapped
     void read(std :: istream& in) override {in >> y >> x;}
     operator bool()const{return x || y;}

@@ -1,10 +1,16 @@
 #pragma once
 #include <vector>
 #include <unordered_map>
+#include <fstream>
 #include <string>
 #include <sstream>
 #include <memory>
 #include <stdint.h>
+#include "../classes/exceptions/FileOpenException.h"
+
+
+std :: vector<std :: string> split(const std :: string& str, char sep = ' ');
+std :: string ReadFile(const std :: string& file_path);
 
 template <typename key, typename val>
 void initMap(std :: unordered_map<key, val>& u_map, std :: vector<key> keys){
@@ -95,4 +101,3 @@ std :: unordered_map <uint16_t, T> toUMap(const std :: vector<T>& vec){
     return u_map;
 }
 
-std :: vector<std :: string> split(const std :: string& str, char sep = ' ');

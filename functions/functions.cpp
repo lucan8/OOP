@@ -9,3 +9,18 @@ std :: vector<std :: string> split(const std :: string& str, char sep){
 
     return split_string;
 }
+
+//Reads file content and returns it as a string
+std :: string ReadFile(const std :: string& file_path){
+    std :: string content;
+    std :: ifstream fin(file_path);
+
+    if (!fin)
+        throw FileOpenException(__func__, file_path);
+
+    std :: string line;
+    while (std :: getline(fin, line))
+        content += line + '\n';
+
+    return content;
+}

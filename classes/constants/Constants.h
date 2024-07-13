@@ -64,6 +64,7 @@ public:
     static vector<string> getPositions(const string& p_type);
     //Retrieves all positions
     static vector<string> getPositions();
+    //static unordered_map<string, vector<string>> getPositions1(){return positions;};
 
     static unordered_map<string, uint16_t> getAllAgeInfo(const string& age_type);
     static uint16_t getAgeInfo(const string& age_type, const string& const_name);
@@ -94,6 +95,8 @@ public:
 
     //Retrives the normal position for a match position
     static const string& getPosEquivalence(const string& m_pos);
+    //static const unordered_map<string, string>& getPosEquivalence();
+
     //Position, nr_players for that position
     //TO DO:
     static unordered_map<string, uint16_t> getSplitFormation(const string& formation_name);

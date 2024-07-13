@@ -3,45 +3,36 @@
 #include <random>
 
 //Ignoring player match stamina for the sake of simplicity
+//Ignoring player match form for the sake of simplicity
+//t1 is in the first half of the pitch, t2 is in the second half
 class Match{
 private:
     //Team, nr_goals
-    unique_ptr<MatchTeam> t1, t2;
+    unique_first_team t1, t2;
 
-    void decidePossesion(const unordered_map<string, double>& t1_stats,
-                         const unordered_map<string, double>& t2_stats){
-        uint16_t t1_pos_chance = t1
-    }
-    bool decideBreakThrough();
-    decideGoal();
-public:
-    Match(const shared_ptr<Team>& t1, const shared_ptr<Team>& t2) : t1(t1, 0), t2(t2, 0){
-        this->nr_chances = Constants :: getVal("NR_CHANCES");
-        uint32_t chances_offset = Constants :: getVal("NR_CHANCES_OFFSET");
+    //Buffer for pitch related positions(middle_line, pitch, goals...)
+    unique_ptr<const float> pitch_positions;
+    //Buffer for player positions and ball position
+    unique_ptr<float> player_positions, ball_position;
+    //Size of the player_positions buffer
+    uint16_t positions_size = 0;
 
-        random_device rd;
-        mt19937 gen(rd());
-        uniform_int_distribution<> chance_dist(
-                                                nr_chances - chances_offset, 
-                                                nr_chances + chances_offset
-                                            );
-        this->nr_chances = chance_dist(gen);
-    }
-
-    void play(){
-        unordered_map<string, double>t1_stats = t1.first->getTeamStats(),
-                                     t2_stats = t2.first->getTeamStats();
-        
-        decideAttack()
-
-        //Apply rules
-        for (uint16_t i = 0; i < this->nr_chances; ++i){
-            
+    void addTeamPositions(const unique_first_team& team, bool second_half){
+        for (const auto& player : team->getFirstEleven()){
+            float* triangle_positions = player->getTrianglePositions(second_half);
+            memcpy(this->player_positions.get() + this->positions_size, triangle_positions, 6 * sizeof(float));
+            positions_size += 6;
+            delete[] triangle_positions;
         }
     }
-
-
-
-
+public:
+    Match(unique_first_team t1, unique_first_team t2): t1(move(t1)), t2(move(t2)){
+        //Pitch positions and ball positions shall be in constants
+        this->pitch_positions = Constants :: getPitchPositions();
+        addTeamPositions(this->t1, false);
+        addTeamPositions(this->t2, true);
+        //Learn how to actually draw circles
+        this->ball_position = Constants :: getBallPositions();
+    }
     
 };

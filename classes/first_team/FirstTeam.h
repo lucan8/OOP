@@ -28,4 +28,12 @@ public:
 
     //Average OVR of the substitutes
     double getSubsOVR() const;
+
+    //Moves all players to the other side of the pitch
+    void changeSide(){
+        for (auto& p : this->first_eleven)
+            p->changeSide();
+    }
+    
+    
 };

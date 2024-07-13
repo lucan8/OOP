@@ -8,17 +8,18 @@ typedef unique_ptr<MatchPlayer> unique_m_player;
 typedef vector<unique_m_player> unique_m_squad;
 //vector of shared_player represented as map(for easier removal)
 typedef unordered_map<uint16_t, unique_m_player> unique_m_squad_map;
+
 class MatchPlayer {
 protected:
     shared_player player;
     const string position; //Can be either a normal position(subs) or a match position(first eleven)
-    Coordinates coordinates;
+    Coordinates coords;
     const double OVR;
     unsigned short yellow_cards = 0;
 public:
     MatchPlayer(shared_player player = shared_player(),
-                const string& position = "", double OVR = 0, const Coordinates& coordinates = Coordinates())
-     : player(move(player)), position(position), coordinates(coordinates), OVR(OVR){}
+                const string& position = "", double OVR = 0, const Coordinates& coords = Coordinates())
+     : player(move(player)), position(position), coords(coords), OVR(OVR){}
 
     virtual ~MatchPlayer(){};
 
@@ -26,10 +27,34 @@ public:
     unsigned short getYellowCards() const{return yellow_cards;}
     string getPosition() const{return position;}
     const shared_player& getPlayer() const{return player;}
-    Coordinates getCoordinates() const{return coordinates;}
+    Coordinates getCoords() const{return coords;}
 
-    void setCoordinates(const Coordinates& coordinates){this->coordinates = coordinates;}
+    void setCoordinates(const Coordinates& coordinates){this->coords = coords;}
     double getOVR() const{return OVR;}
+
+    //Moves the player to the other side of the pitch
+    //Should be used only at the start of any of the halves
+    void changeSide(){
+        this->setCoordinates(Coordinates(Constants :: getVal("GOAL_LINE_LENGTH") - coords.x,
+                                         Constants :: getVal("TOUCHLINE_LENGTH") - coords.y));
+    }
+
+    //Make triangle from the player's coordinates depending on the half
+    float* getTrianglePositions(bool second_half){
+        //triangle if the player is in second half(grows upwards)
+        if (second_half)
+            return new float[6]{
+                coords.x, coords.y + triangle_offset,
+                coords.x - triangle_offset, coords.y,
+                coords.x + triangle_offset, coords.y
+            };
+        //triangle if the player is in first half(grows downwards)
+        return new float[6]{
+            coords.x, coords.y - triangle_offset,
+            coords.x - triangle_offset, coords.y,
+            coords.x + triangle_offset, coords.y
+        };
+    }
 
     bool operator <(const MatchPlayer& other) const;
     virtual void p_move() = 0;

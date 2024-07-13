@@ -21,6 +21,9 @@ struct Constants :: Formation{
 
     void readLinkMatrix(ifstream& fin);
     void initPlayersCoords();
+private:
+    //Normalizes the coordinates to be between -1 and 1(used in initPlayersCoords)
+    void normalizeCoords();
 };
 void Constants :: init(){
     string input_path = (filesystem :: current_path().parent_path() / "resources" / "constants" / "").string();
@@ -205,7 +208,24 @@ void Constants :: Formation :: initPlayersCoords(){
                 p_pos.push(p.first);
             }
     }
+
+    //Normalizing the coordinates to be between -1 and 1
+    normalizeCoords();
 }
+
+
+void Constants :: Formation :: normalizeCoords(){
+    float startx = -1.0;
+    float starty = 1.0;
+
+    float unity_x = 1.0 / (Constants :: getVal("GOAL_LINE_LENGTH") / 2);
+    float unity_y = 1.0 / (Constants :: getVal("TOUCHLINE_LENGTH") / 2);
+
+    for (auto& p : this->coords)
+        p.second = Coordinates(startx + p.second.x * unity_x, starty - p.second.y * unity_y);
+
+}
+
 
 void Constants :: initPositionEquivalence(const string& file_name){
     ifstream fin(file_name);
@@ -217,6 +237,8 @@ void Constants :: initPositionEquivalence(const string& file_name){
         pos_equivalence[match_pos] = normal_pos;
 
 }
+
+
 uint16_t Constants ::  getVal(const string& const_name){
     try{
         return values.at(const_name);
@@ -225,6 +247,7 @@ uint16_t Constants ::  getVal(const string& const_name){
     }
 }
 
+
 unordered_map<string, uint16_t> Constants ::  getAllAgeInfo(const string& age_type){
     try{
         return age_info.at(age_type);
@@ -232,6 +255,7 @@ unordered_map<string, uint16_t> Constants ::  getAllAgeInfo(const string& age_ty
         throw InvalidAgeType(__func__, age_type);
     }
 }
+
 
 uint16_t Constants :: getAgeInfo(const string& age_type, const string& const_name){
     try{
@@ -242,6 +266,7 @@ uint16_t Constants :: getAgeInfo(const string& age_type, const string& const_nam
     }
 }
 
+
 vector<string> Constants :: getPositions(const string& p_type){
     try{
         return positions.at(p_type);
@@ -250,9 +275,11 @@ vector<string> Constants :: getPositions(const string& p_type){
     }
 }
 
+
 vector<string> Constants :: getPositions(){
     return getKeys(stats_ratios);
 }
+
 
 vector<string> Constants :: getStats(const string& p_type){
     try{
@@ -261,6 +288,7 @@ vector<string> Constants :: getStats(const string& p_type){
         throw InvalidPlayerType(__func__, p_type);
     }
 }
+
 
 vector<string> Constants :: getAgeRelatedStats(const string& p_type){
     try{
@@ -271,6 +299,7 @@ vector<string> Constants :: getAgeRelatedStats(const string& p_type){
     
 }
 
+
 vector<pair<string, uint16_t>> Constants :: getStatsRatios(const string& p_pos){
     try{
         return stats_ratios.at(p_pos);
@@ -280,13 +309,16 @@ vector<pair<string, uint16_t>> Constants :: getStatsRatios(const string& p_pos){
     
 }
 
+
 vector<string> Constants :: getPlayerTypes(){
         return getKeys(stats);
 }
 
+
 vector<string> Constants :: getDetailedPTypes(){
     return getKeys(positions);
 }
+
 
 vector<string> Constants :: getSameDetType(const string& pos){
     for (auto& p_t : positions)
@@ -295,17 +327,22 @@ vector<string> Constants :: getSameDetType(const string& pos){
 
     throw InvalidPosition(__func__, pos);
 }
+
+
 vector<string> Constants :: getAgeTypes(){
     return getKeys(age_info);
 }
+
 
 const vector<string>& Constants :: getTeamNames(){
     return team_names;
 }
 
+
 vector<string> Constants :: getFormationsNames(){
     return getKeys(formations);
 }
+
 
 const link_matrix& Constants :: getLinkMatrix(const string& formation_name){
     try{
@@ -315,6 +352,7 @@ const link_matrix& Constants :: getLinkMatrix(const string& formation_name){
     }
 }
 
+
 const players_coords& Constants :: getPlayersCoords(const string& formation_name){
     try{
         return Constants :: formations.at(formation_name).coords;
@@ -322,6 +360,7 @@ const players_coords& Constants :: getPlayersCoords(const string& formation_name
         throw InvalidFormation(__func__, formation_name);
     }
 }
+
 
 const vector<string>& Constants :: getFormationPositions(const string& formation_name){
     try{
@@ -344,6 +383,7 @@ const string& Constants :: getPosEquivalence(const string& m_pos){
         throw InvalidMatchPosition(__func__, m_pos);
     }
 }
+
 
 const unordered_map<string, uint16_t>& Constants :: getSubsLayout(){
     return subs_layout;

@@ -8,7 +8,8 @@ struct Coordinates : public Readable{
     float y;
     Coordinates(float x = 0, float y = 0): x(x), y(y){}
     //Due to the fact that the coordinates are used in a matrix, the x and y values are swapped
-    void read(std :: istream& in) override {in >> y >> x;}
+    void read(std :: istream& in) override {in >> x >> y;}
+
     operator bool()const{return x || y;}
     Coordinates operator-()const{return Coordinates(-x, -y);}
     Coordinates operator+(const Coordinates& other)const{return Coordinates(x + other.x, y + other.y);}

@@ -10,32 +10,37 @@ vector<string> Constants :: team_names;
 unordered_map<string, Constants :: Formation> Constants :: formations;
 unordered_map<string, string> Constants :: pos_equivalence;
 unordered_map<string, uint16_t> Constants :: subs_layout;
+unordered_map<string, unique_ptr<float>> Constants :: vertex_positions;
+mpos_coords Constants :: p_coords;
 
 //Holds  match_positions, the link_matrix, and the coordinates for each position
 struct Constants :: Formation{
     vector<string> positions;
     link_matrix matrix;
-    players_coords coords;
 
     Formation(){}
 
     void readLinkMatrix(ifstream& fin);
-    void initPlayersCoords();
+    //Moved outside of formaation class as player positions as independent of formation
+    //void initPlayersCoords();
 private:
     //Normalizes the coordinates to be between -1 and 1(used in initPlayersCoords)
-    void normalizeCoords();
+    //Reading from file now, not needed
+    //void normalizeCoords();
 };
 void Constants :: init(){
-    string input_path = (filesystem :: current_path().parent_path() / "resources" / "constants" / "").string();
+    string constants_path = (filesystem :: current_path().parent_path() / "resources" / "constants" / "").string();
     try{
-        initValues(input_path + "values.txt");
-        initPlayerGen(input_path + "player_generation.txt");
-        initPositions(input_path + "positions.txt");
-        initStatsRatios(input_path + "stats_ratios.txt");
-        initTeamNames(input_path + "team_names.txt");
-        initFormations(input_path + "formations.txt");
-        initPositionEquivalence(input_path + "position_equivalence.txt");
-        initSubsLayout(input_path + "subs_layout.txt");
+        initValues(constants_path + "values.txt");
+        initPlayerGen(constants_path + "player_generation.txt");
+        initPositions(constants_path + "positions.txt");
+        initStatsRatios(constants_path + "stats_ratios.txt");
+        initTeamNames(constants_path + "team_names.txt");
+        initFormations(constants_path + "formations.txt");
+        initMPosCoords(constants_path + "match_pos_coords.txt");
+        initPositionEquivalence(constants_path + "position_equivalence.txt");
+        initSubsLayout(constants_path + "subs_layout.txt");
+        initVertexPositions(constants_path + "vertex_position.txt");
     }
     catch (FileOpenException& e){
         cerr << e.what() << '\n';
@@ -161,9 +166,6 @@ void Constants :: initFormations(const string& file_name){
 
         //Reading link matrix for chemestry
         formations[formation_name].readLinkMatrix(fin);
-        //Reading the initial coordinates for each position
-        formations[formation_name].initPlayersCoords();
-
         fin.ignore();
     }
 }
@@ -189,6 +191,19 @@ void Constants :: Formation :: readLinkMatrix(ifstream& fin){
         this->matrix[pos2][pos1] = -matrix[pos1][pos2];
     }
 }
+
+
+void Constants :: initMPosCoords(const string& file_name){
+    ifstream fin(file_name);
+    if (!fin.is_open())
+        throw FileOpenException(__func__, file_name);
+
+    string pos;
+    //Reading the player positions and their coordinates
+    while (fin >> pos)
+        fin >> p_coords[pos];
+}
+/*
 void Constants :: Formation :: initPlayersCoords(){
     this->coords["GK"] = Coordinates(Constants :: getVal("GOAL_LINE_LENGTH") / 2,
                                      Constants :: getVal("TOUCHLINE_LENGTH")
@@ -226,7 +241,7 @@ void Constants :: Formation :: normalizeCoords(){
 
 }
 
-
+*/
 void Constants :: initPositionEquivalence(const string& file_name){
     ifstream fin(file_name);
     if (!fin.is_open())
@@ -239,6 +254,20 @@ void Constants :: initPositionEquivalence(const string& file_name){
 }
 
 
+void Constants :: initVertexPositions(const string& file_name){
+    ifstream fin(file_name);
+    if (!fin.is_open())
+        throw FileOpenException(__func__, file_name);
+
+    string const_name;
+    uint16_t nr_positions;
+
+    while (fin >> const_name >> nr_positions){
+        vertex_positions[const_name] = unique_ptr<float>(new float[nr_positions]);
+        for (int i = 0; i < nr_positions; ++i)
+            fin >> vertex_positions[const_name].get()[i];
+    }
+}
 uint16_t Constants ::  getVal(const string& const_name){
     try{
         return values.at(const_name);
@@ -353,15 +382,6 @@ const link_matrix& Constants :: getLinkMatrix(const string& formation_name){
 }
 
 
-const players_coords& Constants :: getPlayersCoords(const string& formation_name){
-    try{
-        return Constants :: formations.at(formation_name).coords;
-    } catch(out_of_range& e){
-        throw InvalidFormation(__func__, formation_name);
-    }
-}
-
-
 const vector<string>& Constants :: getFormationPositions(const string& formation_name){
     try{
         return Constants :: formations.at(formation_name).positions;
@@ -370,11 +390,26 @@ const vector<string>& Constants :: getFormationPositions(const string& formation
     }
 }
 
+
+const Coordinates& Constants :: getMPosCoords(const string& m_pos){
+    try{
+        return p_coords.at(m_pos);
+    } catch(out_of_range& e){
+        throw InvalidMatchPosition(__func__, m_pos);
+    }
+}
+
+
 /*
-const unordered_map<string, string>& Constants :: getPosEquivalence(){
-    return pos_equivalence;
+const players_coords& Constants :: getPlayersCoords(const string& formation_name){
+    try{
+        return Constants :: formations.at(formation_name).coords;
+    } catch(out_of_range& e){
+        throw InvalidFormation(__func__, formation_name);
+    }
 }
 */
+
 
 const string& Constants :: getPosEquivalence(const string& m_pos){
     try{
@@ -388,4 +423,15 @@ const string& Constants :: getPosEquivalence(const string& m_pos){
 const unordered_map<string, uint16_t>& Constants :: getSubsLayout(){
     return subs_layout;
 }
+
+
+float* Constants :: getVertexPositions(const string& const_name){
+    try{
+        return vertex_positions.at(const_name).get();
+    } catch(out_of_range& e){
+        throw InvalidConstName(__func__, const_name);
+    }
+}
+
+
 

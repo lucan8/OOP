@@ -53,7 +53,8 @@ unique_m_squad Team :: getFirstTeamOutfields(const string& form_name, shared_squ
         shared_player& best_player = unused_outfields.at(best_index);
         
         //Adding the player to the first eleven
-        first_eleven.emplace_back(new MatchOutfield(best_player, m_pos, best_player->calculateOVR(pos)));
+        first_eleven.emplace_back(new MatchOutfield(best_player, m_pos, best_player->calculateOVR(pos),
+                                                    Constants :: getMPosCoords(m_pos)));
         //removing the player from the unused players
         unused_outfields.erase(best_index);
     }
@@ -65,7 +66,8 @@ unique_m_player Team :: getBestGoalkeeper(shared_squad_map& unused_goalkeepers){
     uint16_t best_gk_index = Team :: getBestPlayerIndex(unused_goalkeepers, "GK");
     shared_player& chosen_gk = unused_goalkeepers.at(best_gk_index);
 
-    unique_m_player best_gk(new MatchGoalkeeper(chosen_gk, "GK", chosen_gk->calculateOVR("GK")));
+    unique_m_player best_gk(new MatchGoalkeeper(chosen_gk, "GK", chosen_gk->calculateOVR("GK"), 
+                                                Constants :: getMPosCoords("GK")));
     unused_goalkeepers.erase(best_gk_index);
 
     return best_gk;

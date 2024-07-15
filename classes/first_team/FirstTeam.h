@@ -30,10 +30,8 @@ public:
     double getSubsOVR() const;
 
     //Moves all players to the other side of the pitch
-    void changeSide(){
-        for (auto& p : this->first_eleven)
-            p->changeSide();
-    }
+    void changeSide();
     
-    
+    //Returns buffer of positions for the first eleven's corresponding triangles depending on the pitch half
+    unique_ptr<float> getTrianglePositions(MatchPlayer :: pitch_half half) const;
 };

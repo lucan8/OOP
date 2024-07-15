@@ -13,6 +13,7 @@
 #include "../classes/VBO/VBO.h"
 #include "../classes/VAO/VAO.h"
 #include "../classes/IBO/IBO.h"
+#include "../classes/match/Match.h"
 #include <chrono>
 
 //Undefined reff to VAO
@@ -22,68 +23,16 @@
 //If reading from file add invalidCountry, invalidAge, invalidPoz
 //For the moment only using random_generated players and teams
 
-#define shader_path filesystem::current_path().parent_path() / "resources" / "shaders"
-const float triangle_offset = 0.02f;
-
-players_coords normalize(const players_coords& p_coords){
-    players_coords normalized_coords;
-    float startx = -1.0;
-    float starty = 1.0;
-
-    float unity_x = 1.0 / (Constants :: getVal("GOAL_LINE_LENGTH") / 2);
-    float unity_y = 1.0 / (Constants :: getVal("TOUCHLINE_LENGTH") / 2);
-
-    for (const auto& [pos, coords] : p_coords){
-        Coordinates normalized(startx + coords.x * unity_x, starty - unity_y *coords.y);
-        normalized_coords[pos] = normalized;
-    }
-    return normalized_coords;
-}
-
-players_coords changeSide(const players_coords& p_coords){
-    players_coords new_coords;
-    float max_x = Constants :: getVal("GOAL_LINE_LENGTH");
-    float max_y = Constants :: getVal("TOUCHLINE_LENGTH");
-
-    for (const auto& [pos, coords] : p_coords)
-        new_coords[pos] = Coordinates(max_x - coords.x, max_y - coords.y);
-    return new_coords;
-}
-
-
-//Make triangle from the player's coordinates depending on the half
-float* getTriangle(const Coordinates& p_coords, bool second_half){
-    //triangl if the player is in second half(grows upwards)
-    if (second_half)
-        return new float[6]{
-            p_coords.x, p_coords.y,
-            p_coords.x - triangle_offset, p_coords.y + triangle_offset,
-            p_coords.x + triangle_offset, p_coords.y + triangle_offset
-        };
-    //triangle if the player is in first half(grows downwards)
-    return new float[6]{
-        p_coords.x, p_coords.y,
-        p_coords.x - triangle_offset, p_coords.y - triangle_offset,
-        p_coords.x + triangle_offset, p_coords.y - triangle_offset
-    };
-}
-
-
-void addTeamPositions(float* positions, int& positions_size,
-                      const players_coords& team_coords, bool second_half){
-    for (const auto& [pos, coords] : team_coords){
-        float* triangle = getTriangle(coords, second_half);
-        memcpy(positions + positions_size, triangle, 6 * sizeof(float));
-        positions_size += 6;
-        delete[] triangle;
-    }
+//Assuming we are running from app directory
+void GLAPIENTRY MessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length,
+                                const GLchar* message, const void* userParam) {
+    cout << "GL ERROR CALLBACK: " << "type: " << type << ", severity: " << severity << "\nmessage: " << message << '\n';
 }
 
 int main(){
+
+
     Constants :: init();
-    const vector<string> formations = Constants :: getFormationsNames();
-    const players_coords& team1 = Constants :: getPlayersCoords("4-4-2");
-    players_coords normalized_team1 = normalize(team1), normalized_team2 = normalize(changeSide(team1));
 
     //Initializing glfw
     if (!glfwInit()){
@@ -91,8 +40,9 @@ int main(){
     }
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
     //Initializing window
-    GLFWwindow* window = glfwCreateWindow(800, 600, "Hello World", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(900, 600, "Hello World", NULL, NULL);
     if (!window){
         cout << "Failed to create window\n";
         glfwTerminate();
@@ -105,64 +55,17 @@ int main(){
         cout << "Failed to initialize GLEW\n";
     }
 
-    //8 for pitch, 4 middle line,  6(triangle) * 22 for players
-    float positions[8 + 4 + 6 * 22] = {
-        //Green square
-        -1.0f, -1.0f,
-        -1.0f, 1.0f,
-         1.0f, 1.0f,
-         1.0f, -1.0f,
-
-         //Middle line
-         -1.0f, 0.0f,
-          1.0f, 0.0f,
-    };
-    int positions_size = 12;
-    addTeamPositions(positions, positions_size, normalized_team1, true);
-    addTeamPositions(positions, positions_size, normalized_team2, false);
-
-    GLuint indices[6] = {
-        //For square(and triangle)
-        0, 1, 2,
-        //Used only for square
-        2, 3, 0,
-    };
-    VAO vao;
-    vao.bind();
-    //Already bound on creation
-    VBO vbo(positions, sizeof(positions));
-    IBO ibo(indices, 6 * sizeof(GLuint));
-
-    Shader pitch_shader((shader_path / "vertex_shader.glsl").string(),
-                    (shader_path / "fragment_shader.glsl").string()),
-           middle_line_shader((shader_path / "vertex_shader.glsl").string(),
-                    (shader_path / "fragment_shader2.glsl").string()),
-           player_shader((shader_path / "vertex_shader.glsl").string(),
-                    (shader_path / "fragment_shader1.glsl").string());
+    glEnable(GL_DEBUG_OUTPUT);
+    glDebugMessageCallback(MessageCallback, 0);
     
+    vector<string> team_names = Constants :: getTeamNames();
+    unique_team t1(generateTeam(team_names)), t2(generateTeam(team_names));
+
+    Match match(t1->getFirstTeam(), t2->getFirstTeam());
     while (!glfwWindowShouldClose(window)){
+        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
-        //Drawing the pitch
-        pitch_shader.use();
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
-
-        //Drawing the middle line
-        middle_line_shader.use();
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, (void*)(8 * sizeof(float)));
-        glDrawElements(GL_LINES, 2, GL_UNSIGNED_INT, nullptr);
-        
-
-        //Drawing the players
-        player_shader.use();
-        for (int i = 0; i < Constants :: getVal("MATCH_TEAM_SIZE") * 2; ++i){
-            glEnableVertexAttribArray(0);
-            glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, (void*)((8 + 4 + i * 6) * sizeof(float)));
-            glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, nullptr);
-        }
-
+        match.createField();
         glfwSwapBuffers(window);
         glfwPollEvents();
     }

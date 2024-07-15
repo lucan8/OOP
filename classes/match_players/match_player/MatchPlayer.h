@@ -17,6 +17,9 @@ protected:
     const double OVR;
     unsigned short yellow_cards = 0;
 public:
+    //Enum for the pitch half in which the player starts
+    enum class pitch_half {first, second};
+    
     MatchPlayer(shared_player player = shared_player(),
                 const string& position = "", double OVR = 0, const Coordinates& coords = Coordinates())
      : player(move(player)), position(position), coords(coords), OVR(OVR){}
@@ -34,27 +37,10 @@ public:
 
     //Moves the player to the other side of the pitch
     //Should be used only at the start of any of the halves
-    void changeSide(){
-        this->setCoordinates(Coordinates(Constants :: getVal("GOAL_LINE_LENGTH") - coords.x,
-                                         Constants :: getVal("TOUCHLINE_LENGTH") - coords.y));
-    }
+    void changeSide();
 
     //Make triangle from the player's coordinates depending on the half
-    float* getTrianglePositions(bool second_half){
-        //triangle if the player is in second half(grows upwards)
-        if (second_half)
-            return new float[6]{
-                coords.x, coords.y + triangle_offset,
-                coords.x - triangle_offset, coords.y,
-                coords.x + triangle_offset, coords.y
-            };
-        //triangle if the player is in first half(grows downwards)
-        return new float[6]{
-            coords.x, coords.y - triangle_offset,
-            coords.x - triangle_offset, coords.y,
-            coords.x + triangle_offset, coords.y
-        };
-    }
+    unique_ptr<float> getTrianglePositions(pitch_half half) const;
 
     bool operator <(const MatchPlayer& other) const;
     virtual void p_move() = 0;

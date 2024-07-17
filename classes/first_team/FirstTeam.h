@@ -1,7 +1,6 @@
 #pragma once
 #include "../match_players/match_outfield/MatchOutfield.h"
 #include "../match_players/match_goalkeeper/MatchGoalkeeper.h"
-
 class FirstTeam;
 typedef unique_ptr<FirstTeam> unique_first_team;
 class FirstTeam{
@@ -32,6 +31,6 @@ public:
     //Moves all players to the other side of the pitch
     void changeSide();
     
-    //Returns buffer of positions for the first eleven's corresponding triangles depending on the pitch half
-    unique_ptr<float> getTrianglePositions(MatchPlayer :: pitch_half half) const;
+    void drawPlayers(MatchPlayer :: pitch_half half, const Shader& p_shader,
+                     const VertexBufferLayout& player_layout) const;
 };

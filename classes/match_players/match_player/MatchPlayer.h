@@ -1,6 +1,7 @@
 #pragma once
 #include "../../players/player/Player.h"
 #include "../../coordinates/Coordinates.h"
+#include "../../renderer/Renderer.h"
 class MatchPlayer;
 typedef MatchPlayer* m_player_ptr;
 typedef shared_ptr<MatchPlayer> shared_m_player;
@@ -41,6 +42,8 @@ public:
 
     //Make triangle from the player's coordinates depending on the half
     unique_ptr<float> getTrianglePositions(pitch_half half) const;
+    //Draws the player as a triangle
+    void drawTriangle(pitch_half half, const Shader& p_shader, const VertexBufferLayout& player_layout) const;
 
     bool operator <(const MatchPlayer& other) const;
     virtual void p_move() = 0;

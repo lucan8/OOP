@@ -79,6 +79,24 @@ std :: string Shader :: getLinkErrorMessage() const{
     return message;
 }
 
+
+GLint Shader :: getUniformLocation(const std :: string& name){
+    //Checking if the uniform location is already stored
+    if (this->uniform_names_cache.find(name) != this->uniform_names_cache.end())
+        return this->uniform_names_cache[name];
+
+    //Getting the location of the uniform variable
+    GLint location = glGetUniformLocation(this->id, name.c_str());
+
+    if (location == -1)
+        std :: cout << "Warning: uniform " << name << " doesn't exist\n";
+    //Storing the location
+    this->uniform_names_cache[name] = location;
+
+    return location;
+}
+
+
 Shader :: ~Shader(){
     glDeleteProgram(this->id);
 }

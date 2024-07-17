@@ -1,66 +1,59 @@
 #include "Match.h"
 
-void Match :: setPositions(){
-    //Size of position buffer for a team
-    uint16_t team_pos_size = Constants :: getVal("MATCH_TEAM_SIZE") * Constants :: getVal("TRIANGLE_VERTICES")
-                                * Constants :: getVal("NR_COORDS_VERTEX");
-    //Allocating the buffer for player positions
-    this->player_positions = unique_ptr<float>(new float[team_pos_size * 2]);
-    //Getting the positions buffer for the first team                       
-    unique_ptr<float> t1_p_pos = this->t1->getTrianglePositions(MatchPlayer :: pitch_half :: first);
-    //Copying the first team's positions at the beginning of the buffer
-    memcpy(this->player_positions.get(), t1_p_pos.get(), team_pos_size * sizeof(float));
-    //Changing player's positions to the other half of the pitch
-    t2->changeSide();
-    //Getting the positions buffer for the second team
-    unique_ptr<float> t2_p_pos = this->t2->getTrianglePositions(MatchPlayer :: pitch_half :: second);
-    //Copying the second team's positions at the end of the buffer
-    memcpy(this->player_positions.get() + team_pos_size, t2_p_pos.get(), team_pos_size * sizeof(float));
+
+void Match :: draw(){
+    //Loading the shaders
+    const string shader_path = (filesystem::current_path().parent_path() / "resources" / "shaders" / "").string();
+    Shader shader((shader_path + "vertex_shader.glsl"), (shader_path + "fragment_shader.glsl"));
+    
+    this->drawField(shader);
+    this->drawPlayers(shader);
 }
 
-void Match :: createField(){
-        //Loading the shaders
-        const string shader_path = (filesystem::current_path().parent_path() / "resources" / "shaders" / "").string();
-        Shader  pitch_shader((shader_path + "vertex_shader.glsl"),
-                            (shader_path + "fragment_shader.glsl")),
-                middle_line_shader((shader_path + "vertex_shader.glsl"),
-                            (shader_path + "fragment_shader2.glsl")),
-                player_shader((shader_path + "vertex_shader.glsl"),
-                            (shader_path + "fragment_shader1.glsl"));
-        
-        VAO vao;
-        vao.bind();
+void Match :: drawPlayers(Shader& player_shader){
+    player_shader.bind();
+    //Retrieving position of color uniform
+    GLint u_location = player_shader.getUniformLocation("u_Color");
 
-        uint16_t pitch_vert_size = Constants :: getVal("PITCH_VERTICES") * Constants :: getVal("NR_COORDS_VERTEX");
-        uint16_t team_pos_size = Constants :: getVal("MATCH_TEAM_SIZE") * Constants :: getVal("TRIANGLE_VERTICES")
-                                 * Constants :: getVal("NR_COORDS_VERTEX");
-        
-        //Already bound on creation
-        VBO static_vbo(Constants :: getVertexPositions("PITCH"), pitch_vert_size * sizeof(float), GL_STATIC_DRAW),
-            dynamic_vbo(this->player_positions.get(), team_pos_size * 2 * sizeof(float), GL_DYNAMIC_DRAW);
-        
-        GLuint indices[6] = {
-            //Used for pitch, middle line and players
-            0, 1, 2,
-            0, 2, 3
-        };
-        IBO ibo(indices, 6 * sizeof(GLuint));
+    //Layout for player's triangles
+    VertexBufferLayout player_layout;
+    player_layout.addAttribute<float>(2);
 
-        //Drawing the pitch
-        pitch_shader.use();
-        static_vbo.bind();
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0);
-        
-        ibo.bind();
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+    //Red color for the first team
+    glUniform4f(u_location, 1.0f, 0.0f, 0.0f, 1.0f);
+    t1->drawPlayers(MatchPlayer :: pitch_half :: first, player_shader, player_layout);
 
-        //Drawing the players
-        player_shader.use();
-        dynamic_vbo.bind();
-        for (int i = 0; i < Constants :: getVal("MATCH_TEAM_SIZE") * 2; ++i){
-            glEnableVertexAttribArray(0);
-            glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, (void*)((i * 6) * sizeof(float)));
-            glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, nullptr);
-        }
+    //Blue color for the second team
+    glUniform4f(u_location, 0.0f, 0.0f, 1.0f, 1.0f);
+    t2->drawPlayers(MatchPlayer :: pitch_half :: second, player_shader, player_layout);
+}
+
+
+void Match :: drawField(Shader& pitch_shader){
+    pitch_shader.bind();
+    uint16_t pitch_vert_count = Constants :: getVal("PITCH_VERTICES") * Constants :: getVal("NR_COORDS_VERTEX");
+    //Already bound on creation
+    VBO pitch_vbo(Constants :: getVertexPositions("PITCH"), pitch_vert_count * sizeof(float), GL_STATIC_DRAW);
+
+    //Retrieving position of color uniform
+    GLint u_location = pitch_shader.getUniformLocation("u_Color");
+    //Setting color of pitch and drawing it
+    glUniform4f(u_location, 0.2f, 1.0f, 0.1f, 1.0f);
+
+    //Layout for pitch
+    VertexBufferLayout pitch_layout;
+    pitch_layout.addAttribute<float>(2);
+
+    //Binding the pitch VAO and VBO
+    VAO pitch_vao;
+    pitch_vao.addBuffer(pitch_vbo, pitch_layout);
+
+    GLuint pitch_indices[6] = {
+        0, 1, 2,
+        2, 3, 0
+    };
+
+    IBO pitch_ibo(pitch_indices, 6);
+
+    Renderer :: draw(pitch_vao, pitch_ibo, pitch_shader);
 }

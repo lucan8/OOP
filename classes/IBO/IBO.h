@@ -5,9 +5,12 @@
 class IBO{
 private:
     GLuint id;
+    GLsizei count;
 public:
-    IBO(GLuint* indices, GLsizeiptr size);
+    IBO(GLuint* indices, GLsizei count);
     void bind() const;
     void unbind() const;
+
+    GLsizei getCount() const{ return count;}
     ~IBO();
 };

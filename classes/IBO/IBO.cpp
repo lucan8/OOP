@@ -1,9 +1,9 @@
 #include "IBO.h"
 
-IBO :: IBO(GLuint* indices, GLsizeiptr size){
+IBO :: IBO(GLuint* indices, GLsizei count) : count(count){
     glGenBuffers(1, &this->id);
     this->bind();
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, size, indices, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, count * sizeof(GLuint), indices, GL_STATIC_DRAW);
 }
 
 

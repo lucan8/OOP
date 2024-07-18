@@ -6,6 +6,7 @@
 #include <assert.h>
 #include <random>
 
+
 //Ignoring player match stamina for the sake of simplicity
 //Ignoring player match form for the sake of simplicity
 //t1 is in the first half of the pitch, t2 is in the second half

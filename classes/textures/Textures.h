@@ -3,7 +3,6 @@
 #include <GLFW/glfw3.h>
 #include <string>
 #include <memory>
-#include "../vendor/stb_image.h"
 
 class Textures{
 private:
@@ -11,6 +10,7 @@ private:
     std :: unique_ptr<GLubyte> localBuffer;
     GLint width, height, bpp;
 public:
+    //Loads the texture from the file path
     Textures(const std :: string& file_path);
     ~Textures();
 

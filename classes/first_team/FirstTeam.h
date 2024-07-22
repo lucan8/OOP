@@ -3,19 +3,24 @@
 #include "../match_players/match_goalkeeper/MatchGoalkeeper.h"
 class FirstTeam;
 typedef unique_ptr<FirstTeam> unique_first_team;
+//player1, player2, distance
+typedef unordered_map<shared_m_player, unordered_map<shared_m_player, double>> m_adjacency_matrix;
+
 class FirstTeam{
 private:
     string formation;
-    unique_m_squad first_eleven;
+    shared_m_squad first_eleven;
+    m_adjacency_matrix adjacency_matrix;
     unique_m_squad subs;
+
 public:
-    FirstTeam(const string& formation, unique_m_squad first_team, unique_m_squad subs)
-              : formation(formation), first_eleven(move(first_team)), subs(move(subs)){}
+    FirstTeam(const string& formation, shared_m_squad first_team, unique_m_squad subs)
+              : formation(formation), first_eleven(move(first_team)), subs(move(subs)){setAdjacencyMatrix();}
                 
     FirstTeam(){}
     
     const string& getFormation() const{return formation;}
-    const unique_m_squad& getFirstEleven() const{return first_eleven;}
+    const shared_m_squad& getFirstEleven() const{return first_eleven;}
     const unique_m_squad& getSubs() const{return subs;}
 
     //Sums the OVR with chem
@@ -30,7 +35,14 @@ public:
 
     //Moves all players to the other side of the pitch
     void changeSide();
+
+    //From vertical pitch to horizontal pitch(and vice versa)
+    void changeSide1();
     
-    void drawPlayers(MatchPlayer :: pitch_half half, const Shader& p_shader,
+    void drawPlayers(MatchPlayer :: pitch_half half, Shader& p_shader,
                      const VertexBufferLayout& player_layout) const;
+    
+    //Takes every pair of players and calculates the distance between them
+    void setAdjacencyMatrix();
+    void movePlayers();
 };

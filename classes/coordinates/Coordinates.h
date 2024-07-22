@@ -1,5 +1,6 @@
 #pragma once
 #include "../readable/Readable.hpp"
+#include <cmath>
 //Coordinates will be used to determine player position in the pitch matrix
 //Coordinatex x: 15, y: 10 will be matrix[10][15] and so on
 //Also used to hold offsets from one position to another
@@ -12,6 +13,7 @@ struct Coordinates : public Readable{
 
     operator bool()const{return x || y;}
     Coordinates operator-()const{return Coordinates(-x, -y);}
+    float distance(const Coordinates& other)const{return sqrt(pow(x - other.x, 2) + pow(y - other.y, 2));}
     Coordinates operator+(const Coordinates& other)const{return Coordinates(x + other.x, y + other.y);}
     Coordinates operator-(const Coordinates& other)const{return Coordinates(x - other.x, y - other.y);}
 };

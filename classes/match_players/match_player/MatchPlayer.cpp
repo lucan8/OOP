@@ -22,55 +22,78 @@ void MatchPlayer :: changeSide1(){
     this->coords.y = -temp;
 }
 
-void MatchPlayer :: drawCircle(pitch_half half, Shader& p_shader,
-                                 const VertexBufferLayout& player_layout) const{
-    //Getting the triangle vertices
-    uint16_t player_vert_count = Constants :: getVal("SQUARE_VERTICES") * Constants :: getVal("NR_COORDS_VERTEX") 
-                                 * Constants :: getVal("NR_COORDS_TEXTURE");
-                                 
-    unique_ptr<float> player_vert = this->getCanvasPositions(half);
 
-    //Creating the VBO and VAO and binding them
-    VBO player_vbo(player_vert.get(), player_vert_count * sizeof(float), GL_STATIC_DRAW);
+void MatchPlayer :: draw(pitch_half half, Shader& p_shader, const IBO& player_ibo,
+                         const VertexBufferLayout& player_layout, 
+                         const VertexBufferLayout& player_aura_layout) const{
+
+    float player_radius = Constants :: getVal("PLAYER_RADIUS");        
+    //Getting the player's vertices  
+    glm :: mat4 player_vert = this->getPlayerVertices(half, player_radius);
+
+    //Setting and linking the VBO and VAO
+    VBO player_vbo(&player_vert[0][0], sizeof(player_vert), GL_STATIC_DRAW);
     VAO player_vao;
     player_vao.addBuffer(player_vbo, player_layout);
 
-    //Player vert indices for IBO
-    GLuint player_indices[6] = {
-        0, 1, 2,
-        1, 2, 3
-    };
-
-    //Creating the IBO and drawing the player
-    IBO player_ibo(player_indices, 6);
-
     //Setting the player's coordinates
     p_shader.setUniform2f("u_player_coords", glm :: vec2(coords.x, coords.y));
-    Renderer :: draw(player_vao, player_ibo, p_shader);
-    
+
+    drawAura(half, p_shader, player_aura_layout, player_ibo, player_radius * 2);
+    Renderer :: draw(player_vao, player_ibo, p_shader);   
 }
 
 
-unique_ptr<float> MatchPlayer :: getCanvasPositions(pitch_half half) const{
-    const float radius = Constants :: getVal("PLAYER_RADIUS");
-    //Added set of coords represents the texture coords
+void MatchPlayer :: drawAura(pitch_half half, Shader& p_shader,
+                            const VertexBufferLayout& layout, const IBO& player_ibo, float radius) const{     
+    //Getting the vertex positions for the player's aura canvas
+    glm :: mat4x2 player_vert_big = this->getCanvasPositions(radius);
 
-    //triangle if the player is in second half(grows upwards)
-    if (half == pitch_half :: second)
-        return unique_ptr<float>(new float[16]{
-            coords.x - radius, coords.y - radius, 1.0f, 1.0f,
-            coords.x - radius, coords.y + radius , 0.0f, 1.0f,
-            coords.x + radius, coords.y - radius, 1.0f, 0.0f,
-            coords.x + radius, coords.y + radius, 0.0f, 0.0f
+    //Setting and linking and VBO and VAO
+    VBO player_vbo_big(&player_vert_big[0][0], sizeof(player_vert_big), GL_STATIC_DRAW);
+    VAO player_vao_big;
+    player_vao_big.addBuffer(player_vbo_big, layout);
 
-        });
-    //triangle if the player is in first half(grows downwards)
-    return unique_ptr<float>(new float[16]{
-            coords.x - radius, coords.y - radius, 0.0f, 0.0f,
-            coords.x - radius, coords.y + radius , 1.0f, 0.0f,
-            coords.x + radius, coords.y - radius, 0.0f, 1.0f,
-            coords.x + radius, coords.y + radius, 1.0f, 1.0f
-    });
+    //Drawing the player's aura
+    Renderer :: draw(player_vao_big, player_ibo, p_shader);
+}
+
+
+glm :: mat4x2 MatchPlayer :: getCanvasPositions(float radius) const{
+    return glm :: mat4x2(
+        coords.x - radius, coords.y - radius, 
+        coords.x - radius, coords.y + radius,
+        coords.x + radius, coords.y + radius, 
+        coords.x + radius, coords.y - radius
+
+    );
+}
+
+
+glm :: mat4 MatchPlayer :: getPlayerVertices(pitch_half half, float radius) const{
+    //Getting the player's canvas vertex positions coordinates
+    glm :: mat4x4 player_vertices = toMat4(getCanvasPositions(radius));
+    
+    //Getting the texture coordinates
+    float max_x = Constants :: getVal("TEXTURE_MAX_X"), max_y = Constants :: getVal("TEXTURE_MAX_Y");
+    float min_x = Constants :: getVal("TEXTURE_MIN_X"), min_y = Constants :: getVal("TEXTURE_MIN_Y");
+
+    //Setting the texture coordinates depending on the half
+    //Default for the second half
+    player_vertices[0][2] =  max_x, player_vertices[0][3] = max_y,
+    player_vertices[1][2] =  min_x, player_vertices[1][3]  = max_y,
+    player_vertices[2][2] = min_x, player_vertices[2][3] = min_y,
+    player_vertices[3][2] = max_x, player_vertices[3][3] = min_y;
+
+    //For the first half we just swap the texture coordinates
+    if (half == pitch_half :: first)
+        swap(player_vertices[3][2], player_vertices[0][2]),
+        swap(player_vertices[3][3], player_vertices[0][3]),
+        swap(player_vertices[2][2], player_vertices[1][2]),
+        swap(player_vertices[2][3], player_vertices[1][3]);
+            
+    
+    return player_vertices;
 }
 
 

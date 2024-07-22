@@ -7,6 +7,7 @@ typedef MatchPlayer* m_player_ptr;
 typedef shared_ptr<MatchPlayer> shared_m_player;
 typedef unique_ptr<MatchPlayer> unique_m_player;
 typedef vector<unique_m_player> unique_m_squad;
+typedef vector<shared_m_player> shared_m_squad;
 //vector of shared_player represented as map(for easier removal)
 typedef unordered_map<uint16_t, unique_m_player> unique_m_squad_map;
 
@@ -40,13 +41,15 @@ public:
     //Should be used only at the start of any of the halves
     void changeSide();
 
-    //Make triangle from the player's coordinates depending on the half
-    unique_ptr<float> getTrianglePositions(pitch_half half) const;
-    //Draws the player as a triangle
-    void drawTriangle(pitch_half half, const Shader& p_shader, const VertexBufferLayout& player_layout) const;
+    //From vertical pitch to horizontal pitch(and vice versa)
+    void changeSide1();
 
+    //Make triangle from the player's coordinates depending on the half
+    unique_ptr<float> getCanvasPositions(pitch_half half) const;
+    //Draws the player as a triangle
+    void drawCircle(pitch_half half, Shader& p_shader, const VertexBufferLayout& player_layout) const;
     bool operator <(const MatchPlayer& other) const;
-    virtual void p_move() = 0;
+    void p_move();
     virtual void pass() = 0;
     virtual void block() = 0;
     virtual void tackle() = 0;    

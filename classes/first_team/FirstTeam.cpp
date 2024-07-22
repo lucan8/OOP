@@ -12,6 +12,7 @@ void FirstTeam :: changeSide1(){
         p->changeSide1();
 }
 
+
 double FirstTeam :: getElevenTotalStats()const{
     return this->getElevenOVR() + this->getChemestry();
 }
@@ -40,11 +41,14 @@ uint16_t FirstTeam :: getChemestry() const{
     return 0;
 }
 
-void FirstTeam :: drawPlayers(MatchPlayer :: pitch_half half, Shader& p_shader,
-                              const VertexBufferLayout& player_layout)const {
+
+void FirstTeam :: drawPlayers(MatchPlayer :: pitch_half half, Shader& p_shader, const IBO& player_ibo,
+                              const VertexBufferLayout& player_layout, 
+                              const VertexBufferLayout& player_aura_layout)const {
     for (const auto& p : this->first_eleven)
-        p->drawCircle(half, p_shader, player_layout);
+        p->draw(half, p_shader, player_ibo, player_layout, player_aura_layout);
 }
+
 
 void FirstTeam :: setAdjacencyMatrix(){
     for (uint16_t i = 0 ; i < first_eleven.size(); ++i)
@@ -54,6 +58,8 @@ void FirstTeam :: setAdjacencyMatrix(){
                 adjacency_matrix[first_eleven[j]][first_eleven[i]] = distance;
             }
 }
+
+
 void FirstTeam :: movePlayers(){
     for (auto& p : this->first_eleven)
         p->p_move();

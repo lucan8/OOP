@@ -39,8 +39,9 @@ public:
     //From vertical pitch to horizontal pitch(and vice versa)
     void changeSide1();
     
-    void drawPlayers(MatchPlayer :: pitch_half half, Shader& p_shader,
-                     const VertexBufferLayout& player_layout) const;
+    void drawPlayers(MatchPlayer :: pitch_half half, Shader& p_shader, const IBO& player_ibo,
+                     const VertexBufferLayout& player_layout,
+                     const VertexBufferLayout& player_aura_layout) const;
     
     //Takes every pair of players and calculates the distance between them
     void setAdjacencyMatrix();

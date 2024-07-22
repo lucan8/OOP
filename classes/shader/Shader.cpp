@@ -97,6 +97,31 @@ GLint Shader :: getUniformLocation(const std :: string& name){
 }
 
 
+void Shader ::  setUniform1i(const std :: string& name, int value){
+    glUniform1i(this->getUniformLocation(name), value);
+}
+
+
+void Shader ::  setUniform1f(const std :: string& name, float value){
+    glUniform1f(this->getUniformLocation(name), value);
+}
+
+
+void Shader :: setUniform2f(const std :: string& name, const glm :: vec2& values){
+    glUniform2f(this->getUniformLocation(name), values.x, values.y);
+}
+
+
+void Shader :: setUniform4f(const std :: string& name, const glm :: vec4& values){
+    glUniform4f(this->getUniformLocation(name), values.x, values.y, values.z, values.w);
+}
+
+
+void Shader :: setUniformMat4f(const std :: string& name, const glm :: mat4& values){
+    glUniformMatrix4fv(this->getUniformLocation(name), 1, GL_FALSE, &values[0][0]);
+}
+
+
 Shader :: ~Shader(){
     glDeleteProgram(this->id);
 }

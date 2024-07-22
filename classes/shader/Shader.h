@@ -7,6 +7,8 @@
 #include "../exceptions/CompileShaderException.h"
 #include "../exceptions/LinkShaderException.h"
 #include <unordered_map>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 class Shader{
 private:
@@ -22,11 +24,18 @@ public:
     //Loads and compiles the shaders into a single program
     Shader(const std :: string& vertex_file_path, const std :: string& fragment_file_path);
     ~Shader();
+    
     void bind() const{glUseProgram(this->id);}
     void unbind() const{glUseProgram(0);}
     GLuint get() const{return this->id;}
 
     //Returns the location of a uniform variable
     GLint getUniformLocation(const std :: string& name);
+
+    void setUniform1i(const std :: string& name, int value);
+    void setUniform1f(const std :: string& name, float value);
+    void setUniform2f(const std :: string& name, const glm :: vec2& values);
+    void setUniform4f(const std :: string& name, const glm :: vec4& values);
+    void setUniformMat4f(const std :: string& name, const glm :: mat4& values);
 
 };

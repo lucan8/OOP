@@ -43,7 +43,7 @@ uint16_t FirstTeam :: getChemestry() const{
 void FirstTeam :: drawPlayers(MatchPlayer :: pitch_half half, Shader& p_shader,
                               const VertexBufferLayout& player_layout)const {
     for (const auto& p : this->first_eleven)
-        p->drawTriangle(half, p_shader, player_layout);
+        p->drawCircle(half, p_shader, player_layout);
 }
 
 void FirstTeam :: setAdjacencyMatrix(){

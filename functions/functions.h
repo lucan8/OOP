@@ -7,6 +7,7 @@
 #include <memory>
 #include <stdint.h>
 #include "../classes/exceptions/FileOpenException.h"
+#include <glm/glm.hpp>
 
 
 std :: vector<std :: string> split(const std :: string& str, char sep = ' ');
@@ -99,5 +100,18 @@ std :: unordered_map <uint16_t, T> toUMap(const std :: vector<T>& vec){
     for (uint16_t i = 0; i < vec.size(); ++i)
         u_map[i] = vec[i];
     return u_map;
+}
+
+
+//Converts matrices to 4x4 matrices(remaining elements are set to 0)
+template <typename matrix_type>
+glm :: mat4 toMat4(const matrix_type& matrix){
+    glm :: mat4 res_mat;
+    
+    for (uint16_t i = 0; i < matrix.length(); ++i)
+        for (uint16_t j = 0; j < matrix[i].length(); ++j)
+            res_mat[i][j] = matrix[i][j];
+
+    return res_mat;
 }
 

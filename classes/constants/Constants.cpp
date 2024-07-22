@@ -1,5 +1,4 @@
 #include "Constants.h"
-
 unordered_map<string, uint16_t>  Constants :: values;
 unordered_map<string, unordered_map<string, uint16_t>> Constants :: age_info;
 unordered_map<string, vector<string>> Constants :: positions;
@@ -8,10 +7,11 @@ unordered_map<string, vector<string>> Constants :: stats;
 unordered_map<string, vector<pair<string, uint16_t>>> Constants :: stats_ratios;
 vector<string> Constants :: team_names;
 unordered_map<string, Constants :: Formation> Constants :: formations;
+mpos_coords Constants :: p_coords;
 unordered_map<string, string> Constants :: pos_equivalence;
 unordered_map<string, uint16_t> Constants :: subs_layout;
-unordered_map<string, unique_ptr<float>> Constants :: vertex_positions;
-mpos_coords Constants :: p_coords;
+unordered_map<string, unique_ptr<GLfloat>> Constants :: vertices;
+unordered_map<string, unique_ptr<GLuint>> Constants :: vertex_indices;
 
 //Holds  match_positions, the link_matrix, and the coordinates for each position
 struct Constants :: Formation{
@@ -41,7 +41,9 @@ void Constants :: init(){
         initMPosCoords(constants_path + "match_pos_coords.txt");
         initPositionEquivalence(constants_path + "position_equivalence.txt");
         initSubsLayout(constants_path + "subs_layout.txt");
-        initVertexPositions(constants_path + "vertex_position.txt");
+        initVertices(constants_path + "vertices.txt");
+        initVertexIndices(constants_path + "vertex_indices.txt");
+
     }
     catch (FileOpenException& e){
         cerr << e.what() << '\n';
@@ -265,7 +267,7 @@ void Constants :: initPositionEquivalence(const string& file_name){
 }
 
 
-void Constants :: initVertexPositions(const string& file_name){
+void Constants :: initVertices(const string& file_name){
     ifstream fin(file_name);
     if (!fin.is_open())
         throw FileOpenException(__func__, file_name);
@@ -274,11 +276,27 @@ void Constants :: initVertexPositions(const string& file_name){
     uint16_t nr_positions;
 
     while (fin >> const_name >> nr_positions){
-        vertex_positions[const_name] = unique_ptr<float>(new float[nr_positions]);
+        vertices[const_name] = unique_ptr<GLfloat>(new GLfloat[nr_positions]);
         for (int i = 0; i < nr_positions; ++i)
-            fin >> vertex_positions[const_name].get()[i];
+            fin >> vertices[const_name].get()[i];
     }
 }
+
+void Constants :: initVertexIndices(const string& file_name){
+    ifstream fin(file_name);
+    if (!fin.is_open())
+        throw FileOpenException(__func__, file_name);
+
+    string shape;
+    uint16_t nr_indices;
+
+    while (fin >> shape >> nr_indices){
+        vertex_indices[shape] = unique_ptr<GLuint>(new GLuint[nr_indices]);
+        for (int i = 0; i < nr_indices; ++i)
+            fin >> vertex_indices[shape].get()[i];
+    }
+}
+
 uint16_t Constants ::  getVal(const string& const_name){
     try{
         return values.at(const_name);
@@ -436,9 +454,18 @@ const unordered_map<string, uint16_t>& Constants :: getSubsLayout(){
 }
 
 
-float* Constants :: getVertexPositions(const string& const_name){
+GLfloat* Constants :: getVertices(const string& const_name){
     try{
-        return vertex_positions.at(const_name).get();
+        return vertices.at(const_name).get();
+    } catch(out_of_range& e){
+        throw InvalidConstName(__func__, const_name);
+    }
+}
+
+
+GLuint* Constants :: getVertexIndices(const string& const_name){
+    try{
+        return vertex_indices.at(const_name).get();
     } catch(out_of_range& e){
         throw InvalidConstName(__func__, const_name);
     }

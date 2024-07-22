@@ -16,7 +16,7 @@
 #include <unordered_map>
 #include <queue>
 #include <vector>
-
+#include <GL/glew.h>
 using namespace std;
 
 //We have two types of players: OUTFIELD AND GOALKEEPER(GK)
@@ -46,11 +46,9 @@ private:
     //Player type, vector of pairs(stat_name, weight)
     static unordered_map<string, vector<pair<string, uint16_t>>> stats_ratios;
     static vector<string> team_names;
+
     static unordered_map<string, Formation> formations;
     static mpos_coords p_coords;
-
-    //const_name, array of vertex_positions
-    static unordered_map<string, unique_ptr<float>> vertex_positions;
 
     //match_pos, normal_pos
     //ex: "LCB"->"CB", "LCM"->"CM", "LB"->"FULLBACK"
@@ -58,6 +56,11 @@ private:
 
     //Detailed position, nr_players
     static unordered_map<string, uint16_t> subs_layout;
+    //const_name, array of vertices
+    static unordered_map<string, unique_ptr<GLfloat>> vertices;
+
+    //Geometric shape, indices for the vertex positions
+    static unordered_map<string, unique_ptr<GLuint>> vertex_indices;    
     
     static void initValues(const string& file_name);
     static void initPositions(const string& file_name);
@@ -73,7 +76,8 @@ private:
     static void initPositionEquivalence(const string& file_name);
     static void initSubsLayout(const string& file_name);
 
-    static void initVertexPositions(const string& file_name);
+    static void initVertices(const string& file_name);
+    static void initVertexIndices(const string& file_name);
 public:
     static void init();
 
@@ -120,6 +124,8 @@ public:
     static unordered_map<string, uint16_t> getSplitFormation(const string& formation_name);
     static const unordered_map<string, uint16_t>& getSubsLayout();
 
-    //Retrieves the vertex positions for a certain constant name(ex: "PITCH" )
-    static float* getVertexPositions(const string& const_name);
+    //Retrieves the array of vertices for a certain constant name(ex: "PITCH" )
+    //Don't call delete
+    static GLfloat* getVertices(const string& const_name);
+    static GLuint* getVertexIndices(const string& const_name);
 };

@@ -17,12 +17,13 @@ mpos_coords Constants :: p_coords;
 struct Constants :: Formation{
     vector<string> positions;
     link_matrix matrix;
+    //mpos_coords coords;
 
     Formation(){}
 
     void readLinkMatrix(ifstream& fin);
     //Moved outside of formaation class as player positions as independent of formation
-    //void initPlayersCoords();
+    //void initPlayersCoords(ofstream& fout);
 private:
     //Normalizes the coordinates to be between -1 and 1(used in initPlayersCoords)
     //Reading from file now, not needed
@@ -155,6 +156,12 @@ void Constants :: initFormations(const string& file_name){
     
     string formation_name, positions;
 
+    //Comment at the top of the file to be ignored
+    getline(fin, positions);
+    //REMOVE THIS
+    // string constants_path = (filesystem :: current_path().parent_path() / "resources" / "constants" / "").string();
+    // ofstream fout(constants_path + "match_pos_coords.txt");
+
     while (fin.peek() != EOF){
         fin >> formation_name;
         fin.ignore();
@@ -166,8 +173,14 @@ void Constants :: initFormations(const string& file_name){
 
         //Reading link matrix for chemestry
         formations[formation_name].readLinkMatrix(fin);
+
+       //formations[formation_name].initPlayersCoords(fout);
         fin.ignore();
     }
+
+    // for (const auto& p : p_coords){
+    //     fout << p.first << ' ' << p.second.x << ' ' << p.second.y << '\n';
+    // }
 }
 
 void Constants :: initSubsLayout(const string& file_name){
@@ -182,12 +195,13 @@ void Constants :: initSubsLayout(const string& file_name){
         subs_layout[det_p_type] = nr_players;
     }
 }
+
 void Constants :: Formation :: readLinkMatrix(ifstream& fin){
     string pos1, pos2;
     uint16_t nr_links = Constants :: getVal("NR_LINKS");
 
     while (nr_links--){
-        fin >> pos1 >> pos2 >> matrix[pos1][pos2];
+        fin >> pos1 >> pos2 >> matrix[pos1][pos2].y >> matrix[pos1][pos2].x;
         this->matrix[pos2][pos1] = -matrix[pos1][pos2];
     }
 }
@@ -203,15 +217,15 @@ void Constants :: initMPosCoords(const string& file_name){
     while (fin >> pos)
         fin >> p_coords[pos];
 }
+
 /*
-void Constants :: Formation :: initPlayersCoords(){
-    this->coords["GK"] = Coordinates(Constants :: getVal("GOAL_LINE_LENGTH") / 2,
-                                     Constants :: getVal("TOUCHLINE_LENGTH")
-                                     );
+void Constants :: Formation :: initPlayersCoords(ofstream& fout){
+    this->coords["GK"] = Coordinates(0, -Constants :: getVal("TOUCHLINE_LENGTH") / 2);
     queue<string> p_pos;
     p_pos.push("GK");
     while (!p_pos.empty()){
         string pos = p_pos.front();
+        p_coords[pos] = this->coords[pos];
         p_pos.pop();
         //Going through all the positions that are linked to pos
         for (const auto& p : matrix[pos])
@@ -223,12 +237,9 @@ void Constants :: Formation :: initPlayersCoords(){
                 p_pos.push(p.first);
             }
     }
-
-    //Normalizing the coordinates to be between -1 and 1
-    normalizeCoords();
 }
-
-
+*/
+/*
 void Constants :: Formation :: normalizeCoords(){
     float startx = -1.0;
     float starty = 1.0;
@@ -432,6 +443,3 @@ float* Constants :: getVertexPositions(const string& const_name){
         throw InvalidConstName(__func__, const_name);
     }
 }
-
-
-

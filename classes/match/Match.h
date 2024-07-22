@@ -14,13 +14,19 @@ class Match{
 private:
     unique_first_team t1, t2;
 
-    void drawPlayers(Shader& player_shader);
-    void drawField(Shader& pitch_shader);
+    void drawPlayers(Shader& player_shader, const glm :: mat4& proj);
+    void drawField(Shader& pitch_shader, const glm :: mat4& proj);
 public:
     //Draws the pitch and players
     void draw();
     //Setting the player's triangles positions
     Match(unique_first_team t1, unique_first_team t2): t1(move(t1)), t2(move(t2)){
         this->t2->changeSide();
+
+        //From vertical pitch to horizontal pitch(and vice versa)
+        this->t1->changeSide1();
+        this->t2->changeSide1();
     }
+
+    void movePlayers();
 };

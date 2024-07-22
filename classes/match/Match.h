@@ -14,8 +14,8 @@ class Match{
 private:
     unique_first_team t1, t2;
 
-    void drawPlayers(Shader& player_shader, const glm :: mat4& proj);
-    void drawField(Shader& pitch_shader, const glm :: mat4& proj);
+    void drawPlayers(Shader& player_shader, const glm :: mat4& proj, const IBO& player_ibo);
+    void drawField(Shader& pitch_shader, const glm :: mat4& proj, const IBO& pitch_ibo);
 public:
     //Draws the pitch and players
     void draw();

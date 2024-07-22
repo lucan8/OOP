@@ -26,11 +26,14 @@ void Match :: draw(){
     glm :: mat4 proj = glm :: ortho(-pitch_max_x , pitch_max_x ,
                                     -pitch_max_y , pitch_max_y, -1.0f, 1.0f);
 
-    this->drawField(pitch_shader, proj);
-    this->drawPlayers(player_shader, proj);
+    //Getting the indices for the square
+    IBO square_ibo(Constants :: getVertexIndices("SQUARE"), 6);
+
+    this->drawField(pitch_shader, proj, square_ibo);
+    this->drawPlayers(player_shader, proj, square_ibo);
 }
 
-void Match :: drawPlayers(Shader& player_shader, const glm :: mat4& proj){
+void Match :: drawPlayers(Shader& player_shader, const glm :: mat4& proj, const IBO& player_ibo){
     float pitch_padding = Constants :: getVal("PITCH_OUT_PADDING");
 
     const glm :: vec2 halfed_window_res(Constants :: getVal("WINDOW_WIDTH") / 2,
@@ -51,31 +54,36 @@ void Match :: drawPlayers(Shader& player_shader, const glm :: mat4& proj){
     player_shader.setUniform1f("u_player_radius", res_units.x * Constants :: getVal("PLAYER_RADIUS"));
 
     //Layout for player's triangles(2 coords for position, 2 coords for texture)
-    VertexBufferLayout player_layout;
+    VertexBufferLayout player_layout, player_aura_layout;
+    //Coords for vertex positions and texture
     player_layout.addAttribute<float>(2);
     player_layout.addAttribute<float>(2);
 
+    //Coords for vertex positions
+    player_aura_layout.addAttribute<float>(2);
+
     player_shader.setUniform1i("u_Texture", 1);
-    t1->drawPlayers(MatchPlayer :: pitch_half :: first, player_shader, player_layout);
+    t1->drawPlayers(MatchPlayer :: pitch_half :: first, player_shader, player_ibo, player_layout, player_aura_layout);
 
     //Drawing the second team's players
     player_shader.setUniform1i("u_Texture", 2);
-    t2->drawPlayers(MatchPlayer :: pitch_half :: second, player_shader, player_layout);
+    t2->drawPlayers(MatchPlayer :: pitch_half :: second, player_shader, player_ibo, player_layout, player_aura_layout);
 }
 
 
-void Match :: drawField(Shader& pitch_shader, const glm :: mat4& proj){
+void Match :: drawField(Shader& pitch_shader, const glm :: mat4& proj, const IBO& pitch_ibo){
     //Binding the shader and setting the projection matrix
     pitch_shader.bind();
     pitch_shader.setUniformMat4f("u_MVP", proj);
-    
+
+    //Setting the texture to slot 0
+    pitch_shader.setUniform1i("u_Texture", 0);
+
     //Getting the number of values for the pitch vertices
     uint16_t pitch_vert_val_count = Constants :: getVal("SQUARE_VERTICES") * Constants :: getVal("NR_COORDS_VERTEX")
                                     * Constants :: getVal("NR_COORDS_TEXTURE");
     //Already bound on creation
-    VBO pitch_vbo(Constants :: getVertexPositions("PITCH"), pitch_vert_val_count * sizeof(float), GL_STATIC_DRAW);
-
-    pitch_shader.setUniform1i("u_Texture", 0);
+    VBO pitch_vbo(Constants :: getVertices("PITCH"), pitch_vert_val_count * sizeof(float), GL_STATIC_DRAW);
 
     //Layout for pitch
     VertexBufferLayout pitch_layout;
@@ -85,13 +93,6 @@ void Match :: drawField(Shader& pitch_shader, const glm :: mat4& proj){
     //Binding the pitch VAO and VBO
     VAO pitch_vao;
     pitch_vao.addBuffer(pitch_vbo, pitch_layout);
-
-    GLuint pitch_indices[6] = {
-        0, 1, 2,
-        2, 3, 0
-    };
-
-    IBO pitch_ibo(pitch_indices, 6);
 
     Renderer :: draw(pitch_vao, pitch_ibo, pitch_shader);
 }

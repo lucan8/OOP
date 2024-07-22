@@ -21,7 +21,7 @@ unique_first_team Team :: getFirstTeam() const{
         
         //This needs to execute before getSubstitutes
         //because it removes players from the unused players
-        unique_m_squad first_eleven = this->getFirstEleven(f_name, unused_outfields, unused_goalkeepers);
+        shared_m_squad first_eleven = this->getFirstEleven(f_name, unused_outfields, unused_goalkeepers);
         unique_first_team first_team(new FirstTeam(f_name,
                                                    move(first_eleven),
                                                    this->getSubstitutes(unused_outfields, unused_goalkeepers)
@@ -32,17 +32,17 @@ unique_first_team Team :: getFirstTeam() const{
     return best_first_team;
 }
 
-unique_m_squad Team :: getFirstEleven(const string& form_name, shared_squad_map& unused_outfields,
+shared_m_squad Team :: getFirstEleven(const string& form_name, shared_squad_map& unused_outfields,
                                       shared_squad_map& unused_goalkeepers){
-    unique_m_squad first_eleven = getFirstTeamOutfields(form_name, unused_outfields);
-    first_eleven.push_back(getBestGoalkeeper(unused_goalkeepers));
+    shared_m_squad first_eleven = getFirstTeamOutfields(form_name, unused_outfields);
+    first_eleven.emplace_back(getBestGoalkeeper(unused_goalkeepers));
 
     return first_eleven;
 }
 
 
-unique_m_squad Team :: getFirstTeamOutfields(const string& form_name, shared_squad_map& unused_outfields){
-    unique_m_squad first_eleven;
+shared_m_squad Team :: getFirstTeamOutfields(const string& form_name, shared_squad_map& unused_outfields){
+    shared_m_squad first_eleven;
     first_eleven.reserve(Constants :: getVal("MATCH_TEAM_SIZE"));
 
     for (const auto& m_pos : Constants :: getFormationPositions(form_name)){
@@ -62,12 +62,12 @@ unique_m_squad Team :: getFirstTeamOutfields(const string& form_name, shared_squ
 }
 
 
-unique_m_player Team :: getBestGoalkeeper(shared_squad_map& unused_goalkeepers){
+m_player_ptr Team :: getBestGoalkeeper(shared_squad_map& unused_goalkeepers){
     uint16_t best_gk_index = Team :: getBestPlayerIndex(unused_goalkeepers, "GK");
     shared_player& chosen_gk = unused_goalkeepers.at(best_gk_index);
 
-    unique_m_player best_gk(new MatchGoalkeeper(chosen_gk, "GK", chosen_gk->calculateOVR("GK"), 
-                                                Constants :: getMPosCoords("GK")));
+    m_player_ptr best_gk = new MatchGoalkeeper(chosen_gk, "GK", chosen_gk->calculateOVR("GK"), 
+                                                Constants :: getMPosCoords("GK"));
     unused_goalkeepers.erase(best_gk_index);
 
     return best_gk;
@@ -94,7 +94,7 @@ uint16_t Team :: getBestPlayerIndex(const shared_squad_map& players, const strin
 
 unique_m_squad Team :: getSubstitutes(shared_squad_map& unused_outfields, shared_squad_map& unused_goalkeepers){
     unique_m_squad substitutes(Constants :: getVal("NR_PLAYERS_BENCH"));
-    substitutes[0] = move(getBestGoalkeeper(unused_goalkeepers));
+    substitutes[0] = unique_m_player(getBestGoalkeeper(unused_goalkeepers));
     uint16_t subs_index = 1;
 
     //Going through all the p_types for the substitutes

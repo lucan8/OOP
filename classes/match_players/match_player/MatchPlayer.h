@@ -12,15 +12,25 @@ typedef vector<shared_m_player> shared_m_squad;
 typedef unordered_map<uint16_t, unique_m_player> unique_m_squad_map;
 
 class MatchPlayer {
+public:
+    //Enum for the pitch half in which the player starts
+    enum class pitch_half {first, second};
 protected:
     shared_player player;
     const string position; //Can be either a normal position(subs) or a match position(first eleven)
     Coordinates coords;
     const double OVR;
     unsigned short yellow_cards = 0;
+
+    //Draws the player's aura circle;
+    void drawAura(pitch_half half, Shader& p_shader, const VertexBufferLayout& player_layout,
+                       const IBO& p_ibo, float radius) const;
+
+    //left-down, left-up, right-up, right-down
+    glm :: mat4x2 getCanvasPositions(float radius) const;
+    //Follows principle of getCanvasPositions
+    glm :: mat4 getPlayerVertices(pitch_half half, float radius) const;
 public:
-    //Enum for the pitch half in which the player starts
-    enum class pitch_half {first, second};
     
     MatchPlayer(shared_player player = shared_player(),
                 const string& position = "", double OVR = 0, const Coordinates& coords = Coordinates())
@@ -44,10 +54,11 @@ public:
     //From vertical pitch to horizontal pitch(and vice versa)
     void changeSide1();
 
-    //Make triangle from the player's coordinates depending on the half
-    unique_ptr<float> getCanvasPositions(pitch_half half) const;
-    //Draws the player as a triangle
-    void drawCircle(pitch_half half, Shader& p_shader, const VertexBufferLayout& player_layout) const;
+    //Draws the player as a circle
+    void draw(pitch_half half, Shader& p_shader, const IBO& player_ibo,
+              const VertexBufferLayout& player_layout, const VertexBufferLayout& player_aura_layout) const;
+
+    //Compere two players by their OVR
     bool operator <(const MatchPlayer& other) const;
     void p_move();
     virtual void pass() = 0;

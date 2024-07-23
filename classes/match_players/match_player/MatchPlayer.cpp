@@ -39,7 +39,12 @@ void MatchPlayer :: draw(pitch_half half, Shader& p_shader, const IBO& player_ib
     //Setting the player's coordinates
     p_shader.setUniform2f("u_player_coords", glm :: vec2(coords.x, coords.y));
 
+    //Setting the radius for the aura circle
+    p_shader.setUniform1f("u_player_radius", Constants :: getVal("PLAYER_RADIUS") * 2);
     drawAura(half, p_shader, player_aura_layout, player_ibo, player_radius * 2);
+
+    //Setting the radius for the player circle
+    p_shader.setUniform1f("u_player_radius", Constants :: getVal("PLAYER_RADIUS"));
     Renderer :: draw(player_vao, player_ibo, p_shader);   
 }
 

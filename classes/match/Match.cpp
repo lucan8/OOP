@@ -47,11 +47,10 @@ void Match :: drawPlayers(Shader& player_shader, const glm :: mat4& proj, const 
     player_shader.bind();
     player_shader.setUniformMat4f("u_MVP", proj);
 
-    //Setting the unfiforms for determining the player's coordinates according to the window resolution
-    //The player's coord uniform will be set at the player's draw function
+    //Setting the uniforms for determining the player's coordinates according to the window resolution
+    //The player's coord uniform and radius will be set at the player's draw function
     player_shader.setUniform2f("u_units", res_units);
     player_shader.setUniform2f("u_center", halfed_window_res);
-    player_shader.setUniform1f("u_player_radius", res_units.x * Constants :: getVal("PLAYER_RADIUS"));
 
     //Layout for player's triangles(2 coords for position, 2 coords for texture)
     VertexBufferLayout player_layout, player_aura_layout;

@@ -1,6 +1,7 @@
 #include "Player.h"
 #include <numeric>
 #include <random>
+#include "../../exceptions/InvalidPlayerStat.h"
 //TO DO: make exception for stats as well
 /*
 void Player :: Age(){
@@ -15,6 +16,14 @@ void Player :: Age(){
         
 }
 */
+
+double Player :: getStat(const string& stat_name) const{
+    try{
+        return this->stats.at(stat_name);
+    } catch(out_of_range& e){
+        throw InvalidPlayerStat(__func__, stat_name);
+    }
+}
 
 void Player :: eliminateMaxes(vector<pair<string, uint16_t>>& weights) const{
     vector<pair<string, uint16_t>> :: iterator it = weights.begin();

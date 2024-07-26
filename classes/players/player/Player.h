@@ -51,6 +51,7 @@ public:
     const string& getPosition() const{return position;}
 
     const unordered_map<string, double>& getStats() const{return stats;}
+    double getStat(const string& stat_name) const;
 
     bool verifTransferEligible() const{return transfer_eligible;}
     bool verifRedCarded() const{return red_carded;}
@@ -87,5 +88,5 @@ public:
         return p1->calculateOVR(p1->position) < p2->calculateOVR(p2->position);
     }
 
-    virtual ~Player(){cout << "Player destroyed!\n";}
+    virtual ~Player(){}
 };

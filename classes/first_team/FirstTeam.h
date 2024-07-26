@@ -13,6 +13,9 @@ private:
     m_adjacency_matrix adjacency_matrix;
     unique_m_squad subs;
 
+    //Helper function for initPlayersPositions from Match
+    //Sets the players' positions in the players_positions map
+    //void initPlayersPositions(unordered_map<float, unordered_map<float, bool>>& players_positions, bool team) const;
 public:
     FirstTeam(const string& formation, shared_m_squad first_team, unique_m_squad subs)
               : formation(formation), first_eleven(move(first_team)), subs(move(subs)){setAdjacencyMatrix();}
@@ -45,5 +48,9 @@ public:
     
     //Takes every pair of players and calculates the distance between them
     void setAdjacencyMatrix();
-    void movePlayers();
+    
+    //Determines the number of players that intersect with the player passed as argument
+    //Returns the number of intersections and, if there is one opponent, a pointer to him
+    //Argument: player from the other team contained in Match class
+    pair<uint16_t, shared_m_player> getOpponentIntersections(const shared_m_player& player) const;
 };

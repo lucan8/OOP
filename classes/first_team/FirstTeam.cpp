@@ -53,14 +53,43 @@ void FirstTeam :: drawPlayers(MatchPlayer :: pitch_half half, Shader& p_shader, 
 void FirstTeam :: setAdjacencyMatrix(){
     for (uint16_t i = 0 ; i < first_eleven.size(); ++i)
             for (uint16_t j = i + 1; j < first_eleven.size(); ++j){
-                double distance = first_eleven[i]->getCoords().distance(first_eleven[j]->getCoords());
-                adjacency_matrix[first_eleven[i]][first_eleven[j]] = distance;
-                adjacency_matrix[first_eleven[j]][first_eleven[i]] = distance;
+                double dist = distance(first_eleven[i]->getCoords(), first_eleven[j]->getCoords());
+                adjacency_matrix[first_eleven[i]][first_eleven[j]] = dist;
+                adjacency_matrix[first_eleven[j]][first_eleven[i]] = dist;
             }
 }
 
 
-void FirstTeam :: movePlayers(){
-    for (auto& p : this->first_eleven)
-        p->p_move();
+pair<uint16_t, shared_m_player> FirstTeam :: getOpponentIntersections(const shared_m_player& player) const{
+    //Will be needed in case there is only one intersection
+    shared_m_player opponent;
+    uint16_t nr_intersections = 0;
+
+    //We go through the team's first eleven and check if the player intersects with any of them
+    for (const auto& p : this->first_eleven){
+        if (player->intersects(*p)){
+            ++nr_intersections;
+            opponent = p;
+        }
+
+        //Passed two intersections the player should pass the ball so the opponent becomes nullptr
+        if (nr_intersections == 2)
+            return {nr_intersections, nullptr};
+    }
+    
+    return {nr_intersections, opponent};
 }
+
+// void FirstTeam :: movePlayers(const unordered_map<float, unordered_map<float, bool>>& players_positions){
+//     for (auto& p : this->first_eleven)
+//         p->p_move(players_positions);
+// }
+
+
+// void FirstTeam :: initPlayersPositions(unordered_map<float, unordered_map<float, bool>>& players_positions, 
+//                                        bool team) const{
+//     for (const auto& p : this->first_eleven){
+//         Coordinates player_coords = p->getCoords();
+//         players_positions[player_coords.x][player_coords.y] = team;
+//     }
+// }

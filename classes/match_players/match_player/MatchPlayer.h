@@ -26,10 +26,11 @@ protected:
     void drawAura(pitch_half half, Shader& p_shader, const VertexBufferLayout& player_layout,
                        const IBO& p_ibo, float radius) const;
 
-    //left-down, left-up, right-up, right-down
-    glm :: mat4x2 getCanvasPositions(float radius) const;
     //Follows principle of getCanvasPositions
     glm :: mat4 getPlayerVertices(pitch_half half, float radius) const;
+
+    //Decides whether to pass or dribble depending on the opponent's stats
+    void decidePassDribble(const shared_m_player& opponent);
 public:
     
     MatchPlayer(shared_player player = shared_player(),
@@ -60,8 +61,14 @@ public:
 
     //Compere two players by their OVR
     bool operator <(const MatchPlayer& other) const;
-    void p_move();
-    virtual void pass() = 0;
+    bool intersects(const MatchPlayer& other) const;
+    
+    //Decides what to do with the ball depending on the number of intersections with the opposing players
+    //And the opponent's stats(for 0 and 2 intersections there should be no opponent passed)
+    void decide(uint16_t nr_intersections, const shared_m_player& opponent = nullptr);
+    void advance();
+    virtual void pass(){};
     virtual void block() = 0;
-    virtual void tackle() = 0;    
+    virtual void tackle() = 0; 
+    void dribble(){};   
 };

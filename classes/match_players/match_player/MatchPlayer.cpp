@@ -37,22 +37,22 @@ void MatchPlayer :: draw(pitch_half half, Shader& p_shader, const IBO& player_ib
     player_vao.addBuffer(player_vbo, player_layout);
 
     //Setting the player's coordinates
-    p_shader.setUniform2f("u_player_coords", glm :: vec2(coords.x, coords.y));
+    p_shader.setUniform2f("u_entity_coords", glm :: vec2(coords.x, coords.y));
 
     //Setting the radius for the aura circle
-    p_shader.setUniform1f("u_player_radius", Constants :: getVal("PLAYER_RADIUS") * 2);
+    p_shader.setUniform1f("u_entity_radius", Constants :: getVal("PLAYER_RADIUS") * 2);
     drawAura(half, p_shader, player_aura_layout, player_ibo, player_radius * 2);
 
     //Setting the radius for the player circle
-    p_shader.setUniform1f("u_player_radius", Constants :: getVal("PLAYER_RADIUS"));
-    Renderer :: draw(player_vao, player_ibo, p_shader);   
+    p_shader.setUniform1f("u_entity_radius", Constants :: getVal("PLAYER_RADIUS"));
+    Renderer :: draw(player_vao, player_ibo, p_shader);
 }
 
 
 void MatchPlayer :: drawAura(pitch_half half, Shader& p_shader,
                             const VertexBufferLayout& layout, const IBO& player_ibo, float radius) const{     
     //Getting the vertex positions for the player's aura canvas
-    glm :: mat4x2 player_vert_big = this->getCanvasPositions(radius);
+    glm :: mat4x2 player_vert_big = getCanvasPositions(this->coords, radius);
 
     //Setting and linking and VBO and VAO
     VBO player_vbo_big(&player_vert_big[0][0], sizeof(player_vert_big), GL_STATIC_DRAW);
@@ -64,20 +64,10 @@ void MatchPlayer :: drawAura(pitch_half half, Shader& p_shader,
 }
 
 
-glm :: mat4x2 MatchPlayer :: getCanvasPositions(float radius) const{
-    return glm :: mat4x2(
-        coords.x - radius, coords.y - radius, 
-        coords.x - radius, coords.y + radius,
-        coords.x + radius, coords.y + radius, 
-        coords.x + radius, coords.y - radius
-
-    );
-}
-
 
 glm :: mat4 MatchPlayer :: getPlayerVertices(pitch_half half, float radius) const{
     //Getting the player's canvas vertex positions coordinates
-    glm :: mat4x4 player_vertices = toMat4(getCanvasPositions(radius));
+    glm :: mat4x4 player_vertices = toMat4(getCanvasPositions(this->coords, radius));
     
     //Getting the texture coordinates
     float max_x = Constants :: getVal("TEXTURE_MAX_X"), max_y = Constants :: getVal("TEXTURE_MAX_Y");
@@ -102,9 +92,49 @@ glm :: mat4 MatchPlayer :: getPlayerVertices(pitch_half half, float radius) cons
 }
 
 
-void MatchPlayer :: p_move(){
-    
+void MatchPlayer :: decide(uint16_t nr_intersections, const shared_m_player& opponent){
+    switch (nr_intersections){
+        case 0:
+            this->advance();
+            break;
+        case 1:
+            this->decidePassDribble(opponent);
+            break;
+        default:
+            this->pass();
+    }
+}
 
+
+void MatchPlayer :: advance(){
+    this->coords.x += 1;
+}
+
+
+void MatchPlayer :: decidePassDribble(const shared_m_player& opponent){
+    //Make this a function in player
+
+    //Dribbling related stats(add weights for these)
+    double p_stat_sum = this->player->getStat("PAC") + this->player->getStat("DRI") + 
+                        this->player->getStat("PHY") + this->player->getStat("AGG");
+
+    //Defending related stats(add weights for these)
+    double o_stat_sum = opponent->player->getStat("PAC") + opponent->player->getStat("DEF") + 
+                        opponent->player->getStat("PHY") + opponent->player->getStat("AGG");
+
+    if (p_stat_sum < o_stat_sum)
+        this->pass();
+    else
+        this->dribble();
+}
+
+
+bool MatchPlayer :: intersects(const MatchPlayer& other) const{
+    float dist = distance(this->coords, other.coords);
+    float aura_radius = Constants :: getVal("PLAYER_RADIUS") * 2;
+
+    //If the distance is less than the sum of the two players auras then they intersect
+    return dist <= aura_radius * 2;
 }
 
 

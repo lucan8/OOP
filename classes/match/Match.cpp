@@ -1,56 +1,75 @@
 #include "Match.h"
 #include "../textures/Textures.h"
 
+Match :: Match(unique_first_team t1, unique_first_team t2): t1(move(t1)), t2(move(t2)), ball_coords(0, 0){
+    this->t2->changeSide();
+
+    //From vertical pitch to horizontal pitch(and vice versa)
+    this->t1->changeSide1();
+    this->t2->changeSide1();
+
+    loadTextures();
+}
+
+
+void Match :: loadTextures(){
+    const string texture_path = (filesystem::current_path().parent_path() / "resources" / "textures" / "").string();
+    //Loading the textures
+    textures.emplace("PITCH", texture_path + "pitch2.png"),
+    textures.emplace("BALL", texture_path + "ball.png"),
+    textures.emplace("TEAM1", texture_path +  "arsenal.png"),
+    textures.emplace("TEAM2", texture_path + "real_madrid.png");
+    
+    //Binding the textures
+    textures["PITCH"].bind(0);
+    textures["BALL"].bind(1);
+    textures["TEAM1"].bind(2);
+    textures["TEAM2"].bind(3);
+}
+
+
 void Match :: draw(){
     //Setting the shaders paths
     const string vert_shader_path = (filesystem::current_path().parent_path() / "resources" / "shaders" / "vertex" / "").string(),
                  frag_shader_path = (filesystem::current_path().parent_path() / "resources" / "shaders" / "fragment" / "").string();
 
     //Loading the shaders
-    Shader pitch_shader((vert_shader_path + "player.glsl"), (frag_shader_path + "pitch.glsl")),
-           player_shader((vert_shader_path + "player.glsl"), (frag_shader_path + "player.glsl"));
+    Shader entity_shader((vert_shader_path + "entity.glsl"), (frag_shader_path + "entity.glsl"));
+    entity_shader.bind();
     
-    Textures pitch_texture((filesystem::current_path().parent_path() / "resources" / "textures" / "pitch2.png").string()),
-             team1_texture((filesystem::current_path().parent_path() / "resources" / "textures" / "arsenal.png").string()),
-             team2_texture((filesystem::current_path().parent_path() / "resources" / "textures" / "real_madrid.png").string());
+    float pitch_padding = Constants :: getVal("PITCH_OUT_PADDING");
+    //Setting the window resolution and the pitch resolution and the units for the window relative to the pitch
+    const glm :: vec2 halfed_window_res(Constants :: getVal("WINDOW_WIDTH") / 2,
+                                        Constants :: getVal("WINDOW_HEIGHT") / 2),
+                      halfed_pitch_res (Constants :: getVal("TOUCHLINE_LENGTH") / 2 + pitch_padding,
+                                        Constants :: getVal("GOAL_LINE_LENGTH") / 2 + pitch_padding),
+                      res_units(halfed_window_res / halfed_pitch_res);
 
-    //Binding the textures
-    pitch_texture.bind(0);
-    team1_texture.bind(1);
-    team2_texture.bind(2);
+    //Setting the projection matrix                       
+    glm :: mat4 proj = glm :: ortho(-halfed_pitch_res.x, halfed_pitch_res.x,
+                                    -halfed_pitch_res.y, halfed_pitch_res.y);
 
-    //Setting the projection matrix
-    float pitch_max_x = Constants :: getVal("TOUCHLINE_LENGTH") / 2 + Constants :: getVal("PITCH_OUT_PADDING"),
-          pitch_max_y = Constants :: getVal("GOAL_LINE_LENGTH") / 2 + Constants :: getVal("PITCH_OUT_PADDING");
-
-    glm :: mat4 proj = glm :: ortho(-pitch_max_x , pitch_max_x ,
-                                    -pitch_max_y , pitch_max_y, -1.0f, 1.0f);
+    entity_shader.setUniformMat4f("u_projection", proj);
 
     //Getting the indices for the square
     IBO square_ibo(Constants :: getVertexIndices("SQUARE"), 6);
 
-    this->drawField(pitch_shader, proj, square_ibo);
-    this->drawPlayers(player_shader, proj, square_ibo);
+    this->drawField(entity_shader, square_ibo);
+
+    //Setting the uniforms for determining the entity's coordinates according to the window resolution
+    entity_shader.setUniform2f("u_screen_units", res_units);
+    entity_shader.setUniform2f("u_screen_center", halfed_window_res);
+
+    this->drawBall(entity_shader, square_ibo);
+    this->drawPlayers(entity_shader, square_ibo);
 }
 
-void Match :: drawPlayers(Shader& player_shader, const glm :: mat4& proj, const IBO& player_ibo){
-    float pitch_padding = Constants :: getVal("PITCH_OUT_PADDING");
-
-    const glm :: vec2 halfed_window_res(Constants :: getVal("WINDOW_WIDTH") / 2,
-                                        Constants :: getVal("WINDOW_HEIGHT") / 2),
-                      halfed_pitch_res(Constants :: getVal("TOUCHLINE_LENGTH") / 2 + pitch_padding,
-                                       Constants :: getVal("GOAL_LINE_LENGTH") / 2 + pitch_padding),
-                      res_units(halfed_window_res.x / halfed_pitch_res.x,
-                                halfed_window_res.y / halfed_pitch_res.y);
-
-    //Binding the shader and setting the projection matrix
+void Match :: drawPlayers(Shader& player_shader, const IBO& player_ibo){
+    //Binding the shader
     player_shader.bind();
-    player_shader.setUniformMat4f("u_MVP", proj);
 
-    //Setting the uniforms for determining the player's coordinates according to the window resolution
-    //The player's coord uniform and radius will be set at the player's draw function
-    player_shader.setUniform2f("u_units", res_units);
-    player_shader.setUniform2f("u_center", halfed_window_res);
+    //Setting the entity type
+    player_shader.setUniform1i("u_entity_type", Constants :: getEntityNumber("PLAYER"));
 
     //Layout for player's triangles(2 coords for position, 2 coords for texture)
     VertexBufferLayout player_layout, player_aura_layout;
@@ -61,19 +80,21 @@ void Match :: drawPlayers(Shader& player_shader, const glm :: mat4& proj, const 
     //Coords for vertex positions
     player_aura_layout.addAttribute<float>(2);
 
-    player_shader.setUniform1i("u_Texture", 1);
+    player_shader.setUniform1i("u_Texture", 2);
     t1->drawPlayers(MatchPlayer :: pitch_half :: first, player_shader, player_ibo, player_layout, player_aura_layout);
 
     //Drawing the second team's players
-    player_shader.setUniform1i("u_Texture", 2);
+    player_shader.setUniform1i("u_Texture", 3);
     t2->drawPlayers(MatchPlayer :: pitch_half :: second, player_shader, player_ibo, player_layout, player_aura_layout);
 }
 
 
-void Match :: drawField(Shader& pitch_shader, const glm :: mat4& proj, const IBO& pitch_ibo){
-    //Binding the shader and setting the projection matrix
+void Match :: drawField(Shader& pitch_shader, const IBO& pitch_ibo){
+    //Binding the shader
     pitch_shader.bind();
-    pitch_shader.setUniformMat4f("u_MVP", proj);
+
+    //Setting the entity type
+    pitch_shader.setUniform1i("u_entity_type", Constants :: getEntityNumber("PITCH"));
 
     //Setting the texture to slot 0
     pitch_shader.setUniform1i("u_Texture", 0);
@@ -81,7 +102,7 @@ void Match :: drawField(Shader& pitch_shader, const glm :: mat4& proj, const IBO
     //Getting the number of values for the pitch vertices
     uint16_t pitch_vert_val_count = Constants :: getVal("SQUARE_VERTICES") * Constants :: getVal("NR_COORDS_VERTEX")
                                     * Constants :: getVal("NR_COORDS_TEXTURE");
-    //Already bound on creation
+    //Setting the pitch vertices
     VBO pitch_vbo(Constants :: getVertices("PITCH"), pitch_vert_val_count * sizeof(float), GL_STATIC_DRAW);
 
     //Layout for pitch
@@ -97,8 +118,68 @@ void Match :: drawField(Shader& pitch_shader, const glm :: mat4& proj, const IBO
 }
 
 
-void Match :: movePlayers(){
-    //srand(time(0));
-    t1->movePlayers();
-    t2->movePlayers();
+void Match :: drawBall(Shader& ball_shader, const IBO& ball_ibo){
+    //Binding the shader
+    ball_shader.bind();
+
+    //Setting the entity type
+    ball_shader.setUniform1i("u_entity_type", Constants :: getEntityNumber("BALL"));
+
+    //Setting the ball's coordinates
+    ball_shader.setUniform2f("u_entity_coords", glm :: vec2(ball_coords.x, ball_coords.y));
+
+    //Setting the ball's radius
+    ball_shader.setUniform1f("u_entity_radius", Constants :: getVal("PLAYER_RADIUS") / 2.0);
+
+    //Setting the texture to slot 1
+    ball_shader.setUniform1i("u_Texture", 1);
+
+    //Getting the ball canvas vertices
+    glm :: mat4 ball_vertices = this->getBallVertices();
+    
+    //Creating the VBO for the ball canvas
+    VBO ball_vbo(&ball_vertices[0][0], sizeof(ball_vertices), GL_DYNAMIC_DRAW);
+
+    //Layout for ball canvas
+    VertexBufferLayout ball_layout;
+    ball_layout.addAttribute<float>(2);
+    ball_layout.addAttribute<float>(2);
+
+    //Binding the ball VAO and VBO
+    VAO ball_vao;
+    ball_vao.addBuffer(ball_vbo, ball_layout);
+
+    Renderer :: draw(ball_vao, ball_ibo, ball_shader);
 }
+
+
+glm :: mat4 Match :: getBallVertices() const{
+    glm :: mat4 ball_vertices = toMat4(getCanvasPositions(ball_coords, Constants :: getVal("PLAYER_RADIUS") / 2.0));
+
+    //Getting the texture coordinates
+    float max_x = Constants :: getVal("TEXTURE_MAX_X"), max_y = Constants :: getVal("TEXTURE_MAX_Y");
+    float min_x = Constants :: getVal("TEXTURE_MIN_X"), min_y = Constants :: getVal("TEXTURE_MIN_Y");
+
+    //Setting the texture coordinates
+    ball_vertices[0][2] = min_x, ball_vertices[0][3] = min_y,
+    ball_vertices[1][2] = min_x, ball_vertices[1][3] = max_y,
+    ball_vertices[2][2] = max_x, ball_vertices[2][3] = max_y,
+    ball_vertices[3][2] = max_x, ball_vertices[3][3] = min_y;
+
+    return ball_vertices;
+}
+
+
+void Match :: movePlayers(){                    
+    //Going through the first team's first and deciding the next move of each player
+    for (const auto& t1_player : t1->getFirstEleven()){
+        uint16_t nr_intersections = 0;
+        shared_m_player opponent;
+        //If the has the ball we determine the number of opposing players that intersect with him
+        if (t1_player->getCoords() == ball_coords)
+            tie(nr_intersections, opponent) = t2->getOpponentIntersections(t1_player);
+        t1_player->decide(nr_intersections, opponent);
+}
+}
+
+

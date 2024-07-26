@@ -3,6 +3,7 @@
 #include <GLFW/glfw3.h>
 #include "../renderer/Renderer.h"
 #include "../first_team/FirstTeam.h"
+#include "../textures/Textures.h"
 #include <assert.h>
 #include <random>
 
@@ -13,20 +14,27 @@
 class Match{
 private:
     unique_first_team t1, t2;
+    Coordinates ball_coords;
 
-    void drawPlayers(Shader& player_shader, const glm :: mat4& proj, const IBO& player_ibo);
-    void drawField(Shader& pitch_shader, const glm :: mat4& proj, const IBO& pitch_ibo);
+    unordered_map<string, Textures> textures;
+    //player coord x, player coord y, bool for team(0 for t1, 1 for t2)
+    //unordered_map<float, unordered_map<float, bool>> players_positions;
+
+    void drawPlayers(Shader& player_shader, const IBO& player_ibo);
+    void drawField(Shader& pitch_shader, const IBO& pitch_ibo);
+    void drawBall(Shader& ball_shader, const IBO& ball_ibo);
+
+    //Returns the ball vertices(contains the position and texture coords)
+    glm :: mat4 getBallVertices() const;
+
+    //Loads and binds the textures needed(pitch, ball, teams)
+    void loadTextures();
+    //void initPlayersPositions();
 public:
     //Draws the pitch and players
     void draw();
-    //Setting the player's triangles positions
-    Match(unique_first_team t1, unique_first_team t2): t1(move(t1)), t2(move(t2)){
-        this->t2->changeSide();
-
-        //From vertical pitch to horizontal pitch(and vice versa)
-        this->t1->changeSide1();
-        this->t2->changeSide1();
-    }
+    
+    Match(unique_first_team t1, unique_first_team t2);
 
     void movePlayers();
 };

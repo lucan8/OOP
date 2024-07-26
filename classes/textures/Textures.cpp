@@ -1,10 +1,13 @@
 #include "Textures.h"
 #include "../../vendor/stb_image.h"
+#include <memory>
+
 Textures :: Textures(const std :: string& file_path){
+    GLint width, height, bpp;
     stbi_set_flip_vertically_on_load(1);
-    this->localBuffer = std :: unique_ptr<GLubyte>(stbi_load(file_path.c_str(), &this->width, &this->height,
-                                                             &this->bpp, 4));
-    if(this->localBuffer == nullptr)
+    
+    std :: unique_ptr<GLubyte> localBuffer(stbi_load(file_path.c_str(), &width, &height,&bpp, 4));
+    if(localBuffer == nullptr)
         throw std :: runtime_error("Failed to load texture from " + file_path);
     
     glGenTextures(1, &this->id);
@@ -19,7 +22,7 @@ Textures :: Textures(const std :: string& file_path){
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
     //Setting the texture data
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, this->width, this->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, this->localBuffer.get());
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, localBuffer.get());
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 

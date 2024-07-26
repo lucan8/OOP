@@ -1,4 +1,5 @@
 #include "Constants.h"
+
 unordered_map<string, uint16_t>  Constants :: values;
 unordered_map<string, unordered_map<string, uint16_t>> Constants :: age_info;
 unordered_map<string, vector<string>> Constants :: positions;
@@ -12,6 +13,7 @@ unordered_map<string, string> Constants :: pos_equivalence;
 unordered_map<string, uint16_t> Constants :: subs_layout;
 unordered_map<string, unique_ptr<GLfloat>> Constants :: vertices;
 unordered_map<string, unique_ptr<GLuint>> Constants :: vertex_indices;
+unordered_map<string, uint16_t> Constants :: entity_types;
 
 //Holds  match_positions, the link_matrix, and the coordinates for each position
 struct Constants :: Formation{
@@ -43,7 +45,7 @@ void Constants :: init(){
         initSubsLayout(constants_path + "subs_layout.txt");
         initVertices(constants_path + "vertices.txt");
         initVertexIndices(constants_path + "vertex_indices.txt");
-
+        initEntityTypes(constants_path + "entity_types.txt");
     }
     catch (FileOpenException& e){
         cerr << e.what() << '\n';
@@ -297,6 +299,20 @@ void Constants :: initVertexIndices(const string& file_name){
     }
 }
 
+
+void Constants :: initEntityTypes(const string& file_name){
+    ifstream fin(file_name);
+    if (!fin.is_open())
+        throw FileOpenException(__func__, file_name);
+
+    string entity_type;
+    uint16_t entity_nr;
+
+    while (fin >> entity_type >> entity_nr)
+        entity_types[entity_type] = entity_nr;
+}
+
+
 uint16_t Constants ::  getVal(const string& const_name){
     try{
         return values.at(const_name);
@@ -468,5 +484,14 @@ GLuint* Constants :: getVertexIndices(const string& const_name){
         return vertex_indices.at(const_name).get();
     } catch(out_of_range& e){
         throw InvalidConstName(__func__, const_name);
+    }
+}
+
+
+uint16_t Constants :: getEntityNumber(const string& entity_type){
+    try{
+        return entity_types.at(entity_type);
+    } catch(out_of_range& e){
+        throw InvalidEntityType(__func__, entity_type);
     }
 }

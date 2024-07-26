@@ -9,6 +9,7 @@
 #include "../exceptions/InvalidPlayerType.h"
 #include "../exceptions/InvalidFormation.h"
 #include "../exceptions/InvalidMatchPosition.h"
+#include "../exceptions/InvalidEntityType.h"
 #include "../../functions/functions.h"
 #include "../coordinates/Coordinates.h"
 #include <iostream>
@@ -60,7 +61,9 @@ private:
     static unordered_map<string, unique_ptr<GLfloat>> vertices;
 
     //Geometric shape, indices for the vertex positions
-    static unordered_map<string, unique_ptr<GLuint>> vertex_indices;    
+    static unordered_map<string, unique_ptr<GLuint>> vertex_indices;
+    //Entity type, entity number
+    static unordered_map<string, uint16_t> entity_types; 
     
     static void initValues(const string& file_name);
     static void initPositions(const string& file_name);
@@ -78,6 +81,8 @@ private:
 
     static void initVertices(const string& file_name);
     static void initVertexIndices(const string& file_name);
+
+    static void initEntityTypes(const string& file_name);
 public:
     static void init();
 
@@ -128,4 +133,6 @@ public:
     //Don't call delete
     static GLfloat* getVertices(const string& const_name);
     static GLuint* getVertexIndices(const string& const_name);
+
+    static uint16_t getEntityNumber(const string& entity_type);
 };

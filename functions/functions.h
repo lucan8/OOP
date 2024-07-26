@@ -7,18 +7,24 @@
 #include <memory>
 #include <stdint.h>
 #include "../classes/exceptions/FileOpenException.h"
+#include "../classes/coordinates/Coordinates.h"
 #include <glm/glm.hpp>
 
-
+//Splits a string by a separator
 std :: vector<std :: string> split(const std :: string& str, char sep = ' ');
+//Reads file content and returns it as a string
 std :: string ReadFile(const std :: string& file_path);
+//Returns the positions for the square canvas(center is x, y and 2 * radius is the side of the square)
+glm :: mat4x2 getCanvasPositions(Coordinates coords, float radius);
 
+//Initializes a map with keys from a vector
 template <typename key, typename val>
 void initMap(std :: unordered_map<key, val>& u_map, std :: vector<key> keys){
     for (const auto& k : keys)
         u_map[k];
 }
 
+//Returns a vector of keys from an unordered map
 template <typename key, typename val>
 std :: vector<key> getKeys(const std :: unordered_map<key, val>& u_map){
     std :: vector<key> keys;
@@ -29,6 +35,7 @@ std :: vector<key> getKeys(const std :: unordered_map<key, val>& u_map){
     return keys;
 }
 
+//Returns a vector of values from an unordered map
 template <typename key, typename val>
 std :: vector<val> getValues(const std :: unordered_map<key, val>& u_map){
     std :: vector<val> values;
@@ -39,6 +46,7 @@ std :: vector<val> getValues(const std :: unordered_map<key, val>& u_map){
     return values;
 }
 
+//Returns a vector of keys from a vector of pairs
 template <typename key, typename val>
 std :: vector<key> getKeys(const std :: vector<std :: pair<key, val>>& u_map){
     std :: vector<key> keys;
@@ -49,6 +57,7 @@ std :: vector<key> getKeys(const std :: vector<std :: pair<key, val>>& u_map){
     return keys;
 }
 
+//Returns a vector of values from a vector of pairs
 template <typename key, typename val>
 std :: vector<val> getValues(const std :: vector<std :: pair<key, val>>& u_map){
     std :: vector<val> values;

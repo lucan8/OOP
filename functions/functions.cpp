@@ -24,3 +24,16 @@ std :: string ReadFile(const std :: string& file_path){
 
     return content;
 }
+
+
+//Returns the positions for the square canvas(center is x, y and 2 * radius is the side of the square)
+//left bottom, left top, right top, right bottom
+glm :: mat4x2 getCanvasPositions(Coordinates coords, float radius) {
+    return glm :: mat4x2(
+        coords.x - radius, coords.y - radius, 
+        coords.x - radius, coords.y + radius,
+        coords.x + radius, coords.y + radius, 
+        coords.x + radius, coords.y - radius
+
+    );
+}

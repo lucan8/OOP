@@ -19,15 +19,15 @@ private:
     //Should only be used before getSubstitutes
     //Returns the best first eleven for a formation from unused players
     //Players that are part of the starting 11 are removed from the unused players
-    static unique_m_squad getFirstEleven(const string& form_name, shared_squad_map& unused_outfields,
+    static shared_m_squad getFirstEleven(const string& form_name, shared_squad_map& unused_outfields,
                                          shared_squad_map& unused_goalkeepers);
 
     //Helper function for getFirstEleven, returns the best outfield players for a formation
-    static unique_m_squad getFirstTeamOutfields(const string& form_name, 
+    static shared_m_squad getFirstTeamOutfields(const string& form_name, 
                                                 shared_squad_map& unused_outfields);
                                                 
     //Returns the best goalkeeper in the form of a match player
-    static unique_m_player getBestGoalkeeper(shared_squad_map& unused_goalkeepers);
+    static m_player_ptr getBestGoalkeeper(shared_squad_map& unused_goalkeepers);
 
     //Should only be used after getFirstEleven
     //Returns the best substitutes from unused players

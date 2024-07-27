@@ -15,6 +15,15 @@ class MatchPlayer {
 public:
     //Enum for the pitch half in which the player starts
     enum class pitch_half {first, second};
+
+    //Struct used for passing options(should only be used in FirstTeam and MatchPlayer)
+    //Contains a teammate ovr, the chance of receiving a succesful pass 
+    //And the distance from the player to the goal
+    struct PassingInfo{
+        shared_m_player team_mate;
+        double pass_success_chance;
+        double distance_from_goal;
+    };
 protected:
     shared_player player;
     const string position; //Can be either a normal position(subs) or a match position(first eleven)
@@ -29,8 +38,9 @@ protected:
     //Follows principle of getCanvasPositions
     glm :: mat4 getPlayerVertices(pitch_half half, float radius) const;
 
-    //Decides whether to pass or dribble depending on the opponent's stats
-    void decidePassDribble(const shared_m_player& opponent);
+    //Decides whether to pass or dribble depending on the opponent's stats and passing options
+    void decidePassDribble(const shared_m_player& opponent,
+                           const vector<PassingInfo>& passing_options);
 public:
     
     MatchPlayer(shared_player player = shared_player(),
@@ -61,13 +71,20 @@ public:
 
     //Compere two players by their OVR
     bool operator <(const MatchPlayer& other) const;
+    //Two players intersect if their aura circles intersect
     bool intersects(const MatchPlayer& other) const;
     
     //Decides what to do with the ball depending on the number of intersections with the opposing players
-    //And the opponent's stats(for 0 and 2 intersections there should be no opponent passed)
-    void decide(uint16_t nr_intersections, const shared_m_player& opponent = nullptr);
+    //The the opponent's stats and passing options(for 0 and 2 intersections there should be no opponent passed)
+    void decide(uint16_t nr_intersections, const vector<PassingInfo>& passing_options, 
+                const shared_m_player& opponent);
+
+    //Gets the chence of sending a succesful pass to a player at a certain distance
+    double MatchPlayer :: getPassChance(double pass_distance) const;
+    //Calcualtes the chance of choosing this PassingInfo option
+    double MatchPlayer :: getFinalPassChance(const PassingInfo& pass_info) const;
     void advance();
-    virtual void pass(){};
+    virtual void pass(const vector<PassingInfo>& passing_options);
     virtual void block() = 0;
     virtual void tackle() = 0; 
     void dribble(){};   

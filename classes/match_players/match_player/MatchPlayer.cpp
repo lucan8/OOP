@@ -1,5 +1,5 @@
 #include "MatchPlayer.h"
-
+#include <random>
 void MatchPlayer :: addYellowCard(){
     ++yellow_cards;
     player->addYellowCard();
@@ -92,16 +92,17 @@ glm :: mat4 MatchPlayer :: getPlayerVertices(pitch_half half, float radius) cons
 }
 
 
-void MatchPlayer :: decide(uint16_t nr_intersections, const shared_m_player& opponent){
+void MatchPlayer :: decide(uint16_t nr_intersections, const vector<PassingInfo>& passing_options,
+                           const shared_m_player& opponent){
     switch (nr_intersections){
         case 0:
             this->advance();
             break;
         case 1:
-            this->decidePassDribble(opponent);
+            this->decidePassDribble(opponent, passing_options);
             break;
         default:
-            this->pass();
+            this->pass(passing_options);
     }
 }
 
@@ -111,7 +112,8 @@ void MatchPlayer :: advance(){
 }
 
 
-void MatchPlayer :: decidePassDribble(const shared_m_player& opponent){
+void MatchPlayer :: decidePassDribble(const shared_m_player& opponent, 
+                                      const vector<PassingInfo>& passing_options){
     //Make this a function in player
 
     //Dribbling related stats(add weights for these)
@@ -123,9 +125,62 @@ void MatchPlayer :: decidePassDribble(const shared_m_player& opponent){
                         opponent->player->getStat("PHY") + opponent->player->getStat("AGG");
 
     if (p_stat_sum < o_stat_sum)
-        this->pass();
+        this->pass(passing_options);
     else
         this->dribble();
+}
+
+
+double MatchPlayer :: getPassChance(double pass_distance) const{
+    const double max_chance = 100;
+    //Each pass stat is equivalent to 0.36 meters(should be part of the constants)
+    const double pass_distance_multiplier = 0.36;
+    //100% chance of a successful pass
+    const double pass_secure_radius = this->player->getStat("PAS") * pass_distance_multiplier;
+    //With each meter past "pass_distance" the probability of a successful pass decreases by 5%
+    const uint16_t meter_pass_chance_decrease = 5;
+
+    //If withing that distance is 100%(max_chance), else it decreases by 5% for each meter
+    return min(max_chance, max_chance - (pass_distance - pass_secure_radius) * meter_pass_chance_decrease);
+}
+
+
+double MatchPlayer :: getFinalPassChance(const PassingInfo& pass_info) const{
+    uint16_t pass_chance_weight = 4,
+             distance_from_goal_weight = 2,
+             team_mate_OVR_weight = 1;
+
+    return pass_info.pass_success_chance * pass_chance_weight +
+           pass_info.distance_from_goal * distance_from_goal_weight +
+           pass_info.team_mate->getOVR() * team_mate_OVR_weight;
+}
+
+
+void MatchPlayer :: pass(const vector<PassingInfo>& passing_options){
+    double max_final_chance = this->getFinalPassChance(passing_options[0]);
+    uint16_t chosen_index = 0;
+    //Choosing the best passing option based on the final pass chance
+    for (uint16_t i = 0; i < passing_options.size(); ++i){
+        const PassingInfo& pass_info = passing_options[i];
+        double final_pass_chance = this->getFinalPassChance(pass_info);
+
+        if (max_final_chance < final_pass_chance){
+            max_final_chance = final_pass_chance;
+            chosen_index = i;
+        }
+    }
+
+    //Random number generator for the pass success
+    random_device rd;
+    mt19937 gen(rd());
+    uniform_real_distribution<> dis(0, 100);
+
+    //Trying to pass to the chosen team mate
+    if (dis(gen) < passing_options[chosen_index].pass_success_chance)
+        passing_options.at(chosen_index).team_mate->receiveBall();
+    else
+        //to do: send the ball near the chosen team mate but not to him
+    
 }
 
 

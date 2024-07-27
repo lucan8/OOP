@@ -13,9 +13,9 @@ private:
     m_adjacency_matrix adjacency_matrix;
     unique_m_squad subs;
 
-    //Helper function for initPlayersPositions from Match
-    //Sets the players' positions in the players_positions map
-    //void initPlayersPositions(unordered_map<float, unordered_map<float, bool>>& players_positions, bool team) const;
+    //Returns a vector of passing options for the player passed as argument
+    vector<MatchPlayer :: PassingInfo> getPassingOptions(const shared_m_player& player,
+                                                        const Coordinates& opp_gk_coords) const;
 public:
     FirstTeam(const string& formation, shared_m_squad first_team, unique_m_squad subs)
               : formation(formation), first_eleven(move(first_team)), subs(move(subs)){setAdjacencyMatrix();}
@@ -24,6 +24,9 @@ public:
     
     const string& getFormation() const{return formation;}
     const shared_m_squad& getFirstEleven() const{return first_eleven;}
+
+    //Returns the goalkeeper's coordinates
+    Coordinates getGKCoords() const{return first_eleven.back()->getCoords();};
     const unique_m_squad& getSubs() const{return subs;}
 
     //Sums the OVR with chem
@@ -49,6 +52,11 @@ public:
     //Takes every pair of players and calculates the distance between them
     void setAdjacencyMatrix();
     
+    //Moves player at index depending on the number of intersections with other players,
+    //His opponent's stats and his passing options which are dependent on the gk's position 
+    void movePlayer(uint16_t index, uint16_t intersections,
+                    const shared_m_player& opponent, const Coordinates& opp_gk_coords);
+
     //Determines the number of players that intersect with the player passed as argument
     //Returns the number of intersections and, if there is one opponent, a pointer to him
     //Argument: player from the other team contained in Match class

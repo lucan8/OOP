@@ -80,6 +80,31 @@ pair<uint16_t, shared_m_player> FirstTeam :: getOpponentIntersections(const shar
     return {nr_intersections, opponent};
 }
 
+
+void FirstTeam :: movePlayer(uint16_t index, uint16_t intersections,
+                             const shared_m_player& opponent, const Coordinates& opp_gk_coords){
+    shared_m_player& player = this->first_eleven.at(index);
+    vector<MatchPlayer :: PassingInfo> passing_options = this->getPassingOptions(player, opp_gk_coords);
+
+    player->decide(intersections, passing_options, opponent);
+}
+
+
+vector<MatchPlayer :: PassingInfo> FirstTeam :: getPassingOptions(const shared_m_player& player,
+                                                                const Coordinates& opp_gk_coords) const{
+    vector<MatchPlayer :: PassingInfo> passing_options;
+    passing_options.reserve(this->first_eleven.size() - 1);
+
+    //Going through all the players except the one passed as argument
+    //Pushing the player and the distance to him in the passing_options vector 
+    for (const auto& team_mate : this->first_eleven)
+        if (team_mate != player)
+            passing_options.emplace_back(team_mate,
+                                         player->getPassChance(adjacency_matrix.at(player).at(team_mate)), 
+                                         distance(team_mate->getCoords(), opp_gk_coords));
+
+    return passing_options;
+}
 // void FirstTeam :: movePlayers(const unordered_map<float, unordered_map<float, bool>>& players_positions){
 //     for (auto& p : this->first_eleven)
 //         p->p_move(players_positions);

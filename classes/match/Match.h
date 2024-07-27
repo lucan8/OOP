@@ -29,6 +29,9 @@ private:
 
     //Loads and binds the textures needed(pitch, ball, teams)
     void loadTextures();
+
+    bool hasBall(const shared_m_player& player);
+
     //void initPlayersPositions();
 public:
     //Draws the pitch and players

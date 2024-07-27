@@ -170,16 +170,26 @@ glm :: mat4 Match :: getBallVertices() const{
 }
 
 
-void Match :: movePlayers(){                    
-    //Going through the first team's first and deciding the next move of each player
-    for (const auto& t1_player : t1->getFirstEleven()){
+bool Match :: hasBall(const shared_m_player& player){
+    return player->getCoords() == ball_coords;
+}
+
+
+void Match :: movePlayers(){     
+    const shared_m_squad& t1_eleven = t1->getFirstEleven();
+        
+    for (uint16_t i = 0; i < t1_eleven.size(); i++){
+        shared_m_player t1_player = t1_eleven[i];
         uint16_t nr_intersections = 0;
         shared_m_player opponent;
+
         //If the has the ball we determine the number of opposing players that intersect with him
-        if (t1_player->getCoords() == ball_coords)
+        if (hasBall(t1_player))
             tie(nr_intersections, opponent) = t2->getOpponentIntersections(t1_player);
-        t1_player->decide(nr_intersections, opponent);
+        
+        t1->movePlayer(i, nr_intersections, opponent, t2->getGKCoords());
+    }
 }
-}
+
 
 

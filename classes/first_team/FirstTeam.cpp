@@ -81,14 +81,29 @@ pair<uint16_t, shared_m_player> FirstTeam :: getOpponentIntersections(const shar
 }
 
 
-void FirstTeam :: movePlayer(uint16_t index, uint16_t intersections,
-                             const shared_m_player& opponent, const Coordinates& opp_gk_coords){
+void FirstTeam :: movePlayerWithBall(Coordinates& ball_coords, uint16_t index, uint16_t intersections,
+                                     const shared_m_player& opponent, const Coordinates& opp_gk_coords){
     shared_m_player& player = this->first_eleven.at(index);
     vector<MatchPlayer :: PassingInfo> passing_options = this->getPassingOptions(player, opp_gk_coords);
 
-    player->decide(intersections, passing_options, opponent);
+    player->decide(ball_coords, intersections, passing_options, opponent, opp_gk_coords);
 }
 
+
+void FirstTeam :: movePlayerWithoutBall(uint16_t index, const shared_m_player& player_with_ball,
+                                        const Coordinates& opp_gk_coords){
+    shared_m_player& player = this->first_eleven.at(index);
+    
+    double pass_chance = player_with_ball->getPassChance(adjacency_matrix.at(player).at(player_with_ball));
+    const double pass_chance_threshold = 50;
+
+    //If the pass chance is lower than the threshold the player moves towards the player with the ball
+    if (pass_chance < pass_chance_threshold)
+        player->moveTowards(player_with_ball->getCoords());
+    else //Otherwise he moves towards the opponent's goal
+        player->moveTowards(opp_gk_coords);
+
+}
 
 vector<MatchPlayer :: PassingInfo> FirstTeam :: getPassingOptions(const shared_m_player& player,
                                                                 const Coordinates& opp_gk_coords) const{

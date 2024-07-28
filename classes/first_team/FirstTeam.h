@@ -52,10 +52,11 @@ public:
     //Takes every pair of players and calculates the distance between them
     void setAdjacencyMatrix();
     
-    //Moves player at index depending on the number of intersections with other players,
-    //His opponent's stats and his passing options which are dependent on the gk's position 
-    void movePlayer(uint16_t index, uint16_t intersections,
-                    const shared_m_player& opponent, const Coordinates& opp_gk_coords);
+    void movePlayerWithBall(Coordinates& ball_coords, uint16_t index, uint16_t intersections,
+                            const shared_m_player& opponent, const Coordinates& opp_gk_coords);
+
+    void movePlayerWithoutBall(uint16_t index, const shared_m_player& player_with_ball,
+                               const Coordinates& opp_gk_coords);
 
     //Determines the number of players that intersect with the player passed as argument
     //Returns the number of intersections and, if there is one opponent, a pointer to him

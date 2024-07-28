@@ -13,7 +13,7 @@
 //t1 is in the first half of the pitch, t2 is in the second half
 class Match{
 private:
-    unique_first_team t1, t2;
+    unique_first_team team1, team2;
     Coordinates ball_coords;
 
     unordered_map<string, Textures> textures;
@@ -37,7 +37,7 @@ public:
     //Draws the pitch and players
     void draw();
     
-    Match(unique_first_team t1, unique_first_team t2);
+    Match(unique_first_team team1, unique_first_team team2);
 
     void movePlayers();
 };

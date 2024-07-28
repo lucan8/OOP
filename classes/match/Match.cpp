@@ -1,12 +1,13 @@
 #include "Match.h"
 #include "../textures/Textures.h"
 
-Match :: Match(unique_first_team t1, unique_first_team t2): t1(move(t1)), t2(move(t2)), ball_coords(0, 0){
-    this->t2->changeSide();
+Match :: Match(unique_first_team team1, unique_first_team team2)
+        : team1(move(team1)), team2(move(team2)), ball_coords(0, 0){
+    this->team2->changeSide();
 
     //From vertical pitch to horizontal pitch(and vice versa)
-    this->t1->changeSide1();
-    this->t2->changeSide1();
+    this->team1->changeSide1();
+    this->team2->changeSide1();
 
     loadTextures();
 }
@@ -81,11 +82,11 @@ void Match :: drawPlayers(Shader& player_shader, const IBO& player_ibo){
     player_aura_layout.addAttribute<float>(2);
 
     player_shader.setUniform1i("u_Texture", 2);
-    t1->drawPlayers(MatchPlayer :: pitch_half :: first, player_shader, player_ibo, player_layout, player_aura_layout);
+    team1->drawPlayers(MatchPlayer :: pitch_half :: first, player_shader, player_ibo, player_layout, player_aura_layout);
 
     //Drawing the second team's players
     player_shader.setUniform1i("u_Texture", 3);
-    t2->drawPlayers(MatchPlayer :: pitch_half :: second, player_shader, player_ibo, player_layout, player_aura_layout);
+    team2->drawPlayers(MatchPlayer :: pitch_half :: second, player_shader, player_ibo, player_layout, player_aura_layout);
 }
 
 
@@ -175,19 +176,20 @@ bool Match :: hasBall(const shared_m_player& player){
 }
 
 
-void Match :: movePlayers(){     
-    const shared_m_squad& t1_eleven = t1->getFirstEleven();
-        
-    for (uint16_t i = 0; i < t1_eleven.size(); i++){
-        shared_m_player t1_player = t1_eleven[i];
-        uint16_t nr_intersections = 0;
-        shared_m_player opponent;
+void Match :: movePlayers(){
+    const shared_m_squad& team1_eleven = team1->getFirstEleven();
+    shared_m_player player_with_ball;
 
-        //If the has the ball we determine the number of opposing players that intersect with him
-        if (hasBall(t1_player))
-            tie(nr_intersections, opponent) = t2->getOpponentIntersections(t1_player);
-        
-        t1->movePlayer(i, nr_intersections, opponent, t2->getGKCoords());
+    for (uint16_t i = 0; i < team1_eleven.size(); i++){
+        //If the player has the ball we move him accordingly and set him as the player with the ball
+        if (hasBall(team1_eleven[i])){
+            player_with_ball = team1_eleven[i];
+            
+            pair<uint16_t, shared_m_player> opponents = team2->getOpponentIntersections(team1_eleven[i]);
+            team1->movePlayerWithBall(ball_coords, i, opponents.first, opponents.second, team2->getGKCoords());
+        }
+        else
+            team1->movePlayerWithoutBall(i, player_with_ball, team1->getGKCoords());
     }
 }
 

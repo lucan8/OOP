@@ -64,7 +64,6 @@ void MatchPlayer :: drawAura(pitch_half half, Shader& p_shader,
 }
 
 
-
 glm :: mat4 MatchPlayer :: getPlayerVertices(pitch_half half, float radius) const{
     //Getting the player's canvas vertex positions coordinates
     glm :: mat4x4 player_vertices = toMat4(getCanvasPositions(this->coords, radius));
@@ -92,27 +91,42 @@ glm :: mat4 MatchPlayer :: getPlayerVertices(pitch_half half, float radius) cons
 }
 
 
-void MatchPlayer :: decide(uint16_t nr_intersections, const vector<PassingInfo>& passing_options,
-                           const shared_m_player& opponent){
+void MatchPlayer :: decide(Coordinates& ball_coords, uint16_t nr_intersections,
+                           const vector<PassingInfo>& passing_options, const shared_m_player& opponent,
+                           const Coordinates& opp_gk_coords){
     switch (nr_intersections){
         case 0:
-            this->advance();
+            this->moveTowards(ball_coords, opp_gk_coords);
             break;
         case 1:
-            this->decidePassDribble(opponent, passing_options);
+            this->decidePassDribble(ball_coords, opponent, passing_options);
             break;
         default:
-            this->pass(passing_options);
+            this->pass(ball_coords, passing_options);
     }
 }
 
 
-void MatchPlayer :: advance(){
-    this->coords.x += 1;
+void MatchPlayer :: moveTowards(Coordinates& ball_coords , const Coordinates& target){
+    moveTowards(target);
+    ball_coords = this->coords;
 }
 
 
-void MatchPlayer :: decidePassDribble(const shared_m_player& opponent, 
+void MatchPlayer :: moveTowards(const Coordinates& target){
+    if (this->coords.x < target.x)
+        this->coords.x += 1;
+    else if (this->coords.x > target.x)
+        this->coords.x -= 1;
+    
+    if (this->coords.y < target.y)
+        this->coords.y += 1;
+    else if (this->coords.y > target.y)
+        this->coords.y -= 1;
+}
+
+
+void MatchPlayer :: decidePassDribble(Coordinates& ball_coords, const shared_m_player& opponent, 
                                       const vector<PassingInfo>& passing_options){
     //Make this a function in player
 
@@ -125,22 +139,25 @@ void MatchPlayer :: decidePassDribble(const shared_m_player& opponent,
                         opponent->player->getStat("PHY") + opponent->player->getStat("AGG");
 
     if (p_stat_sum < o_stat_sum)
-        this->pass(passing_options);
+        this->pass(ball_coords, passing_options);
     else
         this->dribble();
+}
+
+double MatchPlayer :: getPassingRange() const{
+    //Each pass stat is equivalent to 0.36 meters(should be part of the constants)
+    const double pass_distance_multiplier = 0.36;
+    return this->player->getStat("PAS") * pass_distance_multiplier;
 }
 
 
 double MatchPlayer :: getPassChance(double pass_distance) const{
     const double max_chance = 100;
-    //Each pass stat is equivalent to 0.36 meters(should be part of the constants)
-    const double pass_distance_multiplier = 0.36;
-    //100% chance of a successful pass
-    const double pass_secure_radius = this->player->getStat("PAS") * pass_distance_multiplier;
+    const double pass_secure_radius = getPassingRange();
     //With each meter past "pass_distance" the probability of a successful pass decreases by 5%
     const uint16_t meter_pass_chance_decrease = 5;
 
-    //If withing that distance is 100%(max_chance), else it decreases by 5% for each meter
+    //If within that distance chance is 100%(max_chance), else it decreases by 5% for each meter
     return min(max_chance, max_chance - (pass_distance - pass_secure_radius) * meter_pass_chance_decrease);
 }
 
@@ -156,34 +173,40 @@ double MatchPlayer :: getFinalPassChance(const PassingInfo& pass_info) const{
 }
 
 
-void MatchPlayer :: pass(const vector<PassingInfo>& passing_options){
-    double max_final_chance = this->getFinalPassChance(passing_options[0]);
-    uint16_t chosen_index = 0;
+void MatchPlayer :: pass(Coordinates& ball_coords, const vector<PassingInfo>& passing_options){
+    PassingInfo chosen_pass_option = passing_options.at(0);
+    double max_final_chance = this->getFinalPassChance(chosen_pass_option);
+
     //Choosing the best passing option based on the final pass chance
-    for (uint16_t i = 0; i < passing_options.size(); ++i){
-        const PassingInfo& pass_info = passing_options[i];
-        double final_pass_chance = this->getFinalPassChance(pass_info);
+    for (uint16_t i = 1; i < passing_options.size(); ++i){
+        const PassingInfo& pass_option = passing_options[i];
+        double final_pass_chance = this->getFinalPassChance(pass_option);
 
         if (max_final_chance < final_pass_chance){
             max_final_chance = final_pass_chance;
-            chosen_index = i;
+            chosen_pass_option = pass_option;
         }
     }
 
     //Random number generator for the pass success
     random_device rd;
     mt19937 gen(rd());
-    uniform_real_distribution<> dis(0, 100);
+    uniform_real_distribution<> dist(0, 100);
 
     //Trying to pass to the chosen team mate
-    if (dis(gen) < passing_options[chosen_index].pass_success_chance)
-        passing_options.at(chosen_index).team_mate->receiveBall();
-    else
-        //to do: send the ball near the chosen team mate but not to him
+    if (dist(gen) < chosen_pass_option.pass_success_chance)
+        ball_coords = chosen_pass_option.team_mate->getCoords();
+    else{
+        //uniform_real_distribution<> dist(chosen_pass_option.pass_success_chance, 100);
+        ball_coords = chosen_pass_option.team_mate->getCoords();
+    }
     
 }
 
 
+void MatchPlayer :: dribble(){
+    
+}
 bool MatchPlayer :: intersects(const MatchPlayer& other) const{
     float dist = distance(this->coords, other.coords);
     float aura_radius = Constants :: getVal("PLAYER_RADIUS") * 2;

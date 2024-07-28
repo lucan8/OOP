@@ -39,7 +39,7 @@ protected:
     glm :: mat4 getPlayerVertices(pitch_half half, float radius) const;
 
     //Decides whether to pass or dribble depending on the opponent's stats and passing options
-    void decidePassDribble(const shared_m_player& opponent,
+    void decidePassDribble(Coordinates& ball_coords, const shared_m_player& opponent,
                            const vector<PassingInfo>& passing_options);
 public:
     
@@ -76,16 +76,20 @@ public:
     
     //Decides what to do with the ball depending on the number of intersections with the opposing players
     //The the opponent's stats and passing options(for 0 and 2 intersections there should be no opponent passed)
-    void decide(uint16_t nr_intersections, const vector<PassingInfo>& passing_options, 
-                const shared_m_player& opponent);
+    void decide(Coordinates& ball_coords, uint16_t nr_intersections, const vector<PassingInfo>& passing_options,
+                const shared_m_player& opponent, const Coordinates& opp_gk_coords);
 
     //Gets the chence of sending a succesful pass to a player at a certain distance
-    double MatchPlayer :: getPassChance(double pass_distance) const;
+    double getPassChance(double pass_distance) const ;
     //Calcualtes the chance of choosing this PassingInfo option
-    double MatchPlayer :: getFinalPassChance(const PassingInfo& pass_info) const;
-    void advance();
-    virtual void pass(const vector<PassingInfo>& passing_options);
+    double getFinalPassChance(const PassingInfo& pass_info) const;
+    double getPassingRange() const;
+
+    void moveTowards(const Coordinates& target);
+    void moveTowards(Coordinates& ball_coords, const Coordinates& target);
+
+    virtual void pass(Coordinates& ball_coords, const vector<PassingInfo>& passing_options);
     virtual void block() = 0;
     virtual void tackle() = 0; 
-    void dribble(){};   
+    void dribble();   
 };

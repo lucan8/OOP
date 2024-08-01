@@ -1,6 +1,5 @@
 #include "Player.h"
 #include <numeric>
-#include <random>
 #include "../../exceptions/InvalidPlayerStat.h"
 //TO DO: make exception for stats as well
 /*
@@ -17,11 +16,11 @@ void Player :: Age(){
 }
 */
 
-double Player :: getStat(const string& stat_name) const{
+float Player :: getStat(const string& stat_name) const{
     try{
         return this->stats.at(stat_name);
     } catch(out_of_range& e){
-        throw InvalidPlayerStat(__func__, stat_name);
+        throw InvalidPlayerStat(__FILE__, __func__, __LINE__, stat_name);
     }
 }
 
@@ -29,39 +28,38 @@ void Player :: eliminateMaxes(vector<pair<string, uint16_t>>& weights) const{
     vector<pair<string, uint16_t>> :: iterator it = weights.begin();
     uint16_t max_stat = Constants :: getVal("MAX_STATS");
 
-    for (; it != weights.end();)
-        try{
-            if (this->stats.at(it->first) == max_stat)
-                it = weights.erase(it);
-            else
-                ++it;
-        } catch(out_of_range& e){
-            cout << "Error(eliminateMaxes): stat_name(" << it->first << ") not found\n";
-        }
+    while(it != weights.end()){ 
+        const string& stat_name = it->first;
+        //Removing the stat if it's a max stat
+        if (this->getStat(stat_name) == max_stat)
+            it = weights.erase(it);
+        else
+            ++it;
+    }
 }
 
-double Player :: calculateOVR(const string& p_pos) const{
-    double OVR = 0;
+float Player :: calculateOVR(const string& p_pos) const{
+    float OVR = 0;
     
     vector<pair<string, uint16_t>>stats_ratios = Constants :: getStatsRatios(p_pos);
     const vector<uint16_t> ratios = getValues(stats_ratios);
     uint16_t weights_sum = reduce(ratios.begin(), ratios.end());
 
     for (const auto& stat_ratio : stats_ratios){
-        OVR += this->stats.at(stat_ratio.first) * stat_ratio.second;
+        OVR += this->getStat(stat_ratio.first) * stat_ratio.second;
     }
 
     return OVR / weights_sum;
 }
 
-double Player :: getTrainPlus() const{
-    double ovr = this->calculateOVR(this->position);
+float Player :: getTrainPlus() const{
+    float ovr = this->calculateOVR(this->position);
     return this->potential_OVR / ovr * 
         ((this->potential_OVR - ovr - this->train_nerf) / this->remaining_sessions);
 }
 
 pair<string, string> Player :: minStats2() const{
-    pair<string, double> min1("", Constants :: getVal("MAX_STATS")), 
+    pair<string, float> min1("", Constants :: getVal("MAX_STATS")), 
                          min2("", Constants :: getVal("MAX_STATS"));
 
     for (const auto& stat : this->stats)
@@ -121,28 +119,24 @@ void Player :: read(istream& in){
 
 
 void Player :: rest(){
-    this->stamina = max((double)Constants::getVal("MAX_STAMINA"), 
+    this->stamina = max((float)Constants::getVal("MAX_STAMINA"), 
                         this->stamina + Constants::getVal("REST_STAMINA_PLUS"));
 }
 
 
 void Player :: readStats(istream& in){
     string stat_name;
-    double val;
+    float val;
 
     for (int i = 0; i < stats.size(); ++i){
         in >> stat_name >> val;
-        try{
-            stats.at(stat_name) = val;
-        } catch(out_of_range& e){
-            cerr << "Error(readStats), invalid stat_name: " << stat_name << '\n';
-        }
+        this->setStat(stat_name, val);
     }
 }
 
 void Player :: resetSeasonStats(){
     s_yellow_cards = s_red_cards = form = 0;
-    stamina = (double)Constants::getVal("MAX_STAMINA");
+    stamina = (float)Constants::getVal("MAX_STAMINA");
     transfer_eligible = true;
     red_carded = false;
 }
@@ -153,53 +147,44 @@ void Player :: setTrainNerf(){
 }
 
 
-void Player :: setStats(unordered_map<string, double> Stats){
+void Player :: setStats(unordered_map<string, float> Stats){
     for (const auto& stat : Stats)
         this->setStat(stat.first, stat.second);
 }
 
-void Player :: setStat(const string& stat_name, double stat_val){
+void Player :: setStat(const string& stat_name, float stat_val){
     try{
         this->stats.at(stat_name) = stat_val;
     } catch(out_of_range& e){
-        cerr << "Error(setStat) invalid stat_name: " << stat_name << '\n';
+        throw InvalidPlayerStat(__FILE__, __func__, __LINE__, stat_name);
     }
 }
 
-void Player :: upgradeStat(const string& stat_name, double stat_plus){
-    random_device rd;
-    mt19937 gen(rd());
-    uniform_real_distribution<double> stat_plus_dist(0, 2 * stat_plus);
-
+void Player :: upgradeStat(const string& stat_name, float stat_plus){
+    stat_plus = Constants :: generateRealNumber(0, 2 * stat_plus);
     uint16_t max_stat = Constants :: getVal("MAX_STATS");
 
-    try{
-        double& stat = this->stats.at(stat_name);
-        stat = min(stat + stat_plus_dist(gen), (double)max_stat);
-    } catch(out_of_range& e){
-        cerr << "Error(upgradeStats), invalid stat_name: " << stat_name << '\n';
-    }
+    float upgraded_stat = min(this->getStat(stat_name) + stat_plus, (float)max_stat);
+    this->setStat(stat_name, upgraded_stat);
 }
+
+
 void Player :: train(){
-    double ovr_pl = this->getTrainPlus();
+    float ovr_pl = this->getTrainPlus();
 
     vector<pair<string, uint16_t>>stats_ratios = Constants :: getStatsRatios(this->position);
     eliminateMaxes(stats_ratios);
 
-    vector<uint16_t> probabilities = getValues(stats_ratios);
-    random_device rd;
-    mt19937 gen(rd());
+    vector<uint16_t> stats_weights = getValues(stats_ratios);
 
-    for (int i = 0; i < Constants :: getVal("NR_TRAIN_STATS") && !probabilities.empty(); ++i){
-        discrete_distribution<> stat_distibution(probabilities.begin(), probabilities.end());
-
-        uint16_t stat_poz = stat_distibution(gen);
+    for (int i = 0; i < Constants :: getVal("NR_TRAIN_STATS") && !stats_weights.empty(); ++i){
+        uint16_t stat_poz = Constants :: generateDiscreteNumber(stats_weights);
         const string& chosen_stat = stats_ratios.at(stat_poz).first;
         upgradeStat(chosen_stat, ovr_pl);
 
         //Removing the stat so that we don't choose it again
         stats_ratios.erase(stats_ratios.begin() + stat_poz);
-        probabilities.erase(probabilities.begin() + stat_poz);
+        stats_weights.erase(stats_weights.begin() + stat_poz);
     }
     this->remaining_sessions --;
 }

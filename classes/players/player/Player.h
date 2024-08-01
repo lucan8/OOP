@@ -19,9 +19,9 @@ class Player : public Human{
 protected:
     uint16_t s_yellow_cards = 0, s_red_cards = 0, form = 0;
     uint16_t shirt_nr, remaining_sessions = Constants :: getVal("MAX_TRAIN_SESSIONS");
-    double stamina = (double)Constants::getVal("MAX_STAMINA"), train_nerf, potential_OVR;
+    float stamina = (float)Constants::getVal("MAX_STAMINA"), train_nerf, potential_OVR;
     string position;
-    unordered_map<string, double> stats;
+    unordered_map<string, float> stats;
 
     bool transfer_eligible = true, red_carded = false;
 
@@ -30,40 +30,40 @@ protected:
 
     void eliminateMaxes(vector<pair<string, uint16_t>>& weights) const;
 
-    double getTrainPlus() const;
-    void upgradeStat(const string& stat_name, double stat_plus);
+    float getTrainPlus() const;
+    void upgradeStat(const string& stat_name, float stat_plus);
 public:
     void train();
     void setTrainNerf();
     void rest();
 
     //Players can play outside position as well
-    double calculateOVR(const string& pos) const;
-    double getPrice() const; //TO DO
+    float calculateOVR(const string& pos) const;
+    float getPrice() const; //TO DO
 
     uint16_t getYCard() const{return s_yellow_cards;}
     uint16_t getRCard() const{return s_red_cards;}
     uint16_t getForm() const{return form;}
     uint16_t getShirt() const{return shirt_nr;}
-    double getPotential() const{return potential_OVR;}
+    float getPotential() const{return potential_OVR;}
 
-    double getStamina() const{return stamina;}
+    float getStamina() const{return stamina;}
     const string& getPosition() const{return position;}
 
-    const unordered_map<string, double>& getStats() const{return stats;}
-    double getStat(const string& stat_name) const;
+    const unordered_map<string, float>& getStats() const{return stats;}
+    float getStat(const string& stat_name) const;
 
     bool verifTransferEligible() const{return transfer_eligible;}
     bool verifRedCarded() const{return red_carded;}
 
     void setShirt(uint16_t shirt_nr){this->shirt_nr = shirt_nr;}
-    void setStamina(double stamina){this->stamina = stamina;}
+    void setStamina(float stamina){this->stamina = stamina;}
     void setPosition(const string& pos){this->position = pos;}
 
-    void setStats(unordered_map<string, double> Stats);
-    void setStat(const string& stat_name, double stat_val);
+    void setStats(unordered_map<string, float> Stats);
+    void setStat(const string& stat_name, float stat_val);
 
-    void setPotential(double potential){this->potential_OVR = potential;}
+    void setPotential(float potential){this->potential_OVR = potential;}
 
     void changeTranferEligible(){this->transfer_eligible = !this->transfer_eligible;}
     void addYellowCard(){++s_yellow_cards;}

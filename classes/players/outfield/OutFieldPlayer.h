@@ -20,5 +20,5 @@ public:
     void resetSeasonStats() override;
     player_ptr clone() const override;
 
-    ~OutFieldPlayer(){cout << "Outfield destroyed!\n";}
+    ~OutFieldPlayer(){}
 };

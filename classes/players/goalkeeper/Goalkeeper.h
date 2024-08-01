@@ -10,5 +10,5 @@ public:
     player_ptr clone() const override;
     void resetSeasonStats() override;
     void printSeasonStats(std :: ostream&) const override;
-    ~Goalkeeper(){cout << "GK destroyed!\n";}
+    ~Goalkeeper(){}
 };

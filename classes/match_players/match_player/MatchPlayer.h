@@ -1,6 +1,5 @@
 #pragma once
 #include "../../players/player/Player.h"
-#include "../../coordinates/Coordinates.h"
 #include "../../renderer/Renderer.h"
 class MatchPlayer;
 typedef MatchPlayer* m_player_ptr;
@@ -21,14 +20,14 @@ public:
     //And the distance from the player to the goal
     struct PassingInfo{
         shared_m_player team_mate;
-        double pass_success_chance;
-        double distance_from_goal;
+        float pass_success_chance;
+        float distance_from_goal;
     };
 protected:
     shared_player player;
     const string position; //Can be either a normal position(subs) or a match position(first eleven)
-    Coordinates coords;
-    const double OVR;
+    glm :: vec2 coords;
+    const float OVR;
     unsigned short yellow_cards = 0;
 
     //Draws the player's aura circle;
@@ -39,12 +38,16 @@ protected:
     glm :: mat4 getPlayerVertices(pitch_half half, float radius) const;
 
     //Decides whether to pass or dribble depending on the opponent's stats and passing options
-    void decidePassDribble(Coordinates& ball_coords, const shared_m_player& opponent,
+    void decidePassDribble(glm :: vec2& ball_coords, const shared_m_player& opponent,
                            const vector<PassingInfo>& passing_options);
+    
+    //Should be part of an entity class
+    static bool isOutsidePitch(const glm :: vec2& coords);
+    vector<glm :: vec2> getMoveOptions() const;
 public:
     
     MatchPlayer(shared_player player = shared_player(),
-                const string& position = "", double OVR = 0, const Coordinates& coords = Coordinates())
+                const string& position = "", float OVR = 0, const glm :: vec2& coords = glm :: vec2())
      : player(move(player)), position(position), coords(coords), OVR(OVR){}
 
     virtual ~MatchPlayer(){};
@@ -53,15 +56,14 @@ public:
     unsigned short getYellowCards() const{return yellow_cards;}
     string getPosition() const{return position;}
     const shared_player& getPlayer() const{return player;}
-    Coordinates getCoords() const{return coords;}
+    glm :: vec2 getCoords() const{return coords;}
+    float getOVR() const{return OVR;}
 
-    void setCoordinates(const Coordinates& coordinates){this->coords = coords;}
-    double getOVR() const{return OVR;}
+    void setCoords(const glm :: vec2& coords){this->coords = coords;}
 
     //Moves the player to the other side of the pitch
     //Should be used only at the start of any of the halves
     void changeSide();
-
     //From vertical pitch to horizontal pitch(and vice versa)
     void changeSide1();
 
@@ -76,19 +78,19 @@ public:
     
     //Decides what to do with the ball depending on the number of intersections with the opposing players
     //The the opponent's stats and passing options(for 0 and 2 intersections there should be no opponent passed)
-    void decide(Coordinates& ball_coords, uint16_t nr_intersections, const vector<PassingInfo>& passing_options,
-                const shared_m_player& opponent, const Coordinates& opp_gk_coords);
+    void decide(glm :: vec2& ball_coords, uint16_t nr_intersections, const vector<PassingInfo>& passing_options,
+                const shared_m_player& opponent, const glm :: vec2& opp_gk_coords, const shared_m_player& closest_team_mate);
 
+    //Passes the ball to the best option
+    virtual void pass(glm :: vec2& ball_coords, const vector<PassingInfo>& passing_options);
     //Gets the chence of sending a succesful pass to a player at a certain distance
-    double getPassChance(double pass_distance) const ;
+    float getPassChance(float pass_distance) const ;
     //Calcualtes the chance of choosing this PassingInfo option
-    double getFinalPassChance(const PassingInfo& pass_info) const;
-    double getPassingRange() const;
+    float getFinalPassChance(const PassingInfo& pass_info) const;
+    float getPassingRange() const;
 
-    void moveTowards(const Coordinates& target);
-    void moveTowards(Coordinates& ball_coords, const Coordinates& target);
-
-    virtual void pass(Coordinates& ball_coords, const vector<PassingInfo>& passing_options);
+    //Moves the player towards the target and away from the closest team mate
+    void p_move(const glm :: vec2& target, const shared_m_player& closest_team_mate);
     virtual void block() = 0;
     virtual void tackle() = 0; 
     void dribble();   

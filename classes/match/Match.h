@@ -14,11 +14,8 @@
 class Match{
 private:
     unique_first_team team1, team2;
-    Coordinates ball_coords;
-
+    glm :: vec2 ball_coords;
     unordered_map<string, Textures> textures;
-    //player coord x, player coord y, bool for team(0 for t1, 1 for t2)
-    //unordered_map<float, unordered_map<float, bool>> players_positions;
 
     void drawPlayers(Shader& player_shader, const IBO& player_ibo);
     void drawField(Shader& pitch_shader, const IBO& pitch_ibo);
@@ -30,14 +27,14 @@ private:
     //Loads and binds the textures needed(pitch, ball, teams)
     void loadTextures();
 
-    bool hasBall(const shared_m_player& player);
-
-    //void initPlayersPositions();
+    bool hasBall(const shared_m_player& player) const;
+    shared_m_player getPlayerWithBall() const;
 public:
     //Draws the pitch and players
     void draw();
     
     Match(unique_first_team team1, unique_first_team team2);
 
+    //Moves players and ball
     void movePlayers();
 };

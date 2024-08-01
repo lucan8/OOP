@@ -61,8 +61,8 @@ void Match :: draw(){
     entity_shader.setUniform2f("u_screen_units", res_units);
     entity_shader.setUniform2f("u_screen_center", halfed_window_res);
 
-    this->drawBall(entity_shader, square_ibo);
     this->drawPlayers(entity_shader, square_ibo);
+    this->drawBall(entity_shader, square_ibo);
 }
 
 void Match :: drawPlayers(Shader& player_shader, const IBO& player_ibo){
@@ -171,27 +171,49 @@ glm :: mat4 Match :: getBallVertices() const{
 }
 
 
-bool Match :: hasBall(const shared_m_player& player){
-    return player->getCoords() == ball_coords;
+bool Match :: hasBall(const shared_m_player& player) const{
+    float player_radius = Constants :: getVal("PLAYER_RADIUS");
+    float ball_radius = player_radius / 2.0;
+
+    return glm :: distance(player->getCoords(), ball_coords) < player_radius + ball_radius;
 }
 
 
 void Match :: movePlayers(){
-    const shared_m_squad& team1_eleven = team1->getFirstEleven();
-    shared_m_player player_with_ball;
+    //Getting the player with the ball
+    shared_m_player player_with_ball = getPlayerWithBall();
 
-    for (uint16_t i = 0; i < team1_eleven.size(); i++){
-        //If the player has the ball we move him accordingly and set him as the player with the ball
-        if (hasBall(team1_eleven[i])){
-            player_with_ball = team1_eleven[i];
-            
-            pair<uint16_t, shared_m_player> opponents = team2->getOpponentIntersections(team1_eleven[i]);
-            team1->movePlayerWithBall(ball_coords, i, opponents.first, opponents.second, team2->getGKCoords());
-        }
-        else
-            team1->movePlayerWithoutBall(i, player_with_ball, team1->getGKCoords());
+    if (player_with_ball){
+        //Moving the ball with the player
+        ball_coords = player_with_ball->getCoords();
+        //Getting the number of intersections and the opponent player(if there is one)
+        uint16_t nr_intersections;
+        shared_m_player opponent;
+        tie(nr_intersections, opponent) = team2->getOpponentIntersections(player_with_ball);
+        //Moving the player with the ball
+        team1->movePlayerWithBall(ball_coords, player_with_ball, nr_intersections, opponent, team2->getGKCoords());
+        //Moving the players without the ball
+        team1->movePlayersWithoutBall(player_with_ball, team2->getGKCoords());
     }
+    else
+        team1->movePlayersWithoutBall(ball_coords, team2->getGKCoords());
+    
 }
 
+
+shared_m_player Match :: getPlayerWithBall() const{
+    //Searching for the player with the ball in the first team
+    for (const auto& player : team1->getFirstEleven())
+        if (hasBall(player))
+            return player;
+    
+    //Searching for the player with the ball in the second team
+    for (const auto& player : team2->getFirstEleven())
+        if (hasBall(player))
+            return player;
+
+    //No player has the ball
+    return nullptr;
+}
 
 

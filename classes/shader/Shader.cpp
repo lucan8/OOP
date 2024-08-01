@@ -1,5 +1,5 @@
 #include "Shader.h"
-
+#include "../../functions/functions.h"
 Shader :: Shader(const std :: string& vertex_file_path, const std :: string& fragment_file_path){
     this->id =  glCreateProgram();
     //Reading the shaders source code
@@ -18,13 +18,6 @@ Shader :: Shader(const std :: string& vertex_file_path, const std :: string& fra
     glLinkProgram(this->id);
     glValidateProgram(this->id);
 
-    GLint result;
-    glGetProgramiv(this->id, GL_LINK_STATUS, &result);
-
-    //Checking if the program linked successfully
-    if (result == GL_FALSE)
-        throw LinkShaderException(__func__, this->getLinkErrorMessage());
-
     //Deleting the shaders
     glDeleteShader(v_shader_id);
     glDeleteShader(f_shader_id);
@@ -39,44 +32,7 @@ GLuint Shader :: CompileShader(const std :: string& source, GLenum shader_type) 
     glShaderSource(shader_id, 1, &src, nullptr);
     glCompileShader(shader_id);
 
-    //Checking if the shader compiled successfully
-    int result;
-    glGetShaderiv(shader_id, GL_COMPILE_STATUS, &result);
-
-    //If the shader failed to compile, print the error message
-    if (!result){
-        throw CompileShaderException(__func__, this->getCompileErorrMessage(shader_id));
-        return 0;
-    }
     return shader_id;
-}
-
-
-std :: string Shader :: getCompileErorrMessage(GLuint shader_id) const{
-    //Getting the length of the error message
-    int length;
-    glGetShaderiv(shader_id, GL_INFO_LOG_LENGTH, &length);
-
-    //Allocating memory for the error message
-    char* message = (char*)alloca(length * sizeof(char));
-    //Getting the error message
-    glGetShaderInfoLog(shader_id, length, &length, message);
-
-    return message;
-}
-
-
-std :: string Shader :: getLinkErrorMessage() const{
-    //Getting the length of the error message
-    int length;
-    glGetProgramiv(this->id, GL_INFO_LOG_LENGTH, &length);
-
-    //Allocating memory for the error message
-    char* message = (char*)alloca(length * sizeof(char));
-    //Getting the error message
-    glGetProgramInfoLog(this->id, length, &length, message);
-
-    return message;
 }
 
 

@@ -3,9 +3,6 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include <string>
-#include "../../functions/functions.h"
-#include "../exceptions/CompileShaderException.h"
-#include "../exceptions/LinkShaderException.h"
 #include <unordered_map>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>

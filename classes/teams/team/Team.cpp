@@ -75,12 +75,12 @@ m_player_ptr Team :: getBestGoalkeeper(shared_squad_map& unused_goalkeepers){
 
 
 uint16_t Team :: getBestPlayerIndex(const shared_squad_map& players, const string& pos){
-    double best_OVR = 0;
+    float best_OVR = 0;
     uint16_t best_p_index = 0;
 
     //Going through all players for that position(first: index, second: player)
     for (const auto& player : players){
-        double p_ovr = player.second->calculateOVR(pos);
+        float p_ovr = player.second->calculateOVR(pos);
          //Keeping track of the index of the best player
         if (p_ovr > best_OVR){
             best_OVR = p_ovr;
@@ -127,11 +127,11 @@ unique_m_squad_map Team :: getSubsOutfields(shared_squad_map& unused_outfields, 
 
     //Going through all the outfield players(player.first is index, player.second is the actual player)
     for (const auto& player : unused_outfields){
-        double best_OVR = 0;
+        float best_OVR = 0;
         string best_pos;
         //Going through all the positions related to the detailed player type for that player
         for (const auto& pos : Constants :: getPositions(det_p_type)){
-            double p_ovr = player.second->calculateOVR(pos);
+            float p_ovr = player.second->calculateOVR(pos);
             //Choosing the best position for that player
             if (p_ovr > best_OVR){
                 best_OVR = p_ovr;
@@ -145,10 +145,10 @@ unique_m_squad_map Team :: getSubsOutfields(shared_squad_map& unused_outfields, 
 }
 pair<uint16_t, uint16_t> Team :: getMax2PlayersIndexes(const unique_m_squad_map& players){
     //first is OVR, second is index
-    pair<double, uint16_t> best_player1(0, 0), best_player2(0, 0);
+    pair<float, uint16_t> best_player1(0, 0), best_player2(0, 0);
 
     for (const auto& player : players){
-        double p_ovr = player.second->getOVR();
+        float p_ovr = player.second->getOVR();
         if (p_ovr > best_player1.first){
             best_player2 = best_player1;
             best_player1 = make_pair(p_ovr, player.first);
@@ -215,8 +215,8 @@ void Team :: print(ostream& op) const{
     << "\nPoints: " << this->points << "\n";
 }
 
-unordered_map<string, double> Team :: getTeamStats() const{
-    unordered_map<string, double> stats;
+unordered_map<string, float> Team :: getTeamStats() const{
+    unordered_map<string, float> stats;
     
     for (const auto& p : this->Players)
         for (const auto& stat : p->getStats())

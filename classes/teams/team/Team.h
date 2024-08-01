@@ -12,9 +12,9 @@ typedef vector<shared_ptr<Team>> shared_teams;
 class Team : public Printable, public Readable{
 private:
     string name;
-    double budget;
+    float budget;
     shared_squad Players;
-    unsigned short points = 0;
+    uint16_t points = 0;
 
     //Should only be used before getSubstitutes
     //Returns the best first eleven for a formation from unused players
@@ -44,27 +44,27 @@ private:
     shared_squad_split splitTeamPType() const;
 public:
     shared_squad_split splitTeamPos() const;
-    Team(const string& name = "", shared_squad Players = {}, double budget = 0) : 
+    Team(const string& name = "", shared_squad Players = {}, float budget = 0) : 
     name(name), Players(move(Players)), budget(budget){}
 
     Team(const Team& other) : name(other.name), budget(other.budget),
      Players(clonePtrVector(other.Players)){}
     ~Team(){};
 
-    double getBudget() const{return budget;} 
+    float getBudget() const{return budget;} 
     const string& getName() const{return name;}
 
     unsigned short getPoints() const{return points;}
     const shared_squad& getPlayers() const{return Players;}
 
     //Returns a map of averages calculated from the players stats
-    unordered_map<string, double> getTeamStats() const;
+    unordered_map<string, float> getTeamStats() const;
     unique_first_team getFirstTeam() const;          
     //Returns the index of the best player for a position                    
     static uint16_t getBestPlayerIndex(const shared_squad_map& players, const string& pos);
     team_ptr clone() const; 
 
-    void setBudget(double budget){this->budget = budget;}
+    void setBudget(float budget){this->budget = budget;}
 
     void buyPlayer(Player*);//Not implemented yet
     void sellPlayer(Player*);//Not implemented yet

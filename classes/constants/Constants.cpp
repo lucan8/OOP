@@ -14,6 +14,7 @@ unordered_map<string, uint16_t> Constants :: subs_layout;
 unordered_map<string, unique_ptr<GLfloat>> Constants :: vertices;
 unordered_map<string, unique_ptr<GLuint>> Constants :: vertex_indices;
 unordered_map<string, uint16_t> Constants :: entity_types;
+mt19937 Constants :: rng;
 
 //Holds  match_positions, the link_matrix, and the coordinates for each position
 struct Constants :: Formation{
@@ -54,7 +55,7 @@ void Constants :: init(){
 void Constants :: initValues(const string& file_name){
     ifstream fin(file_name);
     if (!fin.is_open())
-        throw FileOpenException(__func__, file_name);
+        throw FileOpenException(__FILE__, __func__, __LINE__, file_name);
 
     string const_name;
     uint16_t const_val;
@@ -67,7 +68,7 @@ void Constants :: initValues(const string& file_name){
 void Constants :: initPositions(const string& file_name){
     ifstream fin(file_name);
     if (!fin.is_open())
-        throw FileOpenException(__func__, file_name);
+        throw FileOpenException(__FILE__, __func__, __LINE__, file_name);
 
     string const_name;
     uint16_t nr_positions;
@@ -86,7 +87,7 @@ void Constants :: initPositions(const string& file_name){
 void Constants :: initPlayerGen(const string& file_name){
     ifstream fin(file_name);
     if (!fin.is_open())
-        throw FileOpenException(__func__, file_name);
+        throw FileOpenException(__FILE__, __func__, __LINE__, file_name);
 
     string player_type, const_name;
     uint16_t nr_player_type, nr_consts, const_val;
@@ -106,7 +107,7 @@ void Constants :: initStatsRatios(const string& file_name){
     ifstream fin(file_name);
     //Checking file opening
     if (!fin.is_open())
-        throw FileOpenException(__func__, file_name);
+        throw FileOpenException(__FILE__, __func__, __LINE__, file_name);
 
     string player_type, aux_player_positions, stat_name, age_related, match_related;
     uint16_t nr_stats, stat_ratio;
@@ -141,7 +142,7 @@ void Constants :: initTeamNames(const string& file_name){
     
     ifstream fin(file_name);
     if (!fin.is_open())
-        throw FileOpenException(__func__, file_name);
+        throw FileOpenException(__FILE__, __func__, __LINE__, file_name);
     
     uint16_t nr_names;
     string t_name;
@@ -156,15 +157,12 @@ void Constants :: initTeamNames(const string& file_name){
 void Constants :: initFormations(const string& file_name){
     ifstream fin(file_name);
     if (!fin.is_open())
-        throw FileOpenException(__func__, file_name);
+        throw FileOpenException(__FILE__, __func__, __LINE__, file_name);
     
     string formation_name, positions;
 
     //Comment at the top of the file to be ignored
     getline(fin, positions);
-    //REMOVE THIS
-    // string constants_path = (filesystem :: current_path().parent_path() / "resources" / "constants" / "").string();
-    // ofstream fout(constants_path + "match_pos_coords.txt");
 
     while (fin.peek() != EOF){
         fin >> formation_name;
@@ -178,19 +176,16 @@ void Constants :: initFormations(const string& file_name){
         //Reading link matrix for chemestry
         formations[formation_name].readLinkMatrix(fin);
 
-       //formations[formation_name].initPlayersCoords(fout);
         fin.ignore();
     }
 
-    // for (const auto& p : p_coords){
-    //     fout << p.first << ' ' << p.second.x << ' ' << p.second.y << '\n';
-    // }
+
 }
 
 void Constants :: initSubsLayout(const string& file_name){
     ifstream fin(file_name);
     if (!fin.is_open())
-        throw FileOpenException(__func__, file_name);
+        throw FileOpenException(__FILE__, __func__, __LINE__, file_name);
 
     string det_p_type;
     uint16_t nr_players;
@@ -214,12 +209,12 @@ void Constants :: Formation :: readLinkMatrix(ifstream& fin){
 void Constants :: initMPosCoords(const string& file_name){
     ifstream fin(file_name);
     if (!fin.is_open())
-        throw FileOpenException(__func__, file_name);
+        throw FileOpenException(__FILE__, __func__, __LINE__, file_name);
 
     string pos;
     //Reading the player positions and their coordinates
     while (fin >> pos)
-        fin >> p_coords[pos];
+        fin >> p_coords[pos].x >> p_coords[pos].y;
 }
 
 /*
@@ -260,7 +255,7 @@ void Constants :: Formation :: normalizeCoords(){
 void Constants :: initPositionEquivalence(const string& file_name){
     ifstream fin(file_name);
     if (!fin.is_open())
-        throw FileOpenException(__func__, file_name);
+        throw FileOpenException(__FILE__, __func__, __LINE__, file_name);
 
     string match_pos, normal_pos;
     while (fin >> match_pos >> normal_pos)
@@ -272,7 +267,7 @@ void Constants :: initPositionEquivalence(const string& file_name){
 void Constants :: initVertices(const string& file_name){
     ifstream fin(file_name);
     if (!fin.is_open())
-        throw FileOpenException(__func__, file_name);
+        throw FileOpenException(__FILE__, __func__, __LINE__, file_name);
 
     string const_name;
     uint16_t nr_positions;
@@ -287,7 +282,7 @@ void Constants :: initVertices(const string& file_name){
 void Constants :: initVertexIndices(const string& file_name){
     ifstream fin(file_name);
     if (!fin.is_open())
-        throw FileOpenException(__func__, file_name);
+        throw FileOpenException(__FILE__, __func__, __LINE__, file_name);
 
     string shape;
     uint16_t nr_indices;
@@ -303,7 +298,7 @@ void Constants :: initVertexIndices(const string& file_name){
 void Constants :: initEntityTypes(const string& file_name){
     ifstream fin(file_name);
     if (!fin.is_open())
-        throw FileOpenException(__func__, file_name);
+        throw FileOpenException(__FILE__, __func__, __LINE__, file_name);
 
     string entity_type;
     uint16_t entity_nr;
@@ -313,11 +308,17 @@ void Constants :: initEntityTypes(const string& file_name){
 }
 
 
+void Constants :: initRNG(){
+    random_device rd;
+    rng = mt19937(rd());
+}
+
+
 uint16_t Constants ::  getVal(const string& const_name){
     try{
         return values.at(const_name);
     } catch(out_of_range& e){
-        throw InvalidConstName(__func__, const_name);
+        throw InvalidConstName(__FILE__, __func__, __LINE__, const_name);
     }
 }
 
@@ -326,7 +327,7 @@ unordered_map<string, uint16_t> Constants ::  getAllAgeInfo(const string& age_ty
     try{
         return age_info.at(age_type);
     } catch(out_of_range& e){
-        throw InvalidAgeType(__func__, age_type);
+        throw InvalidAgeType(__FILE__, __func__, __LINE__, age_type);
     }
 }
 
@@ -336,7 +337,7 @@ uint16_t Constants :: getAgeInfo(const string& age_type, const string& const_nam
         return getAllAgeInfo(age_type).at(const_name);
     }
     catch(out_of_range& e){
-        throw InvalidConstName(__func__, const_name);
+        throw InvalidConstName(__FILE__, __func__, __LINE__, const_name);
     }
 }
 
@@ -345,7 +346,7 @@ vector<string> Constants :: getPositions(const string& p_type){
     try{
         return positions.at(p_type);
     }catch(out_of_range& e){
-        throw InvalidPlayerType(__func__, p_type);
+        throw InvalidPlayerType(__FILE__, __func__, __LINE__, p_type);
     }
 }
 
@@ -359,7 +360,7 @@ vector<string> Constants :: getStats(const string& p_type){
     try{
         return stats.at(p_type);
     }catch(out_of_range& e){
-        throw InvalidPlayerType(__func__, p_type);
+        throw InvalidPlayerType(__FILE__, __func__, __LINE__, p_type);
     }
 }
 
@@ -368,7 +369,7 @@ vector<string> Constants :: getAgeRelatedStats(const string& p_type){
     try{
         return age_stats.at(p_type);
     }catch(out_of_range& e){
-        throw InvalidPlayerType(__func__, p_type);
+        throw InvalidPlayerType(__FILE__, __func__, __LINE__, p_type);
     }
     
 }
@@ -378,7 +379,7 @@ vector<pair<string, uint16_t>> Constants :: getStatsRatios(const string& p_pos){
     try{
         return stats_ratios.at(p_pos);
     }catch(out_of_range& e){
-        throw InvalidPosition(__func__, p_pos);
+        throw InvalidPosition(__FILE__, __func__, __LINE__, p_pos);
     }
     
 }
@@ -399,7 +400,7 @@ vector<string> Constants :: getSameDetType(const string& pos){
         if (find(p_t.second.begin(), p_t.second.end(), pos) != p_t.second.end())
             return p_t.second;
 
-    throw InvalidPosition(__func__, pos);
+    throw InvalidPosition(__FILE__, __func__, __LINE__, pos);
 }
 
 
@@ -422,7 +423,7 @@ const link_matrix& Constants :: getLinkMatrix(const string& formation_name){
     try{
         return Constants :: formations.at(formation_name).matrix;
     } catch(out_of_range& e){
-        throw InvalidFormation(__func__, formation_name);
+        throw InvalidFormation(__FILE__, __func__, __LINE__, formation_name);
     }
 }
 
@@ -431,16 +432,16 @@ const vector<string>& Constants :: getFormationPositions(const string& formation
     try{
         return Constants :: formations.at(formation_name).positions;
     } catch(out_of_range& e){
-        throw InvalidFormation(__func__, formation_name);
+        throw InvalidFormation(__FILE__, __func__, __LINE__, formation_name);
     }
 }
 
 
-const Coordinates& Constants :: getMPosCoords(const string& m_pos){
+const glm :: vec2& Constants :: getMPosCoords(const string& m_pos){
     try{
         return p_coords.at(m_pos);
     } catch(out_of_range& e){
-        throw InvalidMatchPosition(__func__, m_pos);
+        throw InvalidMatchPosition(__FILE__, __func__, __LINE__, m_pos);
     }
 }
 
@@ -450,7 +451,7 @@ const players_coords& Constants :: getPlayersCoords(const string& formation_name
     try{
         return Constants :: formations.at(formation_name).coords;
     } catch(out_of_range& e){
-        throw InvalidFormation(__func__, formation_name);
+        throw InvalidFormation(__FILE__, __func__, __LINE__, formation_name);
     }
 }
 */
@@ -460,7 +461,7 @@ const string& Constants :: getPosEquivalence(const string& m_pos){
     try{
         return pos_equivalence.at(m_pos);
     } catch(out_of_range& e){
-        throw InvalidMatchPosition(__func__, m_pos);
+        throw InvalidMatchPosition(__FILE__, __func__, __LINE__, m_pos);
     }
 }
 
@@ -474,7 +475,7 @@ GLfloat* Constants :: getVertices(const string& const_name){
     try{
         return vertices.at(const_name).get();
     } catch(out_of_range& e){
-        throw InvalidConstName(__func__, const_name);
+        throw InvalidConstName(__FILE__, __func__, __LINE__, const_name);
     }
 }
 
@@ -483,7 +484,7 @@ GLuint* Constants :: getVertexIndices(const string& const_name){
     try{
         return vertex_indices.at(const_name).get();
     } catch(out_of_range& e){
-        throw InvalidConstName(__func__, const_name);
+        throw InvalidConstName(__FILE__, __func__, __LINE__, const_name);
     }
 }
 
@@ -492,6 +493,22 @@ uint16_t Constants :: getEntityNumber(const string& entity_type){
     try{
         return entity_types.at(entity_type);
     } catch(out_of_range& e){
-        throw InvalidEntityType(__func__, entity_type);
+        throw InvalidEntityType(__FILE__, __func__, __LINE__, entity_type);
     }
+}
+
+
+float Constants :: generateRealNumber(float min, float max){
+    uniform_real_distribution<float> dist(min, max);
+    return dist(rng);
+}
+
+uint16_t  Constants :: generateNaturalNumber(uint16_t min, uint16_t max){
+    uniform_int_distribution<uint16_t> dist(min, max);
+    return dist(rng);
+}
+
+uint16_t Constants :: generateDiscreteNumber(const vector<uint16_t>& weights){
+    discrete_distribution<> dist(weights.begin(), weights.end());
+    return dist(rng);
 }

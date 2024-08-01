@@ -1,5 +1,4 @@
 #pragma once
-
 #include <algorithm>
 #include <filesystem>
 #include "../exceptions/FileOpenException.h"
@@ -11,13 +10,13 @@
 #include "../exceptions/InvalidMatchPosition.h"
 #include "../exceptions/InvalidEntityType.h"
 #include "../../functions/functions.h"
-#include "../coordinates/Coordinates.h"
 #include <iostream>
 #include <sstream>
 #include <unordered_map>
 #include <queue>
 #include <vector>
 #include <GL/glew.h>
+#include <random>
 using namespace std;
 
 //We have two types of players: OUTFIELD AND GOALKEEPER(GK)
@@ -26,10 +25,10 @@ using namespace std;
 //Each "normal" positions holds a set of match positions(LB/RB, LCM/RCM, LW/RW...)
 
 //Adiacence matrix for player positions nodes
-//Coordinates represent the vector to be added to pos1 coordinates in order to get pos2 coordinates
-typedef unordered_map<string, unordered_map<string, Coordinates>> link_matrix;
-//Match position, coordinates
-typedef unordered_map<string, Coordinates> mpos_coords;
+//mpos1, mpos2, vector to be added to mpos1 to get mpos2
+typedef unordered_map<string, unordered_map<string, glm :: vec2>> link_matrix;
+//Match position, player coordinates in the 'pitch matrix'
+typedef unordered_map<string, glm :: vec2> mpos_coords;
 class Constants{
 private:
     //Holds a vector of match positions and the link matrix
@@ -63,8 +62,8 @@ private:
     //Geometric shape, indices for the vertex positions
     static unordered_map<string, unique_ptr<GLuint>> vertex_indices;
     //Entity type, entity number
-    static unordered_map<string, uint16_t> entity_types; 
-    
+    static unordered_map<string, uint16_t> entity_types;
+    static mt19937 rng;
     static void initValues(const string& file_name);
     static void initPositions(const string& file_name);
 
@@ -83,6 +82,7 @@ private:
     static void initVertexIndices(const string& file_name);
 
     static void initEntityTypes(const string& file_name);
+    static void initRNG();
 public:
     static void init();
 
@@ -116,8 +116,8 @@ public:
     static vector<string>getFormationsNames();
     static const link_matrix& getLinkMatrix(const string& formation_name);
     
-    //Retrieves coordinates for a match position
-    static const Coordinates& getMPosCoords(const string& m_pos);
+    //Retrieves glm :: vec2 for a match position
+    static const glm :: vec2& getMPosCoords(const string& m_pos);
     static const vector<string>& getFormationPositions(const string& formation_name);
 
     //Retrives the normal position for a match position
@@ -135,4 +135,10 @@ public:
     static GLuint* getVertexIndices(const string& const_name);
 
     static uint16_t getEntityNumber(const string& entity_type);
+    //Returns a random real number between min and max
+    static float generateRealNumber(float min, float max);
+    //Returns a random positive integer between min and max
+    static uint16_t generateNaturalNumber(uint16_t min, uint16_t max);
+    //Returns index of chosen element from the weights vector
+    static uint16_t generateDiscreteNumber(const vector<uint16_t>& weights);
 };

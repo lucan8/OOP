@@ -1,4 +1,6 @@
 #include "functions.h"
+#include "../classes/exceptions/FileOpenException.h"
+
 std :: vector<std :: string> split(const std :: string& str, char sep){
     std :: istringstream str_stream(str);
     std :: string split_elem;
@@ -16,7 +18,7 @@ std :: string ReadFile(const std :: string& file_path){
     std :: ifstream fin(file_path);
 
     if (!fin)
-        throw FileOpenException(__func__, file_path);
+        throw FileOpenException(__FILE__, __func__, __LINE__, file_path);
 
     std :: string line;
     while (std :: getline(fin, line))
@@ -26,14 +28,17 @@ std :: string ReadFile(const std :: string& file_path){
 }
 
 
-//Returns the positions for the square canvas(center is x, y and 2 * radius is the side of the square)
-//left bottom, left top, right top, right bottom
-glm :: mat4x2 getCanvasPositions(Coordinates coords, float radius) {
+glm :: mat4x2 getCanvasPositions(glm :: vec2 coords, float radius) {
     return glm :: mat4x2(
-        coords.x - radius, coords.y - radius, 
-        coords.x - radius, coords.y + radius,
-        coords.x + radius, coords.y + radius, 
-        coords.x + radius, coords.y - radius
+        coords + glm :: vec2(-radius, -radius), 
+        coords + glm :: vec2(-radius, radius),
+        coords + glm :: vec2(radius, radius),
+        coords + glm :: vec2(radius, -radius)
 
     );
+}
+
+
+bool isBetween(float val, float min_val, float max_val){
+    return val >= min_val && val <= max_val;
 }

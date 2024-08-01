@@ -6,8 +6,6 @@
 #include <sstream>
 #include <memory>
 #include <stdint.h>
-#include "../classes/exceptions/FileOpenException.h"
-#include "../classes/coordinates/Coordinates.h"
 #include <glm/glm.hpp>
 
 //Splits a string by a separator
@@ -15,7 +13,9 @@ std :: vector<std :: string> split(const std :: string& str, char sep = ' ');
 //Reads file content and returns it as a string
 std :: string ReadFile(const std :: string& file_path);
 //Returns the positions for the square canvas(center is x, y and 2 * radius is the side of the square)
-glm :: mat4x2 getCanvasPositions(Coordinates coords, float radius);
+//left bottom, left top, right top, right bottom
+glm :: mat4x2 getCanvasPositions(glm :: vec2 coords, float radius);
+bool isBetween(float val, float min_val, float max_val);
 
 //Initializes a map with keys from a vector
 template <typename key, typename val>
@@ -123,4 +123,7 @@ glm :: mat4 toMat4(const matrix_type& matrix){
 
     return res_mat;
 }
+
+
+
 

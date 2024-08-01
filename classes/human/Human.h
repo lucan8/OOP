@@ -9,14 +9,14 @@ class Human : public Printable, public Readable{
 protected:
     string name, nationality;
     uint16_t age;
-    double wage;
+    float wage;
 public:
     Human(){}
 
     void Age(){age ++;}
     
     uint16_t getAge() const{return age;}
-    double getWage() const{return wage;}
+    float getWage() const{return wage;}
     const string& getNationality() const{return nationality;}
     const string& getName() const{return name;}
 

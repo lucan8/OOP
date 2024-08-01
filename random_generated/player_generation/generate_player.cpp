@@ -1,4 +1,5 @@
 #include "generate_player.h"
+#include "../../classes/exceptions/InvalidPlayerType.h"
 using ng = dasmig :: ng;
 
 player_ptr generatePlayer(const string& p_type, const string& age_type){
@@ -9,26 +10,15 @@ player_ptr generatePlayer(const string& p_type, const string& age_type){
 
     ng :: culture r_culture = ng::instance().get_rand_culture();
 
+    //Human data
     new_player->setNationality(ng::instance().culture_to_string(r_culture));
     new_player->setName(ng::instance().get_name(ng::gender::m, r_culture).append_surname());
+    new_player->setAge(generateAge(age_type));
 
-
-    new_player->setAge(generateAge(
-                                    Constants :: getAgeInfo(age_type, "MIN_AGE"), 
-                                    Constants :: getAgeInfo(age_type, "MAX_AGE")
-                                  ));
-    new_player->setStats(generateStats(
-                                    Constants :: getStats(p_type),
-                                    (double)Constants :: getAgeInfo(age_type, "MIN_STAT"),
-                                    (double)Constants :: getAgeInfo(age_type, "MAX_STAT")
-                                    ));
+    //Player data
+    new_player->setStats(generateStats(p_type, age_type));
     new_player->setPosition(determinePreferedPos(p_type, new_player));
-
-    new_player->setPotential(generatePotential(
-                                    new_player->calculateOVR(new_player->getPosition()) + 
-                                    (double)Constants :: getAgeInfo(age_type, "POT_MIN_PLUS"),
-                                    (double)Constants :: getVal("MAX_STATS")
-                                    ));
+    new_player->setPotential(generatePotential(age_type, new_player->calculateOVR(new_player->getPosition())));
     new_player->setTrainNerf();
 
     return new_player;
@@ -40,8 +30,19 @@ player_ptr createPlayer(const string& p_type){
     else if (p_type == "OUTFIELD")
         return new OutFieldPlayer;
     else
-        throw InvalidPlayerType(__func__, p_type);
+        throw InvalidPlayerType(__FILE__, __func__, __LINE__, p_type);
 }
+
+uint16_t generateAge(const string& age_type){
+    return Constants :: generateNaturalNumber(Constants :: getAgeInfo(age_type, "MIN_AGE"), 
+                                              Constants :: getAgeInfo(age_type, "MAX_AGE"));
+}
+
+float generatePotential(const string& age_type, float player_ovr){
+    return Constants :: generateRealNumber(player_ovr + Constants :: getAgeInfo(age_type, "POT_MIN_PLUS"),
+                                           Constants :: getVal("MAX_STATS"));
+}
+
 
 string determinePreferedPos(const string& p_type, const player_ptr player){
     uint16_t max_ovr = 0;
@@ -65,31 +66,12 @@ string determinePreferedPos(const string& p_type, const player_ptr player){
     return pref_pos;
 }
 
-uint16_t generateAge(uint16_t min_age, uint16_t max_age){
-    random_device rd;
-    mt19937 gen(rd());
-    uniform_int_distribution<> age_dist(min_age, max_age);
-                                        
-    return age_dist(gen);
-}
+unordered_map<string, float> generateStats(const string& p_type, const string& age_type){
+    unordered_map<string, float> stats;
 
-double generatePotential(double min_pot, double max_pot){
-    random_device rd;
-    mt19937 gen(rd());
-    uniform_real_distribution<> pot_dist(min_pot, max_pot);
-
-    return pot_dist(gen);
-}
-
-unordered_map<string, double> generateStats(const vector<string>& stats_names, 
-                                            double min_stat, double max_stat){
-    unordered_map<string, double> stats;
-    random_device rd;
-    mt19937 gen(rd());
-    uniform_real_distribution<> stat_dist(min_stat, max_stat);
-
-    for (const auto& stat_name : stats_names)
-        stats[stat_name] = stat_dist(gen);
+    for (const auto& stat_name : Constants :: getStats(p_type))
+        stats[stat_name] = Constants :: generateRealNumber(Constants :: getAgeInfo(age_type, "MIN_STAT"),
+                                                           Constants :: getAgeInfo(age_type, "MAX_STAT"));
     
     return stats;
 }

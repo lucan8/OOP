@@ -30,8 +30,6 @@ void GLAPIENTRY MessageCallback(GLenum source, GLenum type, GLuint id, GLenum se
 }
 
 int main(){
-
-
     Constants :: init();
 
     //Initializing glfw
@@ -42,14 +40,18 @@ int main(){
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
     //Initializing window
-    GLFWwindow* window = glfwCreateWindow(900, 600, "Hello World", NULL, NULL);
+    const uint16_t window_width = Constants :: getVal("WINDOW_WIDTH"),
+                   window_height = Constants :: getVal("WINDOW_HEIGHT");
+    GLFWwindow* window = glfwCreateWindow(window_width, window_height, "Hello World", NULL, NULL);
+    
     if (!window){
         cout << "Failed to create window\n";
         glfwTerminate();
     }
     //Creating context for window
     glfwMakeContextCurrent(window);
-    
+    glfwSwapInterval(1);
+
     //Initializing glew
     if (glewInit() != GLEW_OK){
         cout << "Failed to initialize GLEW\n";
@@ -57,15 +59,76 @@ int main(){
 
     glEnable(GL_DEBUG_OUTPUT);
     glDebugMessageCallback(MessageCallback, 0);
-    
+
+    //Blending test
+    /*
+    float positions[] = {
+        -0.5f, -0.5f,
+         0.5f, -0.5f,
+         0.5f,  0.5f,
+        -0.5f,  0.5f
+    };
+
+    float positions1[] = {
+        -0.3f, -0.3f,
+         0.7f, -0.3f,
+         0.7f,  0.7f,
+        -0.3f,  0.7f
+    };
+
+    unsigned int indices[] = {
+        0, 1, 2,
+        2, 3, 0
+    };
+
+    const string vert_shader_path = (filesystem::current_path().parent_path() / "resources" / "shaders" / "vertex" / "").string(),
+                 frag_shader_path = (filesystem::current_path().parent_path() / "resources" / "shaders" / "fragment" / "").string();
+
+    //Loading the shaders
+    Shader pitch_shader((vert_shader_path + "pitch.glsl"), (frag_shader_path + "pitch.glsl"));
+    pitch_shader.bind();
+
+    GLint u_location = pitch_shader.getUniformLocation("u_Color");
+    assert(u_location != -1);
+
+    VBO vbo(positions, 4 * 2 * sizeof(float), GL_STATIC_DRAW),
+        vbo1(positions1, 4 * 2 * sizeof(float), GL_STATIC_DRAW);
+
+    VertexBufferLayout layout;
+    layout.addAttribute<float>(2);
+
+    VAO vao, vao1;
+    vao.addBuffer(vbo, layout);
+    vao1.addBuffer(vbo1, layout);
+
+    IBO ibo(indices, 6);
+    */
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
     vector<string> team_names = Constants :: getTeamNames();
     unique_team t1(generateTeam(team_names)), t2(generateTeam(team_names));
-
+    unique_first_team temp = t1->getFirstTeam();
     Match match(t1->getFirstTeam(), t2->getFirstTeam());
+
+    
+    int nr = 0;
     while (!glfwWindowShouldClose(window)){
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
-        match.createField();
+
+        match.draw();
+        if (nr % 50 == 0)
+            match.movePlayers();
+        nr++;
+
+        //Blending test
+        /*
+        glUniform4f(u_location, 0.0f, 1.0f, 0.0f, 0.1f);
+        Renderer :: draw(vao, ibo, pitch_shader);
+        glUniform4f(u_location, 1.0f, 0.0f, 0.0f, 0.1f);
+        Renderer :: draw(vao1, ibo, pitch_shader);
+        */
         glfwSwapBuffers(window);
         glfwPollEvents();
     }

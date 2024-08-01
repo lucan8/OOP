@@ -1,14 +1,16 @@
 #include "Textures.h"
 #include "../../vendor/stb_image.h"
+#include "../exceptions/MyRuntimeException.h"
 #include <memory>
 
 Textures :: Textures(const std :: string& file_path){
+    //Loadint the texture from the file path
     GLint width, height, bpp;
     stbi_set_flip_vertically_on_load(1);
     
     std :: unique_ptr<GLubyte> localBuffer(stbi_load(file_path.c_str(), &width, &height,&bpp, 4));
     if(localBuffer == nullptr)
-        throw std :: runtime_error("Failed to load texture from " + file_path);
+        throw MyRuntimeException(__FILE__, __func__, __LINE__, "Failed to load texture from " + file_path);
     
     glGenTextures(1, &this->id);
     glBindTexture(GL_TEXTURE_2D, this->id);

@@ -1,29 +1,37 @@
-#match v1
-#In a match there will be a number of chances
-#Which team will have a goal scoring change is based on these attr:
-    -PAS
-    -STA
+#The football pitch is a matrix
+#Each player is node in the matrix
+#Depending on the distance between players a transition will appear in adiacence matrix for the players
 
-#After that it's time for the attackers and defenders to compare attributes:
-    -PHY    -PHY
-    -PAC    -AGG
-    -DRI    -DEF
-#If the attackers manage to go past the defense they need to go past the goalkeeper
-    -SHO    -AVG(REF, DIV, HAN, POS)
+Attacking Team:
+#With ball movement:
+    - players with lower PAS have a higher probability of passing near the outer part of the radius
+    - if a pass is sent where two players'es radius overlap,
+        the player with the highest PHY will have a higher chance of keeping the ball
+    case 1:Player with ball is closest to the goal
+        - no opponent in front of him -> he can advance
+        - an opponent in front of him -> he can pass or dribble
+        - at least two opponets blocking the player -> passes automatically
+    case 2: Player with ball is not closest to the goal
+        - passes to closest player to the goal that has the highest probability of receiving the ball
+        - if "blocked" the chance of keeping the ball is dependent on the player's PHY and DRI:
 
+    Passing:
+        - the probability of sending a succesfull pass depends on the player's PAS and the distance to a teammate
+        - 
 
+#With no ball movement:
+    - players can intercept a pass if the ball is withing their radius
+    - each player moves towards the goal
+    - they will try to avoid opponets using their PAC
+    - CBs don't go past middle of pitch
+    - 2 players closest to player with ball stay within their passing range
 
+Defending Team:
+    - Players closest to the one with the ball will move towards him
+    - The rest will block passing lanes and will mark their opponents
+    - If withing the player's radius, they will try to intercept the pass
 
-#Every match will have 90 minutes
-#After each minute the player stamina decreases depending on their statistical_stamina and poz
-#Range for chances between 10, 40 per match
-#Idea: Make football pitch a matrix and players points in matrix
-#Idea: Formations will be graphs
-#In each minute of a game a few things can happen:
-    - team1/team2 has possesion
-    - team1/team2 is attacking(so the other is defending)
-    - team1/team2 commits a foul
-
-#There will be a number between (10 - 30) fauls(average number is 20 in premier league)
-#The chance of getting a yellow(or red) card grows with the number of fauls commited
-#Every match has 9 scoring oportunities(every 10 minutes a scoring chance appears)
+#Dictonary:
+    - succesfull dribbling depenents on the player's DRI, PHY and PAC VS the opponent's DEF, PHY and PAC
+    - how much a player advances at once depends on the player's PAC
+    "blocked player" - the player's center is within an opponent's radius

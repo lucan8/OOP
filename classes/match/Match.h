@@ -7,7 +7,6 @@
 #include <assert.h>
 #include <random>
 
-
 //Ignoring player match stamina for the sake of simplicity
 //Ignoring player match form for the sake of simplicity
 //t1 is in the first half of the pitch, t2 is in the second half
@@ -16,6 +15,7 @@ private:
     unique_first_team team1, team2;
     glm :: vec2 ball_coords;
     unordered_map<string, Textures> textures;
+    shared_m_matrix pitch_matrix;
 
     void drawPlayers(Shader& player_shader, const IBO& player_ibo);
     void drawField(Shader& pitch_shader, const IBO& pitch_ibo);
@@ -28,12 +28,15 @@ private:
     void loadTextures();
 
     bool hasBall(const shared_m_player& player) const;
+
+    void setPitchMatrix();
     shared_m_player getPlayerWithBall() const;
 public:
     //Draws the pitch and players
     void draw();
     
     Match(unique_first_team team1, unique_first_team team2);
+    Match(){}
 
     //Moves players and ball
     void movePlayers();

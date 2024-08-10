@@ -2,7 +2,8 @@
 #include "../textures/Textures.h"
 
 Match :: Match(unique_first_team team1, unique_first_team team2)
-        : team1(move(team1)), team2(move(team2)), ball_coords(0, 0){
+        : team1(move(team1)), team2(move(team2)), ball_coords(0, 0),
+          pitch_matrix(Constants :: getVal("GOAL_LINE_LENGTH") + 1, vector<shared_m_player>(Constants :: getVal("TOUCHLINE_LENGTH") + 1, nullptr)){
     this->team2->changeSide();
 
     //From vertical pitch to horizontal pitch(and vice versa)
@@ -10,6 +11,11 @@ Match :: Match(unique_first_team team1, unique_first_team team2)
     this->team2->changeSide1();
 
     loadTextures();
+    //Setting the aura colors for the teams
+    this->team1->setAuraColor(textures.at("TEAM1").getAverageColor());
+    this->team2->setAuraColor(textures.at("TEAM2").getAverageColor());
+
+    this->setPitchMatrix();
 }
 
 
@@ -64,6 +70,7 @@ void Match :: draw(){
     this->drawPlayers(entity_shader, square_ibo);
     this->drawBall(entity_shader, square_ibo);
 }
+
 
 void Match :: drawPlayers(Shader& player_shader, const IBO& player_ibo){
     //Binding the shader
@@ -154,6 +161,12 @@ void Match :: drawBall(Shader& ball_shader, const IBO& ball_ibo){
 }
 
 
+void Match :: setPitchMatrix(){
+    team1->setPitchMatrix(pitch_matrix);
+    team2->setPitchMatrix(pitch_matrix);
+}
+
+
 glm :: mat4 Match :: getBallVertices() const{
     glm :: mat4 ball_vertices = toMat4(getCanvasPositions(ball_coords, Constants :: getVal("PLAYER_RADIUS") / 2.0));
 
@@ -183,23 +196,26 @@ void Match :: movePlayers(){
     //Getting the player with the ball
     shared_m_player player_with_ball = getPlayerWithBall();
 
+    intersections_map t1_intersections = team1->getOpponentIntersections(team2),
+                      t2_intersections = team2->getOpponentIntersections(team1);
+
     if (player_with_ball){
         //Moving the ball with the player
         ball_coords = player_with_ball->getCoords();
         //Getting the number of intersections and the opponent player(if there is one)
-        uint16_t nr_intersections;
-        shared_m_player opponent;
-        tie(nr_intersections, opponent) = team2->getOpponentIntersections(player_with_ball);
         //Moving the player with the ball
-        team1->movePlayerWithBall(ball_coords, player_with_ball, nr_intersections, opponent, team2->getGKCoords());
+        team1->movePlayerWithBall(ball_coords, player_with_ball, t1_intersections, team2->getGKCoords());
         //Moving the players without the ball
-        team1->movePlayersWithoutBall(player_with_ball, team2->getGKCoords());
+        team1->movePlayersWithoutBall(player_with_ball, team2->getGKCoords(), t1_intersections);
     }
     else
         team1->movePlayersWithoutBall(ball_coords, team2->getGKCoords());
     
+    for (const auto& player : team2->getFirstEleven())
+        if (player->getPosition() != "GK")
+            player->p_move(ball_coords, team2->getClosestPlayer(player->getCoords()));
+    
 }
-
 
 shared_m_player Match :: getPlayerWithBall() const{
     //Searching for the player with the ball in the first team

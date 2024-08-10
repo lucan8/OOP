@@ -91,19 +91,46 @@ glm :: mat4 MatchPlayer :: getPlayerVertices(pitch_half half, float radius) cons
 }
 
 
-void MatchPlayer :: decide(glm :: vec2& ball_coords, uint16_t nr_intersections,
-                           const vector<PassingInfo>& passing_options, const shared_m_player& opponent,
-                           const glm :: vec2& opp_gk_coords, const shared_m_player& closest_team_mate){
-    switch (nr_intersections){
+void MatchPlayer :: decide(glm :: vec2& ball_coords, const OpponentIntersections& opp_intersections,
+                           const passing_options& pass_options, const glm :: vec2& opp_gk_coords,
+                           const shared_m_player& closest_team_mate){
+    switch (opp_intersections.nr_intersections){
         case 0:
             this->p_move(opp_gk_coords, closest_team_mate);
             break;
         case 1:
-            this->decidePassDribble(ball_coords, opponent, passing_options);
+            this->decidePassDribble(ball_coords, opp_intersections.opponent, pass_options);
             break;
         default:
-            this->pass(ball_coords, passing_options);
+            this->pass(ball_coords, pass_options);
     }
+}
+
+
+void MatchPlayer :: p_move(const glm :: vec2& target, const shared_m_player& closest_team_mate,
+                           const shared_m_player& closest_opponent){
+    //Weights for the distances to the target and the team mate
+    float target_dist_weight = 2, team_mate_dist_weight = 1, opponent_dist_weight = 1;
+
+    glm :: vec2 best_option_coords;
+    float best_option_dist = numeric_limits<float>::max();
+
+    //Choosing the best valid move option based on the distance to the target and the team mate                              
+    for (const auto& opt_coords : this->getMoveOptions())
+        if (!isOutsidePitch(opt_coords)){
+            //Calculating the final distance
+            float final_dist = glm :: distance(opt_coords, target) * target_dist_weight - 
+                               glm :: distance(opt_coords, closest_team_mate->getCoords()) * team_mate_dist_weight +
+                               glm :: distance(opt_coords, closest_opponent->getCoords()) * opponent_dist_weight;
+
+            //If the final distance is greater than this is a better option
+            if (final_dist < best_option_dist){
+                best_option_dist = final_dist;
+                best_option_coords = opt_coords;
+            }
+        }
+    
+    this->coords = best_option_coords;
 }
 
 
@@ -118,11 +145,11 @@ void MatchPlayer :: p_move(const glm :: vec2& target, const shared_m_player& clo
     for (const auto& opt_coords : this->getMoveOptions())
         if (!isOutsidePitch(opt_coords)){
             //Calculating the final distance
-            float final_dist = glm :: distance(opt_coords, closest_team_mate->getCoords()) * team_mate_dist_weight
-                               - glm :: distance(opt_coords, target) * target_dist_weight;
+            float final_dist = glm :: distance(opt_coords, target) * target_dist_weight - 
+                               glm :: distance(opt_coords, closest_team_mate->getCoords()) * team_mate_dist_weight;
 
             //If the final distance is greater than this is a better option
-            if (best_option_dist < final_dist){
+            if (final_dist < best_option_dist){
                 best_option_dist = final_dist;
                 best_option_coords = opt_coords;
             }
@@ -133,7 +160,7 @@ void MatchPlayer :: p_move(const glm :: vec2& target, const shared_m_player& clo
 
 
 void MatchPlayer :: decidePassDribble(glm :: vec2& ball_coords, const shared_m_player& opponent, 
-                                      const vector<PassingInfo>& passing_options){
+                                      const passing_options& passing_options){
     //Make this a function in player
 
     //Dribbling related stats(add weights for these)
@@ -151,35 +178,52 @@ void MatchPlayer :: decidePassDribble(glm :: vec2& ball_coords, const shared_m_p
 }
 
 float MatchPlayer :: getPassingRange() const{
-    //Each pass stat is equivalent to 0.36 meters(should be part of the constants)
-    const float pass_distance_multiplier = 0.36;
+    //Coordinates of the top right corner of the pitch
+    glm :: vec2 max_pitch_coords(Constants :: getVal("TOUCHLINE_LENGTH") / 2,
+                                 Constants :: getVal("GOAL_LINE_LENGTH") / 2);
+    //Max distance betweeen to players                             
+    float max_distance = glm :: distance(-max_pitch_coords, max_pitch_coords);
+
+    //Nerfing the pass distance multiplier by deviding it by 2
+    const float pass_distance_multiplier = max_distance / Constants :: getVal("MAX_STATS") / 2;
     return this->player->getStat("PAS") * pass_distance_multiplier;
 }
 
 
-float MatchPlayer :: getPassChance(float pass_distance) const{
+float MatchPlayer :: getPassChance(const shared_m_player& team_mate, const OpponentIntersections& opp_intersections) const{
+    //If there are two intersections the pass should be impossible
+    if (opp_intersections.nr_intersections == 2)
+        return 0;
+    
+    //If there is only one intersection the physical difference between the two players is taken into account
+    float phy_diff;
+    if (opp_intersections.nr_intersections == 1)
+        phy_diff = max(0.0f, opp_intersections.opponent->getPlayer()->getStat("PHY") - team_mate->getPlayer()->getStat("PHY"));
+    
+    float pass_distance = glm :: distance(this->coords, team_mate->getCoords());
+
     const float max_chance = 100;
     const float pass_secure_radius = getPassingRange();
     //With each meter past "pass_distance" the probability of a successful pass decreases by 5%
     const uint16_t meter_pass_chance_decrease = 5;
 
     //If within that distance chance is 100%(max_chance), else it decreases by 5% for each meter
-    return min(max_chance, max_chance - (pass_distance - pass_secure_radius) * meter_pass_chance_decrease);
+    return min(max_chance, max_chance - (pass_distance - pass_secure_radius) * meter_pass_chance_decrease + phy_diff);
 }
 
 
 float MatchPlayer :: getFinalPassChance(const PassingInfo& pass_info) const{
-    const uint16_t pass_chance_weight = 4,
+    const uint16_t pass_chance_weight = 3,
                    distance_from_goal_weight = 2,
                    team_mate_OVR_weight = 1;
 
-    return pass_info.pass_success_chance * pass_chance_weight +
+    return pass_info.pass_success_chance * pass_chance_weight -
            pass_info.distance_from_goal * distance_from_goal_weight +
-           pass_info.team_mate->getOVR() * team_mate_OVR_weight;
+           pass_info.team_mate->getPlayer()->getAttackingOVR() * team_mate_OVR_weight;
 }
 
 
-void MatchPlayer :: pass(glm :: vec2& ball_coords, const vector<PassingInfo>& passing_options){
+void MatchPlayer :: pass(glm :: vec2& ball_coords, const passing_options& passing_options){
     PassingInfo chosen_pass_option = passing_options.at(0);
     float max_final_chance = this->getFinalPassChance(chosen_pass_option);
 
@@ -237,13 +281,29 @@ bool MatchPlayer :: isOutsidePitch(const glm :: vec2& coords){
 
 vector<glm :: vec2> MatchPlayer :: getMoveOptions() const{
     //Getting random move values
-    float move_x = Constants :: generateRealNumber(0, 1), move_y = Constants :: generateRealNumber(0, 1);
+    float move_x = Constants :: generateRealNumber(0.01, 1), move_y = Constants :: generateRealNumber(0.01, 1);
     //Getting all possible new coordinates
     return {
+            this->coords,
+            (this->coords + glm :: vec2(move_x, 0)),
+            (this->coords + glm :: vec2(-move_x, 0)),
+            (this->coords + glm :: vec2(0, move_y)),
+            (this->coords + glm :: vec2(0, -move_y)),
             (this->coords + glm :: vec2(move_x, move_y)),
             (this->coords + glm :: vec2(move_x, -move_y)),
             (this->coords + glm :: vec2(-move_x, move_y)),
-            (this->coords + glm :: vec2(-move_x, -move_y))};
+            (this->coords + glm :: vec2(-move_x, -move_y)),
+            };
+}
+
+
+glm :: vec2 MatchPlayer :: getPitchMatrixcoords() const{
+    //Getting the player's coordinates relative to pitch width and height
+    glm :: vec2 temp = this->coords + glm :: vec2(Constants :: getVal("TOUCHLINE_LENGTH") / 2,
+                                      Constants :: getVal("GOAL_LINE_LENGTH") / 2);
+    
+    //Pitch matrix coordinates will be reversed
+    return glm :: vec2(temp.y, temp.x);
 }
 
 

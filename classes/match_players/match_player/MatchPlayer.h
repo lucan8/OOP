@@ -7,9 +7,9 @@ typedef shared_ptr<MatchPlayer> shared_m_player;
 typedef unique_ptr<MatchPlayer> unique_m_player;
 typedef vector<unique_m_player> unique_m_squad;
 typedef vector<shared_m_player> shared_m_squad;
+typedef vector<vector<shared_m_player>> shared_m_matrix;
 //vector of shared_player represented as map(for easier removal)
 typedef unordered_map<uint16_t, unique_m_player> unique_m_squad_map;
-
 class MatchPlayer {
 public:
     //Enum for the pitch half in which the player starts
@@ -23,6 +23,11 @@ public:
         float pass_success_chance;
         float distance_from_goal;
     };
+    struct OpponentIntersections{
+        uint16_t nr_intersections;
+        shared_m_player opponent;
+    };
+    typedef vector<PassingInfo> passing_options;
 protected:
     shared_player player;
     const string position; //Can be either a normal position(subs) or a match position(first eleven)
@@ -39,7 +44,7 @@ protected:
 
     //Decides whether to pass or dribble depending on the opponent's stats and passing options
     void decidePassDribble(glm :: vec2& ball_coords, const shared_m_player& opponent,
-                           const vector<PassingInfo>& passing_options);
+                           const passing_options& passing_options);
     
     //Should be part of an entity class
     static bool isOutsidePitch(const glm :: vec2& coords);
@@ -57,6 +62,7 @@ public:
     string getPosition() const{return position;}
     const shared_player& getPlayer() const{return player;}
     glm :: vec2 getCoords() const{return coords;}
+    glm :: vec2 getPitchMatrixcoords()const;
     float getOVR() const{return OVR;}
 
     void setCoords(const glm :: vec2& coords){this->coords = coords;}
@@ -78,19 +84,24 @@ public:
     
     //Decides what to do with the ball depending on the number of intersections with the opposing players
     //The the opponent's stats and passing options(for 0 and 2 intersections there should be no opponent passed)
-    void decide(glm :: vec2& ball_coords, uint16_t nr_intersections, const vector<PassingInfo>& passing_options,
-                const shared_m_player& opponent, const glm :: vec2& opp_gk_coords, const shared_m_player& closest_team_mate);
+    void decide(glm :: vec2& ball_coords, const OpponentIntersections& opp_intersections,
+                const passing_options& passing_options, const glm :: vec2& opp_gk_coords,
+                const shared_m_player& closest_team_mate);
 
     //Passes the ball to the best option
-    virtual void pass(glm :: vec2& ball_coords, const vector<PassingInfo>& passing_options);
+    virtual void pass(glm :: vec2& ball_coords, const passing_options& passing_options);
     //Gets the chence of sending a succesful pass to a player at a certain distance
-    float getPassChance(float pass_distance) const ;
+    float getPassChance(const shared_m_player& team_mate, const OpponentIntersections& opp_intersections) const;
     //Calcualtes the chance of choosing this PassingInfo option
     float getFinalPassChance(const PassingInfo& pass_info) const;
     float getPassingRange() const;
 
     //Moves the player towards the target and away from the closest team mate
+    void p_move(const glm :: vec2& target, const shared_m_player& closest_team_mate, 
+                const shared_m_player& closest_opponent);
     void p_move(const glm :: vec2& target, const shared_m_player& closest_team_mate);
+    //Used to retrieve the closest team mate/opponent
+    //shared_m_player getClosestPlayer(const shared_m_squad& players) const;
     virtual void block() = 0;
     virtual void tackle() = 0; 
     void dribble();   

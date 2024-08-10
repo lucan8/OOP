@@ -51,6 +51,7 @@ public:
     const string& getPosition() const{return position;}
 
     const unordered_map<string, float>& getStats() const{return stats;}
+    float getAttackingOVR() const;
     float getStat(const string& stat_name) const;
 
     bool verifTransferEligible() const{return transfer_eligible;}

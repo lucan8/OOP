@@ -24,6 +24,12 @@ float Player :: getStat(const string& stat_name) const{
     }
 }
 
+
+float Player :: getAttackingOVR() const{
+    return (this->getStat("SHO") + this->getStat("DRI") + this->getStat("PAC") + this->getStat("PHY")) / 4;
+}
+
+
 void Player :: eliminateMaxes(vector<pair<string, uint16_t>>& weights) const{
     vector<pair<string, uint16_t>> :: iterator it = weights.begin();
     uint16_t max_stat = Constants :: getVal("MAX_STATS");

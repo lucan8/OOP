@@ -15,9 +15,8 @@ uniform vec2 u_entity_coords;
 uniform float u_entity_radius;
 
 uniform int u_entity_type;
+uniform vec4 u_aura_color;
 
-
-vec4 yellow = vec4(1.0, 1.0, 0.0, 0.5);
 vec4 white = vec4(1.0, 1.0, 1.0, 1.0);
 //Entity types
 const int pitch = 0;
@@ -43,7 +42,7 @@ vec4 getPlayerPixelColor(vec2 curr_pixel, vec2 center,  float radius){
     
     //Color is white, means we are inside the canvas, so we return the player's aura color
     if (color == white)
-        return yellow;
+        return u_aura_color;
     else
         return color;
 }

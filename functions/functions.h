@@ -16,6 +16,9 @@ std :: string ReadFile(const std :: string& file_path);
 //left bottom, left top, right top, right bottom
 glm :: mat4x2 getCanvasPositions(glm :: vec2 coords, float radius);
 bool isBetween(float val, float min_val, float max_val);
+glm :: vec4 normalizeColor(glm :: vec4 color);
+
+
 
 //Initializes a map with keys from a vector
 template <typename key, typename val>

@@ -42,3 +42,10 @@ glm :: mat4x2 getCanvasPositions(glm :: vec2 coords, float radius) {
 bool isBetween(float val, float min_val, float max_val){
     return val >= min_val && val <= max_val;
 }
+
+
+glm :: vec4 normalizeColor(glm :: vec4 color){
+    const float max_color_val = 255;
+    return glm :: vec4(color.r / max_color_val, color.g / max_color_val,
+                       color.b / max_color_val, color.a / max_color_val);
+}

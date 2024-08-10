@@ -1,15 +1,12 @@
 #include "Textures.h"
 #include "../../vendor/stb_image.h"
 #include "../exceptions/MyRuntimeException.h"
-#include <memory>
 
 Textures :: Textures(const std :: string& file_path){
-    //Loadint the texture from the file path
-    GLint width, height, bpp;
     stbi_set_flip_vertically_on_load(1);
     
-    std :: unique_ptr<GLubyte> localBuffer(stbi_load(file_path.c_str(), &width, &height,&bpp, 4));
-    if(localBuffer == nullptr)
+    this->localBuffer = std :: move(std :: unique_ptr<GLubyte>(stbi_load(file_path.c_str(), &width, &height,&bpp, 4)));
+    if(this->localBuffer == nullptr)
         throw MyRuntimeException(__FILE__, __func__, __LINE__, "Failed to load texture from " + file_path);
     
     glGenTextures(1, &this->id);
@@ -24,8 +21,25 @@ Textures :: Textures(const std :: string& file_path){
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
     //Setting the texture data
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, localBuffer.get());
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, this->width, this->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, this->localBuffer.get());
     glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+
+Textures :: Textures(const Textures& other) : id(other.id), width(other.width), height(other.height), bpp(other.bpp),
+                                    localBuffer(std :: unique_ptr<GLubyte>(new GLubyte(other.height * other.width * 4))){
+    memcpy(this->localBuffer.get(), other.localBuffer.get(), other.height * other.width * 4);
+}
+
+
+Textures& Textures :: operator=(const Textures& other){
+    this->id = other.id;
+    this->width = other.width;
+    this->height = other.height;
+    this->bpp = other.bpp;
+    this->localBuffer = std :: unique_ptr<GLubyte>(new GLubyte(other.height * other.width * 4));
+    memcpy(this->localBuffer.get(), other.localBuffer.get(), other.height * other.width * 4);
+    return *this;
 }
 
 
@@ -42,4 +56,17 @@ void Textures :: bind(unsigned int slot) const{
 
 void Textures :: unbind() const{
     glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+
+glm :: vec4 Textures :: getAverageColor() const{
+    glm :: vec4 avg_color(0.0f);
+    for(int i = 0; i < this->width * this->height; i++){
+        avg_color.r += this->localBuffer.get()[i * 4 + 0];
+        avg_color.g += this->localBuffer.get()[i * 4 + 1];
+        avg_color.b += this->localBuffer.get()[i * 4 + 2];
+        avg_color.a += this->localBuffer.get()[i * 4 + 3];
+    }
+    avg_color /= this->width * this->height;
+    return avg_color;
 }

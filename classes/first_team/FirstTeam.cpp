@@ -41,9 +41,18 @@ uint16_t FirstTeam :: getChemestry() const{
 }
 
 
+// bool FirstTeam :: getClosestBall(glm :: vec2 ball_coords) const{
+//     for (const auto& p : this->first_eleven)
+//         if (p->hasBall(ball_coords))
+//             return true;
+    
+//     return false;
+// }
+
 void FirstTeam :: drawPlayers(MatchPlayer :: pitch_half half, Shader& p_shader, const IBO& player_ibo,
                               const VertexBufferLayout& player_layout, 
                               const VertexBufferLayout& player_aura_layout)const {
+    p_shader.setUniform4f("u_aura_color", this->aura_color);
     for (const auto& p : this->first_eleven)
         p->draw(half, p_shader, player_ibo, player_layout, player_aura_layout);
 }
@@ -105,7 +114,7 @@ shared_m_player FirstTeam :: getClosestPlayer(const glm :: vec2& target) const{
 }
 
 
-pair<uint16_t, shared_m_player> FirstTeam :: getOpponentIntersections(const shared_m_player& player) const{
+MatchPlayer :: OpponentIntersections FirstTeam :: getOpponentIntersections(const shared_m_player& player) const{
     //Will be needed in case there is only one intersection
     shared_m_player opponent;
     uint16_t nr_intersections = 0;
@@ -126,18 +135,19 @@ pair<uint16_t, shared_m_player> FirstTeam :: getOpponentIntersections(const shar
 }
 
 
-void FirstTeam :: movePlayerWithBall(glm :: vec2& ball_coords, shared_m_player& player , uint16_t intersections,
-                                     const shared_m_player& opponent, const glm :: vec2& opp_gk_coords){
+void FirstTeam :: movePlayerWithBall(glm :: vec2& ball_coords, shared_m_player& player,
+                                     const intersections_map& opp_intersections, const glm :: vec2& opp_gk_coords){
     //Checking if the player is in the team
     if (find(this->first_eleven.begin(), this->first_eleven.end(), player) == this->first_eleven.end())
         throw MyRuntimeException(__FILE__, __func__, __LINE__, "Player not found in the team");
 
-    vector<MatchPlayer :: PassingInfo> passing_options = this->getPassingOptions(player, opp_gk_coords);
-    player->decide(ball_coords, intersections, passing_options, opponent, opp_gk_coords, getClosestPlayer(player->getCoords()));
+    MatchPlayer :: passing_options passing_options = this->getPassingOptions(player, opp_gk_coords, opp_intersections);
+    player->decide(ball_coords, opp_intersections.at(player), passing_options, opp_gk_coords, getClosestPlayer(player->getCoords()));
 }
 
 
-void FirstTeam :: movePlayersWithoutBall(const shared_m_player& player_with_ball, const glm :: vec2& opp_gk_coords){
+void FirstTeam :: movePlayersWithoutBall(const shared_m_player& player_with_ball, const glm :: vec2& opp_gk_coords,
+                                         const intersections_map& opp_intersections){
     for (auto& player : this->first_eleven){
         //Ignoring the player with the ball
         if (player == player_with_ball)
@@ -145,11 +155,10 @@ void FirstTeam :: movePlayersWithoutBall(const shared_m_player& player_with_ball
         //Getting the player's and the player with the ball's coordinates
         glm :: vec2 p_coords = player->getCoords(),
                     p_ball_coords = player_with_ball->getCoords();
-
         //Getting the player's succesful pass chance
-        float pass_chance = player_with_ball->getPassChance(glm :: distance(p_coords, p_ball_coords));
+        float pass_chance = player_with_ball->getPassChance(player, opp_intersections.at(player));
 
-        //If not within player's passing range we move him towards the him
+        //If not within player's passing range we move him towards the player
         if (pass_chance < Constants :: getVal("PASS_CHANCE_THRESHOLD"))
             player->p_move(p_ball_coords, getClosestPlayer(p_coords));
         else //If within passing range we move him towards the opponent's goal
@@ -165,16 +174,15 @@ void FirstTeam :: movePlayersWithoutBall(glm :: vec2 ball_coords, const glm :: v
     closest_player->p_move(ball_coords, getClosestPlayer(closest_player->getCoords()));
 
     //Moving the rest of the players towards the opponent's goal
-    for (const auto&  player : this->first_eleven){
+    for (const auto&  player : this->first_eleven)
         if (player != closest_player)
             player->p_move(opp_gk_coords, getClosestPlayer(player->getCoords()));
-    }
 }
 
 
-vector<MatchPlayer :: PassingInfo> FirstTeam :: getPassingOptions(const shared_m_player& player,
-                                                                  const glm :: vec2& opp_gk_coords) const{
-    vector<MatchPlayer :: PassingInfo> passing_options;
+MatchPlayer :: passing_options FirstTeam :: getPassingOptions(const shared_m_player& player, const glm :: vec2& opp_gk_coords,
+                                               const intersections_map& opp_intersections) const{
+    MatchPlayer :: passing_options passing_options;
     passing_options.reserve(this->first_eleven.size() - 2);
 
     //Going through all the players except the one passed as argument
@@ -182,10 +190,38 @@ vector<MatchPlayer :: PassingInfo> FirstTeam :: getPassingOptions(const shared_m
     for (const auto& team_mate : this->first_eleven)
         //Ignoring the player passed as argument and the goalkeeper
         if (team_mate != player && team_mate->getPosition() != "GK"){
-            float dist_team_mate = glm :: distance(player->getCoords(), team_mate->getCoords());
+            const MatchPlayer :: OpponentIntersections& curr_intersections = opp_intersections.at(team_mate);
             float dist_goal = glm :: distance(team_mate->getCoords(), opp_gk_coords);
-            passing_options.emplace_back(team_mate, player->getPassChance(dist_team_mate), dist_goal);
+            passing_options.emplace_back(team_mate, player->getPassChance(team_mate, curr_intersections), dist_goal);
         }
 
     return passing_options;
+}
+
+
+void FirstTeam :: setAuraColor(const glm :: vec4& color){
+    aura_color = normalizeColor(color); 
+    aura_color.a = 0.5f;
+}
+
+
+void FirstTeam :: setPitchMatrix(shared_m_matrix& pitch_matrix) const{
+    for (auto player : this->first_eleven){
+        glm :: vec2 p_coords = player->getPitchMatrixcoords();
+        //Setting the player in the pitch matrix(if coordinates are valid)
+        if (p_coords.x < pitch_matrix.size() && p_coords.y < pitch_matrix.at(p_coords.x).size())
+            pitch_matrix.at(p_coords.x).at(p_coords.y) = player;
+        else
+            throw MyRuntimeException(__FILE__, __func__, __LINE__, "Player's coordinates out of matrix range: " + 
+                                    to_string(p_coords.x) + " " + to_string(p_coords.y));
+    }
+}
+
+
+intersections_map FirstTeam :: getOpponentIntersections(const unique_first_team& t2){
+    intersections_map intersections;
+    for (const auto& player : this->getFirstEleven())
+        intersections[player] = t2->getOpponentIntersections(player);
+
+    return intersections;
 }

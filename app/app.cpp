@@ -6,7 +6,7 @@
 #include <filesystem>
 #include <fstream>
 #include "../classes/constants/Constants.h"
-#include "../classes/teams/team/Team.h"
+#include "../classes/teams/first_team/FirstTeam.h"
 #include "../random_generated/player_generation/generate_player.h"
 #include "../random_generated/team_generation/generate_team.h"
 #include "../classes/shader/Shader.h"
@@ -107,11 +107,9 @@ int main(){
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     vector<string> team_names = Constants :: getTeamNames();
-    unique_team t1(generateTeam(team_names)), t2(generateTeam(team_names));
-    unique_first_team temp = t1->getFirstTeam();
-    Match match(t1->getFirstTeam(), t2->getFirstTeam());
+    shared_team t1(generateTeam(team_names)), t2(generateTeam(team_names));
+    Match match(t1, t2);
 
-    
     int nr = 0;
     while (!glfwWindowShouldClose(window)){
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -119,7 +117,7 @@ int main(){
 
         match.draw();
         if (nr % 50 == 0)
-            match.movePlayers();
+            match.play();
         nr++;
 
         //Blending test

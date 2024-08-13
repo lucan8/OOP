@@ -47,6 +47,7 @@ void Constants :: init(){
         initVertices(constants_path + "vertices.txt");
         initVertexIndices(constants_path + "vertex_indices.txt");
         initEntityTypes(constants_path + "entity_types.txt");
+        initRNG();
     }
     catch (FileOpenException& e){
         cerr << e.what() << '\n';
@@ -70,16 +71,16 @@ void Constants :: initPositions(const string& file_name){
     if (!fin.is_open())
         throw FileOpenException(__FILE__, __func__, __LINE__, file_name);
 
-    string const_name;
+    string det_p_type;
     uint16_t nr_positions;
 
     while (fin.peek() != EOF){
-        fin >> const_name >> nr_positions;
+        fin >> det_p_type >> nr_positions;
         //Adding key-value pair, and initializing a vector of empty string to avoid read exception
-        positions.emplace(const_name, vector<string>(nr_positions, ""));
+        positions.emplace(det_p_type, vector<string>(nr_positions, ""));
 
         while (nr_positions-- >= 1)
-            fin >> positions[const_name][nr_positions];
+            fin >> positions[det_p_type][nr_positions];
     }
     fin.ignore();
 }
@@ -178,8 +179,6 @@ void Constants :: initFormations(const string& file_name){
 
         fin.ignore();
     }
-
-
 }
 
 void Constants :: initSubsLayout(const string& file_name){
@@ -342,11 +341,11 @@ uint16_t Constants :: getAgeInfo(const string& age_type, const string& const_nam
 }
 
 
-vector<string> Constants :: getPositions(const string& p_type){
+vector<string> Constants :: getPositions(const string& det_p_type){
     try{
-        return positions.at(p_type);
+        return positions.at(det_p_type);
     }catch(out_of_range& e){
-        throw InvalidPlayerType(__FILE__, __func__, __LINE__, p_type);
+        throw InvalidPlayerType(__FILE__, __func__, __LINE__, det_p_type);
     }
 }
 

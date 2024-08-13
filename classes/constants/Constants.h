@@ -87,7 +87,7 @@ public:
     static void init();
 
     static uint16_t getVal(const string& const_name);
-    static vector<string> getPositions(const string& p_type);
+    static vector<string> getPositions(const string& det_p_type);
     //Retrieves all positions
     static vector<string> getPositions();
     //static unordered_map<string, vector<string>> getPositions1(){return positions;};

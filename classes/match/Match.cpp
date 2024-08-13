@@ -1,8 +1,9 @@
 #include "Match.h"
 #include "../textures/Textures.h"
+#include "../FirstTeamBuilder/FirstTeamBuilder.h"
 
-Match :: Match(unique_first_team team1, unique_first_team team2)
-        : team1(move(team1)), team2(move(team2)), ball_coords(0, 0),
+Match :: Match(shared_team team1, shared_team team2)
+        : team1(FirstTeamBuilder :: buildFirstTeam(team1)), team2(FirstTeamBuilder :: buildFirstTeam(team2)), ball_coords(0, 0),
           pitch_matrix(Constants :: getVal("GOAL_LINE_LENGTH") + 1, vector<shared_m_player>(Constants :: getVal("TOUCHLINE_LENGTH") + 1, nullptr)){
     this->team2->changeSide();
 
@@ -12,8 +13,8 @@ Match :: Match(unique_first_team team1, unique_first_team team2)
 
     loadTextures();
     //Setting the aura colors for the teams
-    this->team1->setAuraColor(textures.at("TEAM1").getAverageColor());
-    this->team2->setAuraColor(textures.at("TEAM2").getAverageColor());
+    this->team1->getTeam()->setAuraColor(textures.at("TEAM1").getAverageColor());
+    this->team2->getTeam()->setAuraColor(textures.at("TEAM2").getAverageColor());
 
     this->setPitchMatrix();
 }
@@ -183,53 +184,40 @@ glm :: mat4 Match :: getBallVertices() const{
     return ball_vertices;
 }
 
-
-bool Match :: hasBall(const shared_m_player& player) const{
-    float player_radius = Constants :: getVal("PLAYER_RADIUS");
-    float ball_radius = player_radius / 2.0;
-
-    return glm :: distance(player->getCoords(), ball_coords) < player_radius + ball_radius;
-}
-
-
-void Match :: movePlayers(){
-    //Getting the player with the ball
-    shared_m_player player_with_ball = getPlayerWithBall();
-
-    intersections_map t1_intersections = team1->getOpponentIntersections(team2),
-                      t2_intersections = team2->getOpponentIntersections(team1);
-
-    if (player_with_ball){
-        //Moving the ball with the player
-        ball_coords = player_with_ball->getCoords();
-        //Getting the number of intersections and the opponent player(if there is one)
-        //Moving the player with the ball
-        team1->movePlayerWithBall(ball_coords, player_with_ball, t1_intersections, team2->getGKCoords());
-        //Moving the players without the ball
-        team1->movePlayersWithoutBall(player_with_ball, team2->getGKCoords(), t1_intersections);
+void Match :: play(){
+    if (team1->inPossesion())
+        movePlayers(*team1, *team2);
+    else if (team2->inPossesion())
+        movePlayers(*team2, *team1);
+    else{
+        //Moving both teams to get possesion
+        team1->getPossesion(ball_coords, team2->getGKCoords());
+        team2->getPossesion(ball_coords, team1->getGKCoords());
+        setPosession();
     }
-    else
-        team1->movePlayersWithoutBall(ball_coords, team2->getGKCoords());
-    
-    for (const auto& player : team2->getFirstEleven())
-        if (player->getPosition() != "GK")
-            player->p_move(ball_coords, team2->getClosestPlayer(player->getCoords()));
-    
-}
-
-shared_m_player Match :: getPlayerWithBall() const{
-    //Searching for the player with the ball in the first team
-    for (const auto& player : team1->getFirstEleven())
-        if (hasBall(player))
-            return player;
-    
-    //Searching for the player with the ball in the second team
-    for (const auto& player : team2->getFirstEleven())
-        if (hasBall(player))
-            return player;
-
-    //No player has the ball
-    return nullptr;
 }
 
 
+void Match :: movePlayers(FirstTeam& poss_team, FirstTeam& opp_team){
+    poss_team.attack(ball_coords, opp_team);
+    opp_team.defend(ball_coords, poss_team);
+}
+
+
+void Match :: setPosession(){
+    //Getting the closest two players to the ball
+    shared_m_player closest1 = team1->getClosestPlayer(ball_coords, team1->getFirstEleven());
+    shared_m_player closest2 = team2->getClosestPlayer(ball_coords, team2->getFirstEleven());
+
+    if (closest1->isNearBall(ball_coords))
+        if (closest2->isNearBall(ball_coords))
+            //Player with the highest pace gets the ball
+            if (closest1->getPlayer()->getStat("PAC") > closest2->getPlayer()->getStat("PAC"))
+                closest1->setPossesion(true);
+            else
+                closest2->setPossesion(true);
+        else
+            closest1->setPossesion(true);
+    else if (closest2->isNearBall(ball_coords))
+        closest2->setPossesion(true);
+}

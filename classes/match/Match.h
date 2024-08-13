@@ -2,7 +2,7 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include "../renderer/Renderer.h"
-#include "../first_team/FirstTeam.h"
+#include "../teams/first_team/FirstTeam.h"
 #include "../textures/Textures.h"
 #include <assert.h>
 #include <random>
@@ -27,17 +27,18 @@ private:
     //Loads and binds the textures needed(pitch, ball, teams)
     void loadTextures();
 
-    bool hasBall(const shared_m_player& player) const;
-
     void setPitchMatrix();
-    shared_m_player getPlayerWithBall() const;
+    //Arg1 team in possesion attacks, arg2 defends
+    void movePlayers(FirstTeam& poss_team, FirstTeam& opp_team);
+    //Determines if any player gets possesion and sets the player with the ball
+    void setPosession();
 public:
     //Draws the pitch and players
     void draw();
     
-    Match(unique_first_team team1, unique_first_team team2);
+    Match(shared_team team1, shared_team team2);
     Match(){}
 
     //Moves players and ball
-    void movePlayers();
+    void play();
 };

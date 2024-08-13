@@ -9,5 +9,5 @@ public:
     //void p_move() override{};
     //void pass() override{};
     void block() override{};
-    void tackle() override{};
+    //void tackle() override{};
 };

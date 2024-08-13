@@ -1,4 +1,5 @@
 #include "MatchPlayer.h"
+#include "../../exceptions/MyRuntimeException.h"
 #include <random>
 void MatchPlayer :: addYellowCard(){
     ++yellow_cards;
@@ -93,13 +94,14 @@ glm :: mat4 MatchPlayer :: getPlayerVertices(pitch_half half, float radius) cons
 
 void MatchPlayer :: decide(glm :: vec2& ball_coords, const OpponentIntersections& opp_intersections,
                            const passing_options& pass_options, const glm :: vec2& opp_gk_coords,
-                           const shared_m_player& closest_team_mate){
+                           const MatchPlayer& closest_team_mate){
     switch (opp_intersections.nr_intersections){
         case 0:
             this->p_move(opp_gk_coords, closest_team_mate);
+            ball_coords = this->coords;
             break;
         case 1:
-            this->decidePassDribble(ball_coords, opp_intersections.opponent, pass_options);
+            this->decidePassDribble(ball_coords, *opp_intersections.opponent, pass_options);
             break;
         default:
             this->pass(ball_coords, pass_options);
@@ -107,46 +109,21 @@ void MatchPlayer :: decide(glm :: vec2& ball_coords, const OpponentIntersections
 }
 
 
-void MatchPlayer :: p_move(const glm :: vec2& target, const shared_m_player& closest_team_mate,
-                           const shared_m_player& closest_opponent){
-    //Weights for the distances to the target and the team mate
-    float target_dist_weight = 2, team_mate_dist_weight = 1, opponent_dist_weight = 1;
-
-    glm :: vec2 best_option_coords;
-    float best_option_dist = numeric_limits<float>::max();
-
-    //Choosing the best valid move option based on the distance to the target and the team mate                              
-    for (const auto& opt_coords : this->getMoveOptions())
-        if (!isOutsidePitch(opt_coords)){
-            //Calculating the final distance
-            float final_dist = glm :: distance(opt_coords, target) * target_dist_weight - 
-                               glm :: distance(opt_coords, closest_team_mate->getCoords()) * team_mate_dist_weight +
-                               glm :: distance(opt_coords, closest_opponent->getCoords()) * opponent_dist_weight;
-
-            //If the final distance is greater than this is a better option
-            if (final_dist < best_option_dist){
-                best_option_dist = final_dist;
-                best_option_coords = opt_coords;
-            }
-        }
-    
-    this->coords = best_option_coords;
-}
-
-
-void MatchPlayer :: p_move(const glm :: vec2& target, const shared_m_player& closest_team_mate){
+void MatchPlayer :: p_move(const glm :: vec2& target, const MatchPlayer& closest_team_mate){
     //Weights for the distances to the target and the team mate
     float target_dist_weight = 2, team_mate_dist_weight = 1;
 
-    glm :: vec2 best_option_coords;
-    float best_option_dist = numeric_limits<float>::max();
+    //Default option, the player stays in place
+    glm :: vec2 best_option_coords = this->coords;
+    float best_option_dist = glm :: distance(best_option_coords, target) * target_dist_weight - 
+                             glm :: distance(best_option_coords, closest_team_mate.getCoords()) * team_mate_dist_weight;
 
     //Choosing the best valid move option based on the distance to the target and the team mate                              
     for (const auto& opt_coords : this->getMoveOptions())
         if (!isOutsidePitch(opt_coords)){
             //Calculating the final distance
             float final_dist = glm :: distance(opt_coords, target) * target_dist_weight - 
-                               glm :: distance(opt_coords, closest_team_mate->getCoords()) * team_mate_dist_weight;
+                               glm :: distance(opt_coords, closest_team_mate.getCoords()) * team_mate_dist_weight;
 
             //If the final distance is greater than this is a better option
             if (final_dist < best_option_dist){
@@ -159,7 +136,37 @@ void MatchPlayer :: p_move(const glm :: vec2& target, const shared_m_player& clo
 }
 
 
-void MatchPlayer :: decidePassDribble(glm :: vec2& ball_coords, const shared_m_player& opponent, 
+void MatchPlayer :: p_move(const MatchPlayer& player_with_ball, const MatchPlayer& closest_team_mate,
+                           const shared_m_squad& opponents){
+    //Weights for the distances to the target and the team mate
+    float pass_chance_weight = 2, team_mate_dist_weight = 1;
+
+    //Default option, the player stays in place
+    glm :: vec2 best_option_coords = this->coords;
+    float best_option_dist = player_with_ball.getPassChance(*this, getOpponentIntersections(opponents)) * pass_chance_weight - 
+                             glm :: distance(best_option_coords, closest_team_mate.coords) * team_mate_dist_weight;
+
+    //Choosing the best valid move option based on the passing chance and the distance to the team mate                              
+    for (const auto& opt_coords : this->getMoveOptions())
+        if (!isOutsidePitch(opt_coords)){
+            this->coords = opt_coords;
+
+            float pass_chance = player_with_ball.getPassChance(*this, getOpponentIntersections(opponents)),
+                  team_mate_dist = glm :: distance(opt_coords, closest_team_mate.coords),
+                  final_dist = pass_chance * pass_chance_weight - team_mate_dist * team_mate_dist_weight;
+
+            //If the final distance is greater than this is a better option
+            if (final_dist < best_option_dist){
+                best_option_dist = final_dist;
+                best_option_coords = opt_coords;
+            }
+        }
+    
+    this->coords = best_option_coords;
+}
+
+
+void MatchPlayer :: decidePassDribble(glm :: vec2& ball_coords, const MatchPlayer& opponent, 
                                       const passing_options& passing_options){
     //Make this a function in player
 
@@ -168,13 +175,17 @@ void MatchPlayer :: decidePassDribble(glm :: vec2& ball_coords, const shared_m_p
                         this->player->getStat("PHY") + this->player->getStat("AGG");
 
     //Defending related stats(add weights for these)
-    float o_stat_sum = opponent->player->getStat("PAC") + opponent->player->getStat("DEF") + 
-                        opponent->player->getStat("PHY") + opponent->player->getStat("AGG");
+    float o_stat_sum = opponent.player->getStat("PAC") + opponent.player->getStat("DEF") + 
+                        opponent.player->getStat("PHY") + opponent.player->getStat("AGG");
 
     //if (p_stat_sum < o_stat_sum)
         this->pass(ball_coords, passing_options);
-    //else
-        //this->dribble();
+    /*
+    else{
+        this->dribble();
+        ball_coords = this->coords;
+    }
+    */
 }
 
 float MatchPlayer :: getPassingRange() const{
@@ -190,7 +201,7 @@ float MatchPlayer :: getPassingRange() const{
 }
 
 
-float MatchPlayer :: getPassChance(const shared_m_player& team_mate, const OpponentIntersections& opp_intersections) const{
+float MatchPlayer :: getPassChance(const MatchPlayer& team_mate, const OpponentIntersections& opp_intersections) const{
     //If there are two intersections the pass should be impossible
     if (opp_intersections.nr_intersections == 2)
         return 0;
@@ -198,9 +209,9 @@ float MatchPlayer :: getPassChance(const shared_m_player& team_mate, const Oppon
     //If there is only one intersection the physical difference between the two players is taken into account
     float phy_diff;
     if (opp_intersections.nr_intersections == 1)
-        phy_diff = max(0.0f, opp_intersections.opponent->getPlayer()->getStat("PHY") - team_mate->getPlayer()->getStat("PHY"));
+        phy_diff = max(0.0f, opp_intersections.opponent->getPlayer()->getStat("PHY") - team_mate.getPlayer()->getStat("PHY"));
     
-    float pass_distance = glm :: distance(this->coords, team_mate->getCoords());
+    float pass_distance = glm :: distance(this->coords, team_mate.getCoords());
 
     const float max_chance = 100;
     const float pass_secure_radius = getPassingRange();
@@ -240,8 +251,10 @@ void MatchPlayer :: pass(glm :: vec2& ball_coords, const passing_options& passin
 
     glm :: vec2 team_mate_coords = chosen_pass_option.team_mate->getCoords();
     //Trying to pass to the chosen team mate
-    if (Constants :: generateRealNumber(0, 100) < chosen_pass_option.pass_success_chance)
+    if (Constants :: generateRealNumber(0, 100) < chosen_pass_option.pass_success_chance){
         ball_coords = team_mate_coords;
+        chosen_pass_option.team_mate->setPossesion(true);
+    }
     else{//If the pass is not successful, the ball is placed randomly around the team mate
         //Getting the error radius for the ball placement
         float error_radius = Constants :: getVal("PASS_ERROR_RADIUS");
@@ -253,12 +266,30 @@ void MatchPlayer :: pass(glm :: vec2& ball_coords, const passing_options& passin
         ball_coords = team_mate_coords + glm :: vec2(Constants :: generateRealNumber(min_error_x, max_error_x),
                                                      Constants :: generateRealNumber(min_error_y, max_error_y));
     }
+    //The player no longer has the ball
+    this->has_ball = false;
     
 }
 
 
 void MatchPlayer :: dribble(){
     
+}
+
+void MatchPlayer :: tackle(MatchPlayer& opponent){
+    //Getting the stats for the player and the opponent
+    float player_stat_sum = this->player->getStat("DEF") + this->player->getStat("PHY") + 
+                            this->player->getStat("AGG");
+
+    float opponent_stat_sum = opponent.player->getStat("DRI") + opponent.player->getStat("PHY") + 
+                              opponent.player->getStat("AGG");
+
+    //If the player has better stats than the opponent, the tackle is successful
+    if (player_stat_sum > opponent_stat_sum){
+        opponent.has_ball = false;
+        this->has_ball = true;
+        //opponent.coords += Constants :: getVal("PLAYER_RADIUS");
+    }
 }
 
 
@@ -284,7 +315,6 @@ vector<glm :: vec2> MatchPlayer :: getMoveOptions() const{
     float move_x = Constants :: generateRealNumber(0.01, 1), move_y = Constants :: generateRealNumber(0.01, 1);
     //Getting all possible new coordinates
     return {
-            this->coords,
             (this->coords + glm :: vec2(move_x, 0)),
             (this->coords + glm :: vec2(-move_x, 0)),
             (this->coords + glm :: vec2(0, move_y)),
@@ -311,3 +341,51 @@ bool MatchPlayer :: operator <(const MatchPlayer& other) const{
     return this->OVR < other.OVR;
 }
 
+
+bool MatchPlayer :: verifDetPType(const string& det_p_type) const{
+    const vector<string>& positions = Constants :: getPositions(det_p_type);
+    return find(positions.begin(), positions.end(), this->position) != positions.end();
+}
+
+
+bool MatchPlayer :: isPassedMidline(pitch_half half) const{
+    if (half == pitch_half :: first)
+        return this->coords.x > 0;
+    return this->coords.x < 0;
+}
+
+MatchPlayer :: OpponentIntersections MatchPlayer :: getOpponentIntersections(const shared_m_squad& opponents) const{
+    //Will be needed in case there is only one intersection
+    shared_m_player opponent;
+    uint16_t nr_intersections = 0;
+
+    //We go through the team's first eleven and check if the player intersects with any of them
+    for (const auto& opp : opponents){
+        if (this->intersects(*opp)){
+            ++nr_intersections;
+            opponent = opp;
+        }
+
+        //Passed two intersections the player should pass the ball so the opponent becomes nullptr
+        if (nr_intersections == 2)
+            return {nr_intersections, nullptr};
+    }
+    
+    return {nr_intersections, opponent};
+}
+
+
+bool MatchPlayer :: isNearBall(const glm :: vec2& ball_coords) const{
+    float player_radius = Constants :: getVal("PLAYER_RADIUS");
+    float ball_radius = player_radius / 2.0;
+
+    return glm :: distance(this->coords, ball_coords) < player_radius + ball_radius;
+}
+
+
+bool MatchPlayer :: inTackleRange(const MatchPlayer& opponent) const{
+    float player_radius = Constants :: getVal("PLAYER_RADIUS");
+    float tackle_range = player_radius * 2;
+
+    return glm :: distance(this->coords, opponent.coords) < tackle_range;
+}   

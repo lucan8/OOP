@@ -112,10 +112,10 @@ void FirstTeam :: attack(glm :: vec2& ball_coords, const FirstTeam& opp_team){
     //Moving the player with the ball
     shared_m_player player_with_ball = this->getPlayerWithBall();
     glm :: vec2 opp_gk_coords = opp_team.getGKCoords();
-    MatchPlayer :: passing_options passing_options = this->getPassingOptions(*player_with_ball, opp_team);
     
     //Moving the rest of the players
     this->movePlayersWithoutBall(*player_with_ball, opp_team);
+    MatchPlayer :: passing_options passing_options = this->getPassingOptions(*player_with_ball, opp_team);
     player_with_ball->decide(ball_coords, player_with_ball->getOpponentIntersections(opp_team.getFirstEleven()),
                              passing_options, opp_gk_coords, *getClosestPlayer(player_with_ball->getCoords(),
                              this->first_eleven));
@@ -128,7 +128,7 @@ void FirstTeam :: defend(glm :: vec2& ball_coords, const FirstTeam& opp_team){
     
     //If the player with the ball is in tackle range we tackle him
     if (player_with_ball->inTackleRange(*closest_ball))
-        closest_ball->tackle(*player_with_ball);
+        closest_ball->tackle(ball_coords, *player_with_ball);
     else //Else we move towards him
         closest_ball->p_move(ball_coords, *getClosestPlayer(closest_ball->getCoords(), this->first_eleven));
 
@@ -182,7 +182,7 @@ void FirstTeam :: movePlayersWithoutBall(const MatchPlayer& player_with_ball, co
         glm :: vec2 opp_gk_coords = opp_team.getGKCoords();
 
         //Getting the player's succesful pass chance
-        float pass_chance = player_with_ball.getPassChance(*player, player->getOpponentIntersections(opponents));
+        float pass_chance = player_with_ball.getPassChance(*player);
 
         //If not within player's passing range we move him where the pass_chance is highest
         if (pass_chance < Constants :: getVal("PASS_CHANCE_THRESHOLD"))
@@ -209,8 +209,8 @@ MatchPlayer :: passing_options FirstTeam :: getPassingOptions(const MatchPlayer&
             MatchPlayer :: OpponentIntersections curr_intersections = team_mate->getOpponentIntersections(opponents);
             //Getting the distance to the opponent's goal and the pass chance
             float dist_goal = glm :: distance(team_mate->getCoords(), opp_gk_coords),
-                  pass_chance = player.getPassChance(*team_mate, curr_intersections);
-            passing_options.emplace_back(team_mate, pass_chance, dist_goal);
+                  pass_chance = player.getPassChance(*team_mate);
+            passing_options.emplace_back(team_mate, pass_chance, dist_goal, curr_intersections);
         }
 
     return passing_options;

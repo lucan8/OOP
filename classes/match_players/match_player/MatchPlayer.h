@@ -17,6 +17,15 @@ public:
     enum class pitch_half {first, second};
     friend pitch_half operator!(pitch_half half){return half == pitch_half :: first ? pitch_half :: second : pitch_half :: first;}
 
+    //Struct holding the number of players marking this one and a pointer to the opponent(if there is one)
+    //Possible nr of intersections: 0, 1, 2(everything above 2 is considered 2)
+    //For 0 and 2 intersections there should be no opponent passed
+    struct OpponentIntersections{
+        uint16_t nr_intersections;
+        shared_m_player opponent;
+    };
+
+
     //Struct used for passing options(should only be used in FirstTeam and MatchPlayer)
     //Contains a teammate ovr, the chance of receiving a succesful pass 
     //And the distance from the player to the goal
@@ -24,10 +33,8 @@ public:
         shared_m_player team_mate;
         float pass_success_chance;
         float distance_from_goal;
-    };
-    struct OpponentIntersections{
-        uint16_t nr_intersections;
-        shared_m_player opponent;
+
+        OpponentIntersections opp_intersections;
     };
     
     typedef vector<PassingInfo> passing_options;
@@ -46,7 +53,7 @@ protected:
     glm :: mat4 getPlayerVertices(pitch_half half, float radius) const;
 
     //Decides whether to pass or dribble depending on the opponent's stats and passing options
-    void decidePassDribble(glm :: vec2& ball_coords, const MatchPlayer& opponent,
+    void decidePassDribble(glm :: vec2& ball_coords, MatchPlayer& opponent,
                            const passing_options& passing_options);
     
     //Should be part of an entity class
@@ -95,7 +102,7 @@ public:
     //Passes the ball to the best option
     virtual void pass(glm :: vec2& ball_coords, const passing_options& passing_options);
     //Gets the chence of sending a succesful pass to a teammate
-    float getPassChance(const MatchPlayer& team_mate, const OpponentIntersections& opp_intersections) const;
+    float getPassChance(const MatchPlayer& team_mate) const;
     //Calcualtes the chance of choosing this PassingInfo option
     float getFinalPassChance(const PassingInfo& pass_info) const;
     float getPassingRange() const;
@@ -109,8 +116,8 @@ public:
     //Used to retrieve the closest team mate/opponent
     //shared_m_player getClosestPlayer(const shared_m_squad& players) const;
     virtual void block() = 0;
-    virtual void tackle(MatchPlayer& opponent);
-    void dribble();
+    virtual void tackle(glm :: vec2& ball_coords, MatchPlayer& opponent);
+    void dribble(glm :: vec2& ball_coords, MatchPlayer& opponent);
 
     //Verifies if the player has the same detailed player type as det_p_type(DEF, MID, ATT)
     bool verifDetPType(const string& det_p_type) const;
@@ -122,5 +129,6 @@ public:
     bool isPassedMidline(pitch_half half) const;
     bool isNearBall(const glm :: vec2& ball_coords) const;
     bool inTackleRange(const MatchPlayer& opponent) const;
+    float getTackleChance(const MatchPlayer& opponent) const;
 
 };

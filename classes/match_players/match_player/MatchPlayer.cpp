@@ -143,7 +143,7 @@ void MatchPlayer :: p_move(const MatchPlayer& player_with_ball, const MatchPlaye
 
     //Default option, the player stays in place
     glm :: vec2 best_option_coords = this->coords;
-    float best_option_dist = player_with_ball.getPassChance(*this, getOpponentIntersections(opponents)) * pass_chance_weight - 
+    float best_option_dist = player_with_ball.getPassChance(*this) * pass_chance_weight - 
                              glm :: distance(best_option_coords, closest_team_mate.coords) * team_mate_dist_weight;
 
     //Choosing the best valid move option based on the passing chance and the distance to the team mate                              
@@ -151,7 +151,7 @@ void MatchPlayer :: p_move(const MatchPlayer& player_with_ball, const MatchPlaye
         if (!isOutsidePitch(opt_coords)){
             this->coords = opt_coords;
 
-            float pass_chance = player_with_ball.getPassChance(*this, getOpponentIntersections(opponents)),
+            float pass_chance = player_with_ball.getPassChance(*this),
                   team_mate_dist = glm :: distance(opt_coords, closest_team_mate.coords),
                   final_dist = pass_chance * pass_chance_weight - team_mate_dist * team_mate_dist_weight;
 
@@ -166,26 +166,13 @@ void MatchPlayer :: p_move(const MatchPlayer& player_with_ball, const MatchPlaye
 }
 
 
-void MatchPlayer :: decidePassDribble(glm :: vec2& ball_coords, const MatchPlayer& opponent, 
+void MatchPlayer :: decidePassDribble(glm :: vec2& ball_coords, MatchPlayer& opponent, 
                                       const passing_options& passing_options){
-    //Make this a function in player
-
-    //Dribbling related stats(add weights for these)
-    float p_stat_sum = this->player->getStat("PAC") + this->player->getStat("DRI") + 
-                        this->player->getStat("PHY") + this->player->getStat("AGG");
-
-    //Defending related stats(add weights for these)
-    float o_stat_sum = opponent.player->getStat("PAC") + opponent.player->getStat("DEF") + 
-                        opponent.player->getStat("PHY") + opponent.player->getStat("AGG");
-
-    //if (p_stat_sum < o_stat_sum)
+    float tackle_chance = opponent.getTackleChance(*this);
+    if (Constants :: generateRealNumber(0, 100) < tackle_chance)
         this->pass(ball_coords, passing_options);
-    /*
-    else{
-        this->dribble();
-        ball_coords = this->coords;
-    }
-    */
+    else
+        this->dribble(ball_coords, opponent);
 }
 
 float MatchPlayer :: getPassingRange() const{
@@ -201,16 +188,7 @@ float MatchPlayer :: getPassingRange() const{
 }
 
 
-float MatchPlayer :: getPassChance(const MatchPlayer& team_mate, const OpponentIntersections& opp_intersections) const{
-    //If there are two intersections the pass should be impossible
-    if (opp_intersections.nr_intersections == 2)
-        return 0;
-    
-    //If there is only one intersection the physical difference between the two players is taken into account
-    float phy_diff;
-    if (opp_intersections.nr_intersections == 1)
-        phy_diff = max(0.0f, opp_intersections.opponent->getPlayer()->getStat("PHY") - team_mate.getPlayer()->getStat("PHY"));
-    
+float MatchPlayer :: getPassChance(const MatchPlayer& team_mate) const{
     float pass_distance = glm :: distance(this->coords, team_mate.getCoords());
 
     const float max_chance = 100;
@@ -219,16 +197,26 @@ float MatchPlayer :: getPassChance(const MatchPlayer& team_mate, const OpponentI
     const uint16_t meter_pass_chance_decrease = 5;
 
     //If within that distance chance is 100%(max_chance), else it decreases by 5% for each meter
-    return min(max_chance, max_chance - (pass_distance - pass_secure_radius) * meter_pass_chance_decrease + phy_diff);
+    return min(max_chance, max_chance - (pass_distance - pass_secure_radius) * meter_pass_chance_decrease);
 }
 
 
 float MatchPlayer :: getFinalPassChance(const PassingInfo& pass_info) const{
+    if (pass_info.opp_intersections.nr_intersections == 2)
+        return 0;
+
+    float tackle_chance = 0;
+
+    if (pass_info.opp_intersections.nr_intersections == 1)
+        tackle_chance = this->getTackleChance(*pass_info.opp_intersections.opponent);
+        
     const uint16_t pass_chance_weight = 3,
+                   tackle_chance_weight = 2,
                    distance_from_goal_weight = 2,
                    team_mate_OVR_weight = 1;
 
     return pass_info.pass_success_chance * pass_chance_weight -
+           tackle_chance * tackle_chance_weight -
            pass_info.distance_from_goal * distance_from_goal_weight +
            pass_info.team_mate->getPlayer()->getAttackingOVR() * team_mate_OVR_weight;
 }
@@ -272,23 +260,23 @@ void MatchPlayer :: pass(glm :: vec2& ball_coords, const passing_options& passin
 }
 
 
-void MatchPlayer :: dribble(){
+void MatchPlayer :: dribble(glm :: vec2& ball_coords , MatchPlayer& opponent){
+    float dribble_chance = 100 - this->getTackleChance(opponent);
+    if (Constants :: generateRealNumber(0, 100) < dribble_chance){
+        this->coords = this->coords + glm :: vec2(Constants :: generateRealNumber(1, 2), 
+                                                  Constants :: generateRealNumber(1, 2));
+        ball_coords = this->coords;
+    }
     
 }
 
-void MatchPlayer :: tackle(MatchPlayer& opponent){
-    //Getting the stats for the player and the opponent
-    float player_stat_sum = this->player->getStat("DEF") + this->player->getStat("PHY") + 
-                            this->player->getStat("AGG");
+void MatchPlayer :: tackle(glm :: vec2& ball_coords, MatchPlayer& opponent){
+    float tackle_chance = this->getTackleChance(opponent);
 
-    float opponent_stat_sum = opponent.player->getStat("DRI") + opponent.player->getStat("PHY") + 
-                              opponent.player->getStat("AGG");
-
-    //If the player has better stats than the opponent, the tackle is successful
-    if (player_stat_sum > opponent_stat_sum){
+    if (Constants :: generateRealNumber(0, 100) < tackle_chance){
         opponent.has_ball = false;
         this->has_ball = true;
-        //opponent.coords += Constants :: getVal("PLAYER_RADIUS");
+        ball_coords = this->coords;
     }
 }
 
@@ -388,4 +376,15 @@ bool MatchPlayer :: inTackleRange(const MatchPlayer& opponent) const{
     float tackle_range = player_radius * 2;
 
     return glm :: distance(this->coords, opponent.coords) < tackle_range;
-}   
+}
+
+
+float MatchPlayer :: getTackleChance(const MatchPlayer& opponent) const{
+    float player_stat_sum = this->player->getStat("DEF") + this->player->getStat("PHY") + 
+                            this->player->getStat("AGG") + this->player->getStat("PAC");
+
+    float opponent_stat_sum = opponent.player->getStat("DRI") + opponent.player->getStat("PHY") + 
+                              opponent.player->getStat("AGG") + opponent.player->getStat("PAC");
+
+    return (player_stat_sum / (player_stat_sum + opponent_stat_sum)) * 100;
+}

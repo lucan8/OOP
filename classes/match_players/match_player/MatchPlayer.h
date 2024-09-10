@@ -19,7 +19,7 @@ public:
 
     //Struct holding the number of players marking this one and a pointer to the opponent(if there is one)
     //Possible nr of intersections: 0, 1, 2(everything above 2 is considered 2)
-    //For 0 and 2 intersections there should be no opponent passed
+    //For 0 and 2 intersections there is shoudl be no opponent
     struct OpponentIntersections{
         uint16_t nr_intersections;
         shared_m_player opponent;
@@ -39,6 +39,9 @@ public:
     
     typedef vector<PassingInfo> passing_options;
 protected:
+    //Enum for the type of radius used in the intersects method
+    enum class radius_type {player, aura, ball};
+
     shared_player player;
     const string position; //Can be either a normal position(subs) or a match position(first eleven)
     glm :: vec2 coords;
@@ -53,12 +56,16 @@ protected:
     glm :: mat4 getPlayerVertices(pitch_half half, float radius) const;
 
     //Decides whether to pass or dribble depending on the opponent's stats and passing options
-    void decidePassDribble(glm :: vec2& ball_coords, MatchPlayer& opponent,
-                           const passing_options& passing_options);
+    void decidePassDribble(glm :: vec2& ball_coords, const MatchPlayer& opp_intersections,
+                           const passing_options& passing_options, const glm :: vec2& opp_gk_coords);
     
     //Should be part of an entity class
     static bool isOutsidePitch(const glm :: vec2& coords);
     vector<glm :: vec2> getMoveOptions() const;
+    OpponentIntersections getOpponentIntersections(const shared_m_squad& opponents, radius_type r_type) const;
+    //Target should be another player's coords for r_type = {player, aura}
+    //And the ball's coords for r_type = ball
+    bool intersects(const glm :: vec2& target, radius_type r_type) const;
 public:
     
     MatchPlayer(shared_player player = shared_player(),
@@ -90,8 +97,6 @@ public:
 
     //Compere two players by their OVR
     bool operator <(const MatchPlayer& other) const;
-    //Two players intersect if their aura circles intersect
-    bool intersects(const MatchPlayer& other) const;
     
     //Decides what to do with the ball depending on the number of intersections with the opposing players
     //The the opponent's stats and passing options(for 0 and 2 intersections there should be no opponent passed)
@@ -113,22 +118,25 @@ public:
     
     //Chooses the best move option taking into account the distance to the target and teammate
     void p_move(const glm :: vec2& target, const MatchPlayer& closest_team_mate);
+
+    void moveTowards(const glm :: vec2& target, const glm :: vec2& move_values);
     //Used to retrieve the closest team mate/opponent
     //shared_m_player getClosestPlayer(const shared_m_squad& players) const;
     virtual void block() = 0;
     virtual void tackle(glm :: vec2& ball_coords, MatchPlayer& opponent);
-    void dribble(glm :: vec2& ball_coords, MatchPlayer& opponent);
+    void dribble(glm :: vec2& ball_coords, const MatchPlayer& opponent, const glm :: vec2& opp_gk_coords);
+    
+    bool inTackleRange(const MatchPlayer& opponent) const;
+    bool isNearBall(const glm :: vec2& ball_coords) const;
 
     //Verifies if the player has the same detailed player type as det_p_type(DEF, MID, ATT)
     bool verifDetPType(const string& det_p_type) const;
 
-    //Determines the number of players that intersect with this player
-    //Returns the number of intersections and, if there is one opponent, a pointer to him
-    OpponentIntersections getOpponentIntersections(const shared_m_squad& opponents) const;
+    
+    OpponentIntersections getMarkingIntersections(const shared_m_squad& opponents) const;
+    OpponentIntersections getTacklingIntersections(const shared_m_squad& opponents) const;
 
     bool isPassedMidline(pitch_half half) const;
-    bool isNearBall(const glm :: vec2& ball_coords) const;
-    bool inTackleRange(const MatchPlayer& opponent) const;
     float getTackleChance(const MatchPlayer& opponent) const;
 
 };

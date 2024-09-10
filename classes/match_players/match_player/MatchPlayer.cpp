@@ -101,7 +101,7 @@ void MatchPlayer :: decide(glm :: vec2& ball_coords, const OpponentIntersections
             ball_coords = this->coords;
             break;
         case 1:
-            this->decidePassDribble(ball_coords, *opp_intersections.opponent, pass_options);
+            this->decidePassDribble(ball_coords, *opp_intersections.opponent, pass_options, opp_gk_coords);
             break;
         default:
             this->pass(ball_coords, pass_options);
@@ -166,13 +166,27 @@ void MatchPlayer :: p_move(const MatchPlayer& player_with_ball, const MatchPlaye
 }
 
 
-void MatchPlayer :: decidePassDribble(glm :: vec2& ball_coords, MatchPlayer& opponent, 
-                                      const passing_options& passing_options){
+void MatchPlayer :: moveTowards(const glm :: vec2& target, const glm :: vec2& move_values){   
+    if (this->coords.x < target.x)
+        this->coords.x += move_values.x;
+    else
+        this->coords.x -= move_values.x;
+    
+    if (this->coords.y < target.y)
+        this->coords.y += move_values.y;
+    else
+        this->coords.y -= move_values.y;
+}
+
+
+void MatchPlayer :: decidePassDribble(glm :: vec2& ball_coords, const MatchPlayer& opponent, 
+                                      const passing_options& passing_options, const glm :: vec2& opp_gk_coords){
     float tackle_chance = opponent.getTackleChance(*this);
     if (Constants :: generateRealNumber(0, 100) < tackle_chance)
         this->pass(ball_coords, passing_options);
     else
-        this->dribble(ball_coords, opponent);
+        this->dribble(ball_coords, opponent, opp_gk_coords);
+
 }
 
 float MatchPlayer :: getPassingRange() const{
@@ -260,14 +274,20 @@ void MatchPlayer :: pass(glm :: vec2& ball_coords, const passing_options& passin
 }
 
 
-void MatchPlayer :: dribble(glm :: vec2& ball_coords , MatchPlayer& opponent){
+void MatchPlayer :: dribble(glm :: vec2& ball_coords, const MatchPlayer& opponent,
+                            const glm :: vec2& opp_gk_coords){
+    glm :: vec2 opp_coords = opponent.coords;
     float dribble_chance = 100 - this->getTackleChance(opponent);
-    if (Constants :: generateRealNumber(0, 100) < dribble_chance){
-        this->coords = this->coords + glm :: vec2(Constants :: generateRealNumber(1, 2), 
-                                                  Constants :: generateRealNumber(1, 2));
-        ball_coords = this->coords;
-    }
-    
+
+    //Moving the player towards the opponent's goal and away from the opponent
+    if (Constants :: generateRealNumber(0, 100) < dribble_chance)
+        this->moveTowards(opp_gk_coords + glm :: vec2(0, -opp_coords.y),
+                          glm :: vec2(Constants :: generateRealNumber(1, 2), Constants :: generateRealNumber(1, 2)));
+    else //Moving the player towards the opponent because the dribble was unsuccessful
+        this->moveTowards(opponent.coords,
+                         glm :: vec2(Constants :: generateRealNumber(0.1, 1), Constants :: generateRealNumber(0.1, 1)));
+    //Moving the ball with the player                     
+    ball_coords = this->coords;
 }
 
 void MatchPlayer :: tackle(glm :: vec2& ball_coords, MatchPlayer& opponent){
@@ -281,12 +301,18 @@ void MatchPlayer :: tackle(glm :: vec2& ball_coords, MatchPlayer& opponent){
 }
 
 
-bool MatchPlayer :: intersects(const MatchPlayer& other) const{
-    float dist = glm :: distance(this->coords, other.coords);
-    float aura_radius = Constants :: getVal("PLAYER_RADIUS") * 2;
-
-    //If the distance is less than the sum of the two players auras then they intersect
-    return dist <= aura_radius * 2;
+bool MatchPlayer :: intersects(const glm :: vec2& target, radius_type r_type) const{
+    float dist = glm :: distance(this->coords, target);
+    switch (r_type){
+        case radius_type :: player:
+            return dist <= Constants :: getVal("PLAYER_RADIUS") * 2;
+        case radius_type :: aura://The aura's radius is 2 times the player's
+            return dist <= Constants :: getVal("PLAYER_RADIUS") * 4;
+        case radius_type :: ball: //The ball's radius is 1/2 of the player's
+            return dist <= Constants :: getVal("PLAYER_RADIUS") * 1.5;
+        default:
+            throw MyRuntimeException(__FILE__, __func__, __LINE__, "Invalid radius type");
+    }
 }
 
 
@@ -330,6 +356,16 @@ bool MatchPlayer :: operator <(const MatchPlayer& other) const{
 }
 
 
+bool MatchPlayer :: inTackleRange(const MatchPlayer& opponent) const{
+    return this->intersects(opponent.coords, radius_type :: player);
+}
+
+
+bool MatchPlayer :: isNearBall(const glm :: vec2& ball_coords) const{
+    return this->intersects(ball_coords, radius_type :: ball);
+}
+
+
 bool MatchPlayer :: verifDetPType(const string& det_p_type) const{
     const vector<string>& positions = Constants :: getPositions(det_p_type);
     return find(positions.begin(), positions.end(), this->position) != positions.end();
@@ -342,14 +378,26 @@ bool MatchPlayer :: isPassedMidline(pitch_half half) const{
     return this->coords.x < 0;
 }
 
-MatchPlayer :: OpponentIntersections MatchPlayer :: getOpponentIntersections(const shared_m_squad& opponents) const{
+
+MatchPlayer :: OpponentIntersections MatchPlayer :: getMarkingIntersections(const shared_m_squad& opponents) const{
+    return getOpponentIntersections(opponents, radius_type :: aura);
+}
+
+
+MatchPlayer :: OpponentIntersections MatchPlayer :: getTacklingIntersections(const shared_m_squad& opponents) const{
+    return getOpponentIntersections(opponents, radius_type :: player);
+}
+
+
+MatchPlayer :: OpponentIntersections MatchPlayer :: getOpponentIntersections(const shared_m_squad& opponents, 
+                                                                             radius_type r_type) const{
     //Will be needed in case there is only one intersection
     shared_m_player opponent;
     uint16_t nr_intersections = 0;
 
     //We go through the team's first eleven and check if the player intersects with any of them
     for (const auto& opp : opponents){
-        if (this->intersects(*opp)){
+        if (this->intersects(opp->coords, r_type)){
             ++nr_intersections;
             opponent = opp;
         }
@@ -360,22 +408,6 @@ MatchPlayer :: OpponentIntersections MatchPlayer :: getOpponentIntersections(con
     }
     
     return {nr_intersections, opponent};
-}
-
-
-bool MatchPlayer :: isNearBall(const glm :: vec2& ball_coords) const{
-    float player_radius = Constants :: getVal("PLAYER_RADIUS");
-    float ball_radius = player_radius / 2.0;
-
-    return glm :: distance(this->coords, ball_coords) < player_radius + ball_radius;
-}
-
-
-bool MatchPlayer :: inTackleRange(const MatchPlayer& opponent) const{
-    float player_radius = Constants :: getVal("PLAYER_RADIUS");
-    float tackle_range = player_radius * 2;
-
-    return glm :: distance(this->coords, opponent.coords) < tackle_range;
 }
 
 

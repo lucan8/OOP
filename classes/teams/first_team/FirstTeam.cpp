@@ -116,7 +116,7 @@ void FirstTeam :: attack(glm :: vec2& ball_coords, const FirstTeam& opp_team){
     //Moving the rest of the players
     this->movePlayersWithoutBall(*player_with_ball, opp_team);
     MatchPlayer :: passing_options passing_options = this->getPassingOptions(*player_with_ball, opp_team);
-    player_with_ball->decide(ball_coords, player_with_ball->getOpponentIntersections(opp_team.getFirstEleven()),
+    player_with_ball->decide(ball_coords, player_with_ball->getTacklingIntersections(opp_team.getFirstEleven()),
                              passing_options, opp_gk_coords, *getClosestPlayer(player_with_ball->getCoords(),
                              this->first_eleven));
 }
@@ -135,16 +135,15 @@ void FirstTeam :: defend(glm :: vec2& ball_coords, const FirstTeam& opp_team){
     for (const auto& player : this->first_eleven)
         //Ignoring the player with the ball and the GK
         if (player->getPosition() != "GK" && player != closest_ball){
-            //Getting the player's intersections with the opponent's first eleven
-            MatchPlayer :: OpponentIntersections player_intersections = 
-                                                    player->getOpponentIntersections(opp_team.getFirstEleven());
+            MatchPlayer :: OpponentIntersections
+                player_markers = player->getMarkingIntersections(opp_team.getFirstEleven());
             
             //Checking if the player is marking someone, and if that someone is only marked by him
             //If so, he moves towards that player
-            if (player_intersections.nr_intersections == 1 && 
-                player_intersections.opponent->getOpponentIntersections(this->first_eleven).nr_intersections == 1)
-                    player->p_move(player_intersections.opponent->getCoords(),
-                                   *getClosestPlayer(player->getCoords(), this->first_eleven));
+            if (player_markers.nr_intersections == 1 &&
+                player_markers.opponent->getMarkingIntersections(this->first_eleven).nr_intersections == 1)
+                player->p_move(player_markers.opponent->getCoords(), *getClosestPlayer(player->getCoords(),
+                               this->first_eleven));
    
             else{ //Else he moves towards the closest unmarked player
                 shared_m_squad unmarked_players = opp_team.getUnmarkedPlayers(*this);
@@ -202,11 +201,12 @@ MatchPlayer :: passing_options FirstTeam :: getPassingOptions(const MatchPlayer&
 
     const shared_m_squad& opponents = opp_team.getFirstEleven();
     glm :: vec2 opp_gk_coords = opp_team.getGKCoords();
+
     //Going through all the players except the one passed as argument
     for (const auto& team_mate : this->first_eleven)
         //Ignoring the player passed as argument and the goalkeeper
         if (team_mate->getPlayer() != player.getPlayer() && team_mate->getPosition() != "GK"){
-            MatchPlayer :: OpponentIntersections curr_intersections = team_mate->getOpponentIntersections(opponents);
+            MatchPlayer :: OpponentIntersections curr_intersections = team_mate->getMarkingIntersections(opponents);
             //Getting the distance to the opponent's goal and the pass chance
             float dist_goal = glm :: distance(team_mate->getCoords(), opp_gk_coords),
                   pass_chance = player.getPassChance(*team_mate);
@@ -247,7 +247,7 @@ bool FirstTeam :: operator<(const FirstTeam& other) const{
     const shared_m_squad& opponents = opp_team.getFirstEleven();
     
     for (const auto& player : this->first_eleven)
-        if (player->getOpponentIntersections(opponents).nr_intersections == 0)
+        if (player->getMarkingIntersections(opponents).nr_intersections == 0)
             unmarked_players.push_back(player);
 
     return unmarked_players;

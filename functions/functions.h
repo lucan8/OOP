@@ -12,9 +12,13 @@
 std :: vector<std :: string> split(const std :: string& str, char sep = ' ');
 //Reads file content and returns it as a string
 std :: string ReadFile(const std :: string& file_path);
-//Returns the positions for the square canvas(center is x, y and 2 * radius is the side of the square)
+//Returns the positions for the square canvas(coords is center, 2 * radius is the side of the square)
 //left bottom, left top, right top, right bottom
 glm :: mat4x2 getCanvasPositions(glm :: vec2 coords, float radius);
+//Returns the positions for the rectangle canvas
+//Coords is center, 2 * max_x and 2 * max_y are the sides of the rectangle
+//left bottom, left top, right top, right bottom
+glm :: mat4x2 getCanvasPositions(glm :: vec2 coords, float max_x, float max_y);
 bool isBetween(float val, float min_val, float max_val);
 glm :: vec4 normalizeColor(glm :: vec4 color);
 

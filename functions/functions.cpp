@@ -28,12 +28,23 @@ std :: string ReadFile(const std :: string& file_path){
 }
 
 
-glm :: mat4x2 getCanvasPositions(glm :: vec2 coords, float radius) {
+glm :: mat4x2 getCanvasPositions(glm :: vec2 coords, float radius){
     return glm :: mat4x2(
         coords + glm :: vec2(-radius, -radius), 
         coords + glm :: vec2(-radius, radius),
         coords + glm :: vec2(radius, radius),
         coords + glm :: vec2(radius, -radius)
+
+    );
+}
+
+
+glm :: mat4x2 getCanvasPositions(glm :: vec2 coords, float max_x, float max_y){
+    return glm :: mat4x2(
+        coords + glm :: vec2(-max_x, -max_y), 
+        coords + glm :: vec2(-max_x, max_y),
+        coords + glm :: vec2(max_x, max_y),
+        coords + glm :: vec2(max_x, -max_y)
 
     );
 }

@@ -282,7 +282,7 @@ void MatchPlayer :: dribble(glm :: vec2& ball_coords, const MatchPlayer& opponen
     //Moving the player towards the opponent's goal and away from the opponent
     if (Constants :: generateRealNumber(0, 100) < dribble_chance)
         this->moveTowards(opp_gk_coords + glm :: vec2(0, -opp_coords.y),
-                          glm :: vec2(Constants :: generateRealNumber(1, 2), Constants :: generateRealNumber(1, 2)));
+                          glm :: vec2(Constants :: generateRealNumber(2, 3), Constants :: generateRealNumber(2, 3)));
     else //Moving the player towards the opponent because the dribble was unsuccessful
         this->moveTowards(opponent.coords,
                          glm :: vec2(Constants :: generateRealNumber(0.1, 1), Constants :: generateRealNumber(0.1, 1)));
@@ -298,6 +298,25 @@ void MatchPlayer :: tackle(glm :: vec2& ball_coords, MatchPlayer& opponent){
         this->has_ball = true;
         ball_coords = this->coords;
     }
+}
+
+void MatchPlayer :: shoot(glm :: vec2& ball_coords, MatchPlayer& opp_gk){
+    float scoring_chance = this->getScoringChance(opp_gk);
+
+    if (Constants :: generateRealNumber(0, 100) < scoring_chance){
+        ball_coords = opp_gk.getCoords();
+        this->has_ball = false;
+        opp_gk.has_ball = true;
+    }
+}
+
+
+float MatchPlayer :: getScoringChance(const MatchPlayer& opp_gk) const{
+    float gk_avg = (opp_gk.getPlayer()->getStat("REF") + opp_gk.getPlayer()->getStat("DIV") + 
+                    opp_gk.getPlayer()->getStat("POS")) / 3;
+    float player_avg = this->player->getStat("SHO");
+
+    return player_avg / (player_avg + gk_avg);
 }
 
 

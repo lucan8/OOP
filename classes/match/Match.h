@@ -16,13 +16,21 @@ private:
     glm :: vec2 ball_coords;
     unordered_map<string, Textures> textures;
     shared_m_matrix pitch_matrix;
+    pair<uint16_t, uint16_t> score = {0, 0};
 
     void drawPlayers(Shader& player_shader, const IBO& player_ibo);
     void drawField(Shader& pitch_shader, const IBO& pitch_ibo);
     void drawBall(Shader& ball_shader, const IBO& ball_ibo);
+    void drawScore(Shader& score_shader, const IBO& score_ibo);
 
+    //Returns the pitch vertices(contains the position and texture coords)
+    glm :: mat4 getPitchVertices() const;
     //Returns the ball vertices(contains the position and texture coords)
     glm :: mat4 getBallVertices() const;
+    glm :: mat4 getScoreVertices() const;
+
+    //Sets the texture coordinates for the vertices
+    void setTextureCoords(glm :: mat4& entity_vertices) const;
 
     //Loads and binds the textures needed(pitch, ball, teams)
     void loadTextures();

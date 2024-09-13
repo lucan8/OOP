@@ -2,6 +2,8 @@
 #include "../../vendor/stb_image.h"
 #include "../exceptions/MyRuntimeException.h"
 
+uint16_t Textures :: slots_in_use = 0;
+
 Textures :: Textures(const std :: string& file_path){
     stbi_set_flip_vertically_on_load(1);
     
@@ -13,7 +15,7 @@ Textures :: Textures(const std :: string& file_path){
     glBindTexture(GL_TEXTURE_2D, this->id);
 
     //Setting the texture filtering option for magnification and minification
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     
     //Setting the texture wrapping option for S and T coordinates
@@ -22,6 +24,9 @@ Textures :: Textures(const std :: string& file_path){
 
     //Setting the texture data
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, this->width, this->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, this->localBuffer.get());
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    this->setSlot(Textures :: slots_in_use++);
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
@@ -48,13 +53,13 @@ Textures :: ~Textures(){
 }
 
 
-void Textures :: bind(unsigned int slot) const{
-    glActiveTexture(GL_TEXTURE0 + slot);
+void Textures :: bind() const{
+    glActiveTexture(GL_TEXTURE0 + this->slot);
     glBindTexture(GL_TEXTURE_2D, this->id);
 }
 
 
-void Textures :: unbind() const{
+void Textures :: unbind(){
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
@@ -69,4 +74,11 @@ glm :: vec4 Textures :: getAverageColor() const{
     }
     avg_color /= this->width * this->height;
     return avg_color;
+}
+
+
+void Textures :: setSlot(int slot){
+    if (slot >= 32)
+        throw MyRuntimeException(__FILE__, __func__, __LINE__, "Too many textures loaded, max is 32");
+    this->slot = slot;
 }

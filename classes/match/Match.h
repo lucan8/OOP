@@ -15,8 +15,10 @@ private:
     unique_first_team team1, team2;
     glm :: vec2 ball_coords;
     unordered_map<string, Textures> textures;
-    shared_m_matrix pitch_matrix;
+    Shader entity_shader;
     pair<uint16_t, uint16_t> score = {0, 0};
+    //shared_m_matrix pitch_matrix;
+    
 
     void drawPlayers(Shader& player_shader, const IBO& player_ibo);
     void drawField(Shader& pitch_shader, const IBO& pitch_ibo);
@@ -34,18 +36,22 @@ private:
 
     //Loads and binds the textures needed(pitch, ball, teams)
     void loadTextures();
-
-    void setPitchMatrix();
+    //Loads the shaders needed for the match
+    void loadShaders();
     //Arg1 team in possesion attacks, arg2 defends
     void movePlayers(FirstTeam& poss_team, FirstTeam& opp_team);
     //Determines if any player gets possesion and sets the player with the ball
     void setPosession();
+    //Sets the uniforms that don't change during the match(projection matrix, resolution_units...)
+    void setConstUniforms();
+
+    //void setPitchMatrix();
 public:
     //Draws the pitch and players
     void draw();
     
     Match(shared_team team1, shared_team team2);
-    Match(){}
+    ~Match();
 
     //Moves players and ball
     void play();

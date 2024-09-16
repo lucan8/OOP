@@ -22,17 +22,12 @@ Match :: Match(shared_team team1, shared_team team2)
 
 void Match :: loadTextures(){
     const string texture_path = (filesystem::current_path().parent_path() / "resources" / "textures" / "").string();
-    //Loading the textures
-    textures.emplace("PITCH", texture_path + "pitch2.png"),
-    textures.emplace("BALL", texture_path + "ball.png"),
-    textures.emplace("TEAM1", texture_path +  "arsenal.png"),
-    textures.emplace("TEAM2", texture_path + "real_madrid.png");
-    
-    //Binding the textures
-    textures["PITCH"].bind(0);
-    textures["BALL"].bind(1);
-    textures["TEAM1"].bind(2);
-    textures["TEAM2"].bind(3);
+    for (const auto& entry : filesystem::directory_iterator(texture_path)){
+        string file_path = entry.path().string();
+        textures.emplace(file_path.substr(file_path.find_last_of("/") + 1), file_path);
+    }
+    for (auto& texture : textures)
+        texture.second.bind();
 }
 
 
@@ -45,12 +40,14 @@ void Match :: draw(){
     Shader entity_shader((vert_shader_path + "entity.glsl"), (frag_shader_path + "entity.glsl"));
     entity_shader.bind();
     
-    float pitch_padding = Constants :: getVal("PITCH_OUT_PADDING");
+    float aspect_ratio = Constants :: getVal("TOUCHLINE_LENGTH") / Constants :: getVal("GOAL_LINE_LENGTH"),
+          pitch_padding_y = Constants :: getVal("PITCH_PADDING"),
+          pitch_padding_x = pitch_padding_y * aspect_ratio;
     //Setting the window resolution and the pitch resolution and the units for the window relative to the pitch
     const glm :: vec2 halfed_window_res(Constants :: getVal("WINDOW_WIDTH") / 2,
                                         Constants :: getVal("WINDOW_HEIGHT") / 2),
-                      halfed_pitch_res (Constants :: getVal("TOUCHLINE_LENGTH") / 2 + pitch_padding,
-                                        Constants :: getVal("GOAL_LINE_LENGTH") / 2 + pitch_padding),
+                      halfed_pitch_res (Constants :: getVal("TOUCHLINE_LENGTH") / 2 + pitch_padding_x,
+                                        Constants :: getVal("GOAL_LINE_LENGTH") / 2 + pitch_padding_y),
                       res_units(halfed_window_res / halfed_pitch_res);
 
     //Setting the projection matrix                       
@@ -70,6 +67,7 @@ void Match :: draw(){
 
     this->drawPlayers(entity_shader, square_ibo);
     this->drawBall(entity_shader, square_ibo);
+    this->drawScore(entity_shader, square_ibo);
 }
 
 
@@ -112,7 +110,7 @@ void Match :: drawField(Shader& pitch_shader, const IBO& pitch_ibo){
     uint16_t pitch_vert_val_count = Constants :: getVal("SQUARE_VERTICES") * Constants :: getVal("NR_COORDS_VERTEX")
                                     * Constants :: getVal("NR_COORDS_TEXTURE");
     //Setting the pitch vertices
-    VBO pitch_vbo(Constants :: getVertices("PITCH"), pitch_vert_val_count * sizeof(float), GL_STATIC_DRAW);
+    VBO pitch_vbo(&getPitchVertices()[0][0], pitch_vert_val_count * sizeof(float), GL_STATIC_DRAW);
 
     //Layout for pitch
     VertexBufferLayout pitch_layout;
@@ -162,27 +160,82 @@ void Match :: drawBall(Shader& ball_shader, const IBO& ball_ibo){
 }
 
 
+void Match :: drawScore(Shader& score_shader, const IBO& score_ibo){
+    //Binding the shader and setting the uniforms
+    score_shader.bind();
+    score_shader.setUniform1i("u_entity_type", Constants :: getEntityNumber("SCORE"));
+    score_shader.setUniform1i("u_Texture", this->textures[to_string(this->score.first)].getSlot());
+    
+    //Setting the score's vertices
+    glm :: mat4 score_vertices = this->getScoreVertices();
+    VBO score_vbo(&getScoreVertices()[0][0], sizeof(score_vertices), GL_STATIC_DRAW);
+
+    //Setting layout for VAO
+    VertexBufferLayout score_layout;
+    score_layout.addAttribute<float>(2);
+    score_layout.addAttribute<float>(2);
+
+    //Binding the layout and VBO to the VAO
+    VAO score_vao;
+    score_vao.addBuffer(score_vbo, score_layout);
+
+    Renderer :: draw(score_vao, score_ibo, score_shader);
+}
+
+
 void Match :: setPitchMatrix(){
     team1->setPitchMatrix(pitch_matrix);
     team2->setPitchMatrix(pitch_matrix);
 }
 
 
+glm :: mat4 Match :: getPitchVertices() const{
+    //Getting the pitch's max x and y values
+    float p_max_x = Constants :: getVal("TOUCHLINE_LENGTH") / 2,
+          p_max_y = Constants :: getVal("GOAL_LINE_LENGTH") / 2,
+          aspect_ratio = p_max_x / p_max_y,
+          padding_y = Constants :: getVal("PITCH_OUT_PADDING"),
+          padding_x = padding_y * aspect_ratio;
+
+    glm :: mat4 pitch_vertices = toMat4(getCanvasPositions(glm :: vec2(0, 0),
+                                        p_max_x + padding_x, p_max_y + padding_y));
+    setTextureCoords(pitch_vertices);
+    return pitch_vertices;
+}
+
+
 glm :: mat4 Match :: getBallVertices() const{
     glm :: mat4 ball_vertices = toMat4(getCanvasPositions(ball_coords, Constants :: getVal("PLAYER_RADIUS") / 2.0));
+    setTextureCoords(ball_vertices);
 
+    return ball_vertices;
+}
+
+
+glm :: mat4 Match :: getScoreVertices() const{
+    float max_y = Constants :: getVal("GOAL_LINE_LENGTH") / 2,
+          padding = Constants :: getVal("PITCH_PADDING") - Constants :: getVal("PITCH_OUT_PADDING");
+    //Pure center for x, y is above the pitch(and it's padding)
+    glm :: vec2 center(0, max_y + padding);
+    glm :: mat4 ball_vertices = toMat4(getCanvasPositions(center, Constants :: getVal("SCORE_RADIUS")));
+    setTextureCoords(ball_vertices);
+
+    return ball_vertices;
+}
+
+
+void Match :: setTextureCoords(glm :: mat4& entity_vertices) const{
     //Getting the texture coordinates
     float max_x = Constants :: getVal("TEXTURE_MAX_X"), max_y = Constants :: getVal("TEXTURE_MAX_Y");
     float min_x = Constants :: getVal("TEXTURE_MIN_X"), min_y = Constants :: getVal("TEXTURE_MIN_Y");
 
     //Setting the texture coordinates
-    ball_vertices[0][2] = min_x, ball_vertices[0][3] = min_y,
-    ball_vertices[1][2] = min_x, ball_vertices[1][3] = max_y,
-    ball_vertices[2][2] = max_x, ball_vertices[2][3] = max_y,
-    ball_vertices[3][2] = max_x, ball_vertices[3][3] = min_y;
-
-    return ball_vertices;
+    entity_vertices[0][2] = min_x, entity_vertices[0][3] = min_y,
+    entity_vertices[1][2] = min_x, entity_vertices[1][3] = max_y,
+    entity_vertices[2][2] = max_x, entity_vertices[2][3] = max_y,
+    entity_vertices[3][2] = max_x, entity_vertices[3][3] = min_y;
 }
+
 
 void Match :: play(){
     if (team1->inPossesion())

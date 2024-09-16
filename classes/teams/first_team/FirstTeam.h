@@ -66,12 +66,12 @@ public:
     pair<shared_m_player, shared_m_player> getClosest2Players(const glm :: vec2& target) const;
     static shared_m_player getClosestPlayer(const glm :: vec2& target, const shared_m_squad& players);
 
-    //Use the pitch_matrix from Match class
-    void setPitchMatrix(shared_m_matrix& pitch_matrix) const;
-
     shared_m_squad getUnmarkedPlayers(const FirstTeam& opp_team) const;
     //If the team is not in possession of the ball, the player with the ball is nullptr
     shared_m_player getPlayerWithBall() const;
 
     bool operator<(const FirstTeam& other) const;
+
+    //Use the pitch_matrix from Match class
+    //void setPitchMatrix(shared_m_matrix& pitch_matrix) const;
 };

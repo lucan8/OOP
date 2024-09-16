@@ -216,7 +216,7 @@ MatchPlayer :: passing_options FirstTeam :: getPassingOptions(const MatchPlayer&
     return passing_options;
 }
 
-
+/*
 void FirstTeam :: setPitchMatrix(shared_m_matrix& pitch_matrix) const{
     for (auto player : this->first_eleven){
         glm :: vec2 p_coords = player->getPitchMatrixcoords();
@@ -228,6 +228,7 @@ void FirstTeam :: setPitchMatrix(shared_m_matrix& pitch_matrix) const{
                                     to_string(p_coords.x) + " " + to_string(p_coords.y));
     }
 }
+*/
 
 
 bool FirstTeam :: operator<(const FirstTeam& other) const{

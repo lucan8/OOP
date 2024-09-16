@@ -359,7 +359,7 @@ vector<glm :: vec2> MatchPlayer :: getMoveOptions() const{
             };
 }
 
-
+/*
 glm :: vec2 MatchPlayer :: getPitchMatrixcoords() const{
     //Getting the player's coordinates relative to pitch width and height
     glm :: vec2 temp = this->coords + glm :: vec2(Constants :: getVal("TOUCHLINE_LENGTH") / 2,
@@ -368,6 +368,7 @@ glm :: vec2 MatchPlayer :: getPitchMatrixcoords() const{
     //Pitch matrix coordinates will be reversed
     return glm :: vec2(temp.y, temp.x);
 }
+*/
 
 
 bool MatchPlayer :: operator <(const MatchPlayer& other) const{

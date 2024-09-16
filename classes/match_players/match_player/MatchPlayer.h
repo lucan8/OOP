@@ -7,9 +7,9 @@ typedef shared_ptr<MatchPlayer> shared_m_player;
 typedef unique_ptr<MatchPlayer> unique_m_player;
 typedef vector<unique_m_player> unique_m_squad;
 typedef vector<shared_m_player> shared_m_squad;
-typedef vector<vector<shared_m_player>> shared_m_matrix;
 //vector of shared_player represented as map(for easier removal)
 typedef unordered_map<uint16_t, unique_m_player> unique_m_squad_map;
+//typedef vector<vector<shared_m_player>> shared_m_matrix;
 
 class MatchPlayer {
 public:
@@ -94,9 +94,6 @@ public:
     //Draws the player as a circle
     void draw(pitch_half half, Shader& p_shader, const IBO& player_ibo,
               const VertexBufferLayout& player_layout, const VertexBufferLayout& player_aura_layout) const;
-
-    //Compere two players by their OVR
-    bool operator <(const MatchPlayer& other) const;
     
     //Decides what to do with the ball depending on the number of intersections with the opposing players
     //The the opponent's stats and passing options(for 0 and 2 intersections there should be no opponent passed)
@@ -115,28 +112,26 @@ public:
     //Chooses the best move option taking into account the pass_chance and the distance to the teammate
     void p_move(const MatchPlayer& player_with_ball, const MatchPlayer& closest_team_mate,
                 const shared_m_squad& opponents);
-    
     //Chooses the best move option taking into account the distance to the target and teammate
     void p_move(const glm :: vec2& target, const MatchPlayer& closest_team_mate);
-
     void moveTowards(const glm :: vec2& target, const glm :: vec2& move_values);
-    //Used to retrieve the closest team mate/opponent
-    //shared_m_player getClosestPlayer(const shared_m_squad& players) const;
+
     virtual void block() = 0;
     virtual void tackle(glm :: vec2& ball_coords, MatchPlayer& opponent);
     void dribble(glm :: vec2& ball_coords, const MatchPlayer& opponent, const glm :: vec2& opp_gk_coords);
+
+    void shoot(glm :: vec2& ball_coords, MatchPlayer& opp_gk);
+    float getScoringChance(const MatchPlayer& opp_gk) const;
     
     bool inTackleRange(const MatchPlayer& opponent) const;
-    bool isNearBall(const glm :: vec2& ball_coords) const;
-
-    //Verifies if the player has the same detailed player type as det_p_type(DEF, MID, ATT)
-    bool verifDetPType(const string& det_p_type) const;
-
-    
+    float getTackleChance(const MatchPlayer& opponent) const;
     OpponentIntersections getMarkingIntersections(const shared_m_squad& opponents) const;
     OpponentIntersections getTacklingIntersections(const shared_m_squad& opponents) const;
 
+    //Verifies if the player has the same detailed player type as det_p_type(DEF, MID, ATT)
+    bool verifDetPType(const string& det_p_type) const;
     bool isPassedMidline(pitch_half half) const;
-    float getTackleChance(const MatchPlayer& opponent) const;
-
+    bool isNearBall(const glm :: vec2& ball_coords) const;
+    //Compere two players by their OVR
+    bool operator <(const MatchPlayer& other) const;
 };

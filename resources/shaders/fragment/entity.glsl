@@ -18,10 +18,12 @@ uniform int u_entity_type;
 uniform vec4 u_aura_color;
 
 vec4 white = vec4(1.0, 1.0, 1.0, 1.0);
+vec4 black = vec4(0.0, 0.0, 0.0, 1.0);
 //Entity types
 const int pitch = 0;
 const int ball = 1;
 const int player = 2;
+const int score = 3;
 
 
 //If pixel is withing the entity's circle, return the texture color, else discard
@@ -57,6 +59,10 @@ vec4 getPitchPixelColor(){
     return texture(u_Texture, v_texCoords);
 }
 
+vec4 getScorePixelColor(){
+    return texture(u_Texture, v_texCoords);
+}
+
 
 void main(){
     //Calculate the center of the entity's circle in screen coordinates
@@ -72,6 +78,9 @@ void main(){
             break;
         case player:
             fragColor = getPlayerPixelColor(gl_FragCoord.xy, entity_center, u_entity_radius * u_screen_units.x);
+            break;
+        case score:
+            fragColor = getScorePixelColor();
             break;
         default:
             discard;

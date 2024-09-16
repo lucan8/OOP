@@ -20,7 +20,10 @@ private:
 public:
     //Loads and compiles the shaders into a single program
     Shader(const std :: string& vertex_file_path, const std :: string& fragment_file_path);
-    ~Shader();
+    Shader(): id(0){}
+    ~Shader(){};
+    //Frees the memory and invalides the program
+    void deleteProgram();
     
     void bind() const{glUseProgram(this->id);}
     void unbind() const{glUseProgram(0);}

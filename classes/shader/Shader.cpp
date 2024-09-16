@@ -78,6 +78,6 @@ void Shader :: setUniformMat4f(const std :: string& name, const glm :: mat4& val
 }
 
 
-Shader :: ~Shader(){
+void Shader :: deleteProgram(){
     glDeleteProgram(this->id);
 }

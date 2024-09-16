@@ -57,7 +57,7 @@ private:
     //Detailed position, nr_players
     static unordered_map<string, uint16_t> subs_layout;
     //const_name, array of vertices
-    static unordered_map<string, unique_ptr<GLfloat>> vertices;
+    //static unordered_map<string, unique_ptr<GLfloat>> vertices;
 
     //Geometric shape, indices for the vertex positions
     static unordered_map<string, unique_ptr<GLuint>> vertex_indices;
@@ -78,7 +78,7 @@ private:
     static void initPositionEquivalence(const string& file_name);
     static void initSubsLayout(const string& file_name);
 
-    static void initVertices(const string& file_name);
+    //static void initVertices(const string& file_name);
     static void initVertexIndices(const string& file_name);
 
     static void initEntityTypes(const string& file_name);
@@ -131,7 +131,10 @@ public:
 
     //Retrieves the array of vertices for a certain constant name(ex: "PITCH" )
     //Don't call delete
-    static GLfloat* getVertices(const string& const_name);
+    //static GLfloat* getVertices(const string& const_name);
+    
+    //Retrieves the array of vertex indices for a certain constant name(ex: "SQUARE" )
+    //Don't call delete
     static GLuint* getVertexIndices(const string& const_name);
 
     static uint16_t getEntityNumber(const string& entity_type);

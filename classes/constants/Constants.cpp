@@ -1,5 +1,5 @@
 #include "Constants.h"
-
+#include <unordered_set>
 unordered_map<string, uint16_t>  Constants :: values;
 unordered_map<string, unordered_map<string, uint16_t>> Constants :: age_info;
 unordered_map<string, vector<string>> Constants :: positions;
@@ -11,7 +11,7 @@ unordered_map<string, Constants :: Formation> Constants :: formations;
 mpos_coords Constants :: p_coords;
 unordered_map<string, string> Constants :: pos_equivalence;
 unordered_map<string, uint16_t> Constants :: subs_layout;
-unordered_map<string, unique_ptr<GLfloat>> Constants :: vertices;
+//unordered_map<string, unique_ptr<GLfloat>> Constants :: vertices;
 unordered_map<string, unique_ptr<GLuint>> Constants :: vertex_indices;
 unordered_map<string, uint16_t> Constants :: entity_types;
 mt19937 Constants :: rng;
@@ -20,18 +20,18 @@ mt19937 Constants :: rng;
 struct Constants :: Formation{
     vector<string> positions;
     link_matrix matrix;
-    //mpos_coords coords;
 
     Formation(){}
 
     void readLinkMatrix(ifstream& fin);
     //Moved outside of formaation class as player positions as independent of formation
-    //void initPlayersCoords(ofstream& fout);
+    void initPlayersCoords();
 private:
     //Normalizes the coordinates to be between -1 and 1(used in initPlayersCoords)
     //Reading from file now, not needed
     //void normalizeCoords();
 };
+
 void Constants :: init(){
     string constants_path = (filesystem :: current_path().parent_path() / "resources" / "constants" / "").string();
     try{
@@ -44,7 +44,7 @@ void Constants :: init(){
         initMPosCoords(constants_path + "match_pos_coords.txt");
         initPositionEquivalence(constants_path + "position_equivalence.txt");
         initSubsLayout(constants_path + "subs_layout.txt");
-        initVertices(constants_path + "vertices.txt");
+        //initVertices(constants_path + "vertices.txt");
         initVertexIndices(constants_path + "vertex_indices.txt");
         initEntityTypes(constants_path + "entity_types.txt");
         initRNG();
@@ -177,8 +177,19 @@ void Constants :: initFormations(const string& file_name){
         //Reading link matrix for chemestry
         formations[formation_name].readLinkMatrix(fin);
 
+        //Initializing the players coordinates
+        formations[formation_name].initPlayersCoords();
+
         fin.ignore();
     }
+
+    //Writing the match positions and their coordinates to a file
+    string constants_path = (filesystem :: current_path().parent_path() / "resources" / "constants" / "").string();
+    ofstream fout(constants_path + "match_pos_coords.txt");
+    if (!fout.is_open())
+        throw FileOpenException(__FILE__, __func__, __LINE__, "match_pos_coords.txt");
+    for (const auto& pos : p_coords)
+        fout << pos.first << ' ' << pos.second.x << ' ' << pos.second.y << '\n';
 }
 
 void Constants :: initSubsLayout(const string& file_name){
@@ -216,27 +227,30 @@ void Constants :: initMPosCoords(const string& file_name){
         fin >> p_coords[pos].x >> p_coords[pos].y;
 }
 
-/*
-void Constants :: Formation :: initPlayersCoords(ofstream& fout){
-    this->coords["GK"] = Coordinates(0, -Constants :: getVal("TOUCHLINE_LENGTH") / 2);
+
+void Constants :: Formation :: initPlayersCoords(){
+    unordered_set<string> visited;
+    p_coords["GK"] = glm :: vec2(0, -Constants :: getVal("TOUCHLINE_LENGTH") / 2);
+    visited.insert("GK");
+
     queue<string> p_pos;
     p_pos.push("GK");
     while (!p_pos.empty()){
         string pos = p_pos.front();
-        p_coords[pos] = this->coords[pos];
         p_pos.pop();
         //Going through all the positions that are linked to pos
         for (const auto& p : matrix[pos])
             //If the position is not already in the coords map, add it
-            if (this->coords.find(p.first) == coords.end()){
+            if (!visited.contains(p.first)){
                 //Adding the offset coordinates to the current position coordinates
                 //That will be the new position coordinates
-                this->coords[p.first] = this->coords[pos] + this->matrix[pos][p.first];
+                p_coords[p.first] = p_coords[pos] + this->matrix[pos][p.first];
+                visited.insert(p.first);
                 p_pos.push(p.first);
             }
     }
 }
-*/
+
 /*
 void Constants :: Formation :: normalizeCoords(){
     float startx = -1.0;
@@ -262,7 +276,7 @@ void Constants :: initPositionEquivalence(const string& file_name){
 
 }
 
-
+/*
 void Constants :: initVertices(const string& file_name){
     ifstream fin(file_name);
     if (!fin.is_open())
@@ -277,7 +291,7 @@ void Constants :: initVertices(const string& file_name){
             fin >> vertices[const_name].get()[i];
     }
 }
-
+*/
 void Constants :: initVertexIndices(const string& file_name){
     ifstream fin(file_name);
     if (!fin.is_open())
@@ -469,7 +483,7 @@ const unordered_map<string, uint16_t>& Constants :: getSubsLayout(){
     return subs_layout;
 }
 
-
+/*
 GLfloat* Constants :: getVertices(const string& const_name){
     try{
         return vertices.at(const_name).get();
@@ -477,6 +491,7 @@ GLfloat* Constants :: getVertices(const string& const_name){
         throw InvalidConstName(__FILE__, __func__, __LINE__, const_name);
     }
 }
+*/
 
 
 GLuint* Constants :: getVertexIndices(const string& const_name){

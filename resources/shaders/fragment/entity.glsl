@@ -60,7 +60,11 @@ vec4 getPitchPixelColor(){
 }
 
 vec4 getScorePixelColor(){
-    return texture(u_Texture, v_texCoords);
+    vec4 color = texture(u_Texture, v_texCoords);
+    if (color == white)
+        discard;
+    else
+        return texture(u_Texture, v_texCoords);
 }
 
 

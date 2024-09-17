@@ -24,6 +24,7 @@ const int pitch = 0;
 const int ball = 1;
 const int player = 2;
 const int score = 3;
+const int team_crest = 4;
 
 
 //If pixel is withing the entity's circle, return the texture color, else discard
@@ -33,7 +34,6 @@ vec4 getPixelColor(vec2 curr_pixel, vec2 center,  float radius){
     //If pixel is inside circle, return texture color
     if (dist < radius)
         return texture(u_Texture, v_texCoords);
-
     discard; 
 }
 
@@ -60,13 +60,17 @@ vec4 getPitchPixelColor(){
 }
 
 vec4 getScorePixelColor(){
+    return texture(u_Texture, v_texCoords);
+}
+
+
+vec4 getTeamCrestPixelColor(){
     vec4 color = texture(u_Texture, v_texCoords);
     if (color == white)
         discard;
     else
-        return texture(u_Texture, v_texCoords);
+        return color;
 }
-
 
 void main(){
     //Calculate the center of the entity's circle in screen coordinates
@@ -85,6 +89,9 @@ void main(){
             break;
         case score:
             fragColor = getScorePixelColor();
+            break;
+        case team_crest:
+            fragColor = getTeamCrestPixelColor();
             break;
         default:
             discard;

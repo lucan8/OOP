@@ -52,6 +52,7 @@ void Match :: draw(){
     this->drawPlayers(entity_shader, square_ibo);
     this->drawBall(entity_shader, square_ibo);
     this->drawScore(entity_shader, square_ibo);
+    this->drawTeamCrests(entity_shader, square_ibo);
 }
 
 
@@ -122,7 +123,7 @@ void Match :: drawBall(Shader& ball_shader, const IBO& ball_ibo){
     //Setting the ball's radius
     ball_shader.setUniform1f("u_entity_radius", Constants :: getVal("PLAYER_RADIUS") / 2.0);
 
-    //Setting the texture to slot 1
+    //Setting the texture
     ball_shader.setUniform1i("u_Texture", this->textures.at("BALL").getSlot());
 
     //Getting the ball canvas vertices
@@ -145,27 +146,78 @@ void Match :: drawBall(Shader& ball_shader, const IBO& ball_ibo){
 
 
 void Match :: drawScore(Shader& score_shader, const IBO& score_ibo){
-    //Binding the shader and setting the uniforms
+    //Binding the shader and setting the entity type uniform
     score_shader.bind();
     score_shader.setUniform1i("u_entity_type", Constants :: getEntityNumber("SCORE"));
-    score_shader.setUniform1i("u_Texture", this->textures[to_string(this->score.first)].getSlot());
-    
-    //Setting the score's vertices
-    glm :: mat4 score_vertices = this->getScoreVertices();
-    VBO score_vbo(&getScoreVertices()[0][0], sizeof(score_vertices), GL_STATIC_DRAW);
 
-    //Setting layout for VAO
+    //Creating layout for VAO
     VertexBufferLayout score_layout;
     score_layout.addAttribute<float>(2);
     score_layout.addAttribute<float>(2);
+
+    //Getting the number of values for the score vertices
+    uint16_t score_vert_val_count = Constants :: getVal("SQUARE_VERTICES") * Constants :: getVal("NR_COORDS_VERTEX")
+                                    * Constants :: getVal("NR_COORDS_TEXTURE");
+    //Creating an empty vbo for the score line and number(with the size needed for each drawn object)
+    VBO score_vbo(NULL, sizeof(float) * score_vert_val_count, GL_DYNAMIC_DRAW);
 
     //Binding the layout and VBO to the VAO
     VAO score_vao;
     score_vao.addBuffer(score_vbo, score_layout);
 
+    //Getting the coordinates needed for the score line center
+    float max_y = Constants :: getVal("GOAL_LINE_LENGTH") / 2,
+          padding = Constants :: getVal("PITCH_PADDING") - Constants :: getVal("PITCH_OUT_PADDING");
+    glm :: vec2 center(0, max_y + padding),
+                score_offset(Constants :: getVal("SCORE_RADIUS") * 2, 0);
+
+    //Drawing the score elements(line, team1 score, team2 score)
+    drawScoreElement(score_shader, score_ibo, score_vbo, score_vao, textures.at("LINE"), center);
+    drawScoreElement(score_shader, score_ibo, score_vbo, score_vao, textures.at(to_string(score.first)),
+                     center - score_offset);
+    drawScoreElement(score_shader, score_ibo, score_vbo, score_vao, textures.at(to_string(score.second)),
+                     center + score_offset);
+}
+
+
+void Match :: drawScoreElement(Shader& score_shader, const IBO& score_ibo, VBO& score_vbo, VAO& score_vao,
+                            const Textures& texture, const glm :: vec2& center){
+    score_shader.setUniform1i("u_Texture", texture.getSlot());
+    glm :: mat4 score_vertices = this->getScoreVertices(center);
+    score_vbo.update(&score_vertices[0][0], sizeof(score_vertices));
     Renderer :: draw(score_vao, score_ibo, score_shader);
 }
 
+
+void Match :: drawTeamCrests(Shader& crest_shader, const IBO& crest_ibo){
+    //Binding the shader and setting the uniforms
+    crest_shader.bind();
+    crest_shader.setUniform1i("u_entity_type", Constants :: getEntityNumber("TEAM_CREST"));
+
+    //Creating layout for VAO
+    VertexBufferLayout crest_layout;
+    crest_layout.addAttribute<float>(2);
+    crest_layout.addAttribute<float>(2);
+
+    //Getting the number of values for the score vertices
+    uint16_t crest_vert_val_count = Constants :: getVal("SQUARE_VERTICES") * Constants :: getVal("NR_COORDS_VERTEX")
+                                    * Constants :: getVal("NR_COORDS_TEXTURE");
+    //Creating an empty vbo for the team crests
+    VBO crest_vbo(NULL, sizeof(float) * crest_vert_val_count, GL_DYNAMIC_DRAW);
+
+    //Binding the layout and VBO to the VAO
+    VAO crest_vao;
+    crest_vao.addBuffer(crest_vbo, crest_layout);
+
+    //Getting the coordinates needed for the crest canvas center
+    float max_y = Constants :: getVal("GOAL_LINE_LENGTH") / 2,
+          padding = Constants :: getVal("PITCH_PADDING") - Constants :: getVal("PITCH_OUT_PADDING");
+    //Drawing the team crests
+    drawScoreElement(crest_shader, crest_ibo, crest_vbo, crest_vao, textures.at("TEAM1"),
+                     glm :: vec2(-Constants :: getVal("TOUCHLINE_LENGTH") / 2, max_y + padding));
+    drawScoreElement(crest_shader, crest_ibo, crest_vbo, crest_vao, textures.at("TEAM2"),
+                     glm :: vec2(Constants :: getVal("TOUCHLINE_LENGTH") / 2, max_y + padding));
+}
 /*
 void Match :: setPitchMatrix(){
     team1->setPitchMatrix(pitch_matrix);
@@ -197,15 +249,11 @@ glm :: mat4 Match :: getBallVertices() const{
 }
 
 
-glm :: mat4 Match :: getScoreVertices() const{
-    float max_y = Constants :: getVal("GOAL_LINE_LENGTH") / 2,
-          padding = Constants :: getVal("PITCH_PADDING") - Constants :: getVal("PITCH_OUT_PADDING");
-    //Pure center for x, y is above the pitch(and it's padding)
-    glm :: vec2 center(0, max_y + padding);
-    glm :: mat4 ball_vertices = toMat4(getCanvasPositions(center, Constants :: getVal("SCORE_RADIUS")));
-    setTextureCoords(ball_vertices);
+glm :: mat4 Match :: getScoreVertices(const glm :: vec2& center) const{
+    glm :: mat4 score_vertices = toMat4(getCanvasPositions(center, Constants :: getVal("SCORE_RADIUS")));
+    setTextureCoords(score_vertices);
 
-    return ball_vertices;
+    return score_vertices;
 }
 
 

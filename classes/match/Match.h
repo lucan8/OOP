@@ -24,12 +24,17 @@ private:
     void drawField(Shader& pitch_shader, const IBO& pitch_ibo);
     void drawBall(Shader& ball_shader, const IBO& ball_ibo);
     void drawScore(Shader& score_shader, const IBO& score_ibo);
-
+    //Binds the texture, updates the vbo using getScoreVertices and draws the score element
+    void drawScoreElement(Shader& score_shader, const IBO& score_ibo, VBO& score_vbo, VAO& score_vao,
+                       const Textures& texture, const glm :: vec2& center);
+                    
+    void drawTeamCrests(Shader& team_shader, const IBO& team_ibo);
     //Returns the pitch vertices(contains the position and texture coords)
     glm :: mat4 getPitchVertices() const;
     //Returns the ball vertices(contains the position and texture coords)
     glm :: mat4 getBallVertices() const;
-    glm :: mat4 getScoreVertices() const;
+    //Returns the canvas vertices with the center at the argument and the radius as score radius
+    glm :: mat4 getScoreVertices(const glm :: vec2& center) const;
 
     //Sets the texture coordinates for the vertices
     void setTextureCoords(glm :: mat4& entity_vertices) const;

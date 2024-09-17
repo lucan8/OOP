@@ -112,7 +112,7 @@ int main(){
 
     int nr = 0;
     while (!glfwWindowShouldClose(window)){
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClearColor(0.2f, 0.3f, 0.5f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
         match.draw();
@@ -120,13 +120,6 @@ int main(){
             match.play();
         nr++;
 
-        //Blending test
-        /*
-        glUniform4f(u_location, 0.0f, 1.0f, 0.0f, 0.1f);
-        Renderer :: draw(vao, ibo, pitch_shader);
-        glUniform4f(u_location, 1.0f, 0.0f, 0.0f, 0.1f);
-        Renderer :: draw(vao1, ibo, pitch_shader);
-        */
         glfwSwapBuffers(window);
         glfwPollEvents();
     }

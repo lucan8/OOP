@@ -1,10 +1,12 @@
 #include "Shader.h"
 #include "../../functions/functions.h"
+
 Shader :: Shader(const std :: string& vertex_file_path, const std :: string& fragment_file_path){
     this->id =  glCreateProgram();
+
     //Reading the shaders source code
-    std :: string VertexShaderSrc = ReadFile(vertex_file_path);
-    std :: string FragmentShaderSrc = ReadFile(fragment_file_path);
+    std :: string VertexShaderSrc = readFile(vertex_file_path);
+    std :: string FragmentShaderSrc = readFile(fragment_file_path);
 
     //Compiling the shaders
     GLuint v_shader_id = CompileShader(VertexShaderSrc, GL_VERTEX_SHADER);

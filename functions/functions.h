@@ -11,7 +11,7 @@
 //Splits a string by a separator
 std :: vector<std :: string> split(const std :: string& str, char sep = ' ');
 //Reads file content and returns it as a string
-std :: string ReadFile(const std :: string& file_path);
+std :: string readFile(const std :: string& file_path);
 //Returns the positions for the square canvas(coords is center, 2 * radius is the side of the square)
 //left bottom, left top, right top, right bottom
 glm :: mat4x2 getCanvasPositions(glm :: vec2 coords, float radius);

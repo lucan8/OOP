@@ -13,7 +13,7 @@ std :: vector<std :: string> split(const std :: string& str, char sep){
 }
 
 //Reads file content and returns it as a string
-std :: string ReadFile(const std :: string& file_path){
+std :: string readFile(const std :: string& file_path){
     std :: string content;
     std :: ifstream fin(file_path);
 

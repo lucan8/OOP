@@ -1,18 +1,19 @@
 #pragma once
 #include "../../vendor/stb_truetype.h"
-#include "../Textures/Textures.h"
+#include "../textures/Textures.h"
+#include "../shader/Shader.h"
+#include "../constants/Constants.h"
+#include <array>
 #include <string>
 //TODO: Add font sizes
 class Font{
 private:
-    //unsigned char* buffer;
     Textures texture;
-    std :: unique_ptr<stbtt_bakedchar> cdata;
+    //96 is the number of characters in the font
+    std :: array<stbtt_bakedchar, 96> cdata;
 public:
     Font(const std :: string& f_name);
     ~Font(){};
-    // void bakeFont();
-    // void bindTexture();
-    // void unbindTexture();
-    // void draw();
+    //Uses different projection matrix than the one used for rendering the match entities
+    void draw(Shader& shader, const std :: string& text, glm :: vec2 pos, glm :: vec4 color = glm :: vec4(1.0f));
 };

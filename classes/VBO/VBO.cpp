@@ -1,6 +1,7 @@
 #include "VBO.h"
+#include "../exceptions/MyRuntimeException.h"
 
-VBO :: VBO(const GLfloat* vertices, GLsizeiptr size, GLenum usage){
+VBO :: VBO(GLsizeiptr size, const GLfloat* vertices, GLenum usage){
     glGenBuffers(1, &this->id);
     this->bind();
     glBufferData(GL_ARRAY_BUFFER, size, vertices, usage);

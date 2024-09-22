@@ -6,7 +6,7 @@ class VBO{
 private:
     GLuint id;
 public:
-    VBO(const GLfloat* vertices, GLsizeiptr size, GLenum usage);
+    VBO(GLsizeiptr size, const GLfloat* vertices = nullptr , GLenum usage = GL_DYNAMIC_DRAW);
 
     void update(GLfloat* vertices, GLsizeiptr size);
     void bind() const;

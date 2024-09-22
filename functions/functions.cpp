@@ -1,5 +1,8 @@
 #include "functions.h"
+#include <sstream>
+#include <fstream>
 #include "../classes/exceptions/FileOpenException.h"
+#include "../classes/constants/Constants.h"
 
 std :: vector<std :: string> split(const std :: string& str, char sep){
     std :: istringstream str_stream(str);
@@ -13,9 +16,9 @@ std :: vector<std :: string> split(const std :: string& str, char sep){
 }
 
 //Reads file content and returns it as a string
-std :: string readFile(const std :: string& file_path){
+std :: string readFile(const std :: string& file_path, bool is_binary){
     std :: string content;
-    std :: ifstream fin(file_path);
+    std :: ifstream fin(file_path, is_binary ? std :: ios :: binary : std :: ios :: in);
 
     if (!fin)
         throw FileOpenException(__FILE__, __func__, __LINE__, file_path);
@@ -47,6 +50,19 @@ glm :: mat4x2 getCanvasPositions(glm :: vec2 coords, float max_x, float max_y){
         coords + glm :: vec2(max_x, -max_y)
 
     );
+}
+
+
+void setTextureCoords(glm :: mat4& entity_vertices){
+    //Getting the texture coordinates
+    float max_x = Constants :: getVal("TEXTURE_MAX_X"), max_y = Constants :: getVal("TEXTURE_MAX_Y");
+    float min_x = Constants :: getVal("TEXTURE_MIN_X"), min_y = Constants :: getVal("TEXTURE_MIN_Y");
+
+    //Setting the texture coordinates
+    entity_vertices[0][2] = min_x, entity_vertices[0][3] = min_y,
+    entity_vertices[1][2] = min_x, entity_vertices[1][3] = max_y,
+    entity_vertices[2][2] = max_x, entity_vertices[2][3] = max_y,
+    entity_vertices[3][2] = max_x, entity_vertices[3][3] = min_y;
 }
 
 

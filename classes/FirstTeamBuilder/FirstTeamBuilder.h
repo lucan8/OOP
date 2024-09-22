@@ -8,13 +8,13 @@ private:
     //Should only be used before getSubstitutes
     //Returns the best first eleven for a formation from unused players
     //Players that are part of the starting 11 are removed from the unused players
-    static shared_m_squad getFirstEleven(const string& form_name, shared_squad_map& unused_outfields,
+    static shared_m_squad getFirstEleven(const std :: string& form_name, shared_squad_map& unused_outfields,
                                         shared_squad_map& unused_goalkeepers);
     //Returns the index of the best player for a position                    
-    static uint16_t getBestPlayerIndex(const shared_squad_map& players, const string& pos);
+    static uint16_t getBestPlayerIndex(const shared_squad_map& players, const std :: string& pos);
 
     //Helper function for getFirstEleven, returns the best outfield players for a formation
-    static shared_m_squad getFirstTeamOutfields(const string& form_name, 
+    static shared_m_squad getFirstTeamOutfields(const std :: string& form_name, 
                                                 shared_squad_map& unused_outfields);
                                                 
     //Returns the best goalkeeper in the form of a match player
@@ -26,10 +26,10 @@ private:
     static unique_m_squad getSubstitutes(shared_squad_map& unused_outfields, shared_squad_map& unused_goalkeepers);
 
     //Helper function for getSubstitutes, returns the best outfield substitutes
-    static unique_m_squad_map getSubsOutfields(shared_squad_map& unused_outfields, const string& det_p_type);
+    static unique_m_squad_map getSubsOutfields(shared_squad_map& unused_outfields, const std :: string& det_p_type);
 
     //Helper function for getSubsOutfields, returns the best two match players indexes
-    static pair<uint16_t, uint16_t> getMax2PlayersIndexes(const unique_m_squad_map& players);
+    static std :: pair<uint16_t, uint16_t> getMax2PlayersIndexes(const unique_m_squad_map& players);
 
     static shared_squad_split splitTeamPType(const shared_team& team);
 

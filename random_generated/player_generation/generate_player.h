@@ -5,12 +5,12 @@
 //p_types: GK, OUTFIELD
 //age types: YOUNG, MATURE, OLD
 
-player_ptr generatePlayer(const string& p_type, const string& age_type);
+player_ptr generatePlayer(const std :: string& p_type, const std :: string& age_type);
 
-uint16_t generateAge(const string& age_type);
-float generatePotential(const string& age_type, float player_ovr);
+uint16_t generateAge(const std :: string& age_type);
+float generatePotential(const std :: string& age_type, float player_ovr);
 
-string determinePreferedPos(const string& p_type, const player_ptr player);
-unordered_map<string, float> generateStats(const string& p_type, const string& age_type);
+std :: string determinePreferedPos(const std :: string& p_type, const player_ptr player);
+std :: unordered_map<std :: string, float> generateStats(const std :: string& p_type, const std :: string& age_type);
 void loadNamegenResources();
-player_ptr createPlayer(const string& p_type);
+player_ptr createPlayer(const std :: string& p_type);

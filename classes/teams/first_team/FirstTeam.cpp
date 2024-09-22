@@ -1,6 +1,10 @@
 #include "FirstTeam.h"
 #include "../../exceptions/MyRuntimeException.h"
+#include "../../constants/Constants.h"
+#include "../../../functions/functions.h"
+#include <limits>
 
+using glm :: vec2, glm :: distance;
 float FirstTeam :: getElevenTotalStats()const{
     return this->getElevenOVR() + this->getChemestry();
 }
@@ -52,20 +56,21 @@ void FirstTeam :: drawPlayers(MatchPlayer :: pitch_half half, Shader& p_shader, 
 }
 
 
-pair<shared_m_player, shared_m_player> FirstTeam :: getClosest2Players(const glm :: vec2& target) const{
+std :: pair<shared_m_player, shared_m_player> FirstTeam :: getClosest2Players(const vec2& target) const{
     uint16_t closest1 = 0, closest2 = 0;
-    float min_dist1 = numeric_limits<float>::max(), min_dist2 = numeric_limits<float>::max();
+    float min_dist1 = std :: numeric_limits<float>::max(),
+          min_dist2 = std :: numeric_limits<float>::max();
 
     for (uint16_t i = 0; i < this->first_eleven.size(); ++i){
         const shared_m_player& curr_player = this->first_eleven[i];
         //Using it as a vec2 for convenience
-        glm :: vec2 player_coords = curr_player->getCoords();
+        vec2 player_coords = curr_player->getCoords();
 
         //If the player is the target we ignore him
         if (player_coords == target)
             continue;
 
-        float dist = glm :: distance(curr_player->getCoords(), target);
+        float dist = distance(curr_player->getCoords(), target);
 
         if (dist < min_dist1){
             min_dist2 = min_dist1;
@@ -84,19 +89,19 @@ pair<shared_m_player, shared_m_player> FirstTeam :: getClosest2Players(const glm
 }
 
 
-shared_m_player FirstTeam :: getClosestPlayer(const glm :: vec2& target, const shared_m_squad& players){
+shared_m_player FirstTeam :: getClosestPlayer(const vec2& target, const shared_m_squad& players){
     uint16_t closest = 0;
-    float min_dist = numeric_limits<float>::max();
+    float min_dist = std :: numeric_limits<float>::max();
 
     for (uint16_t i = 0; i < players.size(); ++i){
         const shared_m_player& curr_player = players[i];
         //Using it as a vec2 for convenience
-        glm :: vec2 player_coords = curr_player->getCoords();
+        vec2 player_coords = curr_player->getCoords();
         //If the player is the target we ignore him
         if (player_coords == target)
             continue;
 
-        float dist = glm :: distance(player_coords, target);
+        float dist = distance(player_coords, target);
 
         if (dist < min_dist){
             min_dist = dist;
@@ -108,10 +113,10 @@ shared_m_player FirstTeam :: getClosestPlayer(const glm :: vec2& target, const s
 }
 
 
-void FirstTeam :: attack(glm :: vec2& ball_coords, const FirstTeam& opp_team){
+void FirstTeam :: attack(vec2& ball_coords, const FirstTeam& opp_team){
     //Moving the player with the ball
     shared_m_player player_with_ball = this->getPlayerWithBall();
-    glm :: vec2 opp_gk_coords = opp_team.getGKCoords();
+    vec2 opp_gk_coords = opp_team.getGKCoords();
     
     //Moving the rest of the players
     this->movePlayersWithoutBall(*player_with_ball, opp_team);
@@ -122,7 +127,7 @@ void FirstTeam :: attack(glm :: vec2& ball_coords, const FirstTeam& opp_team){
 }
 
 
-void FirstTeam :: defend(glm :: vec2& ball_coords, const FirstTeam& opp_team){
+void FirstTeam :: defend(vec2& ball_coords, const FirstTeam& opp_team){
     shared_m_player closest_ball = getClosestPlayer(ball_coords, this->first_eleven),
                     player_with_ball = opp_team.getPlayerWithBall();
     
@@ -154,7 +159,7 @@ void FirstTeam :: defend(glm :: vec2& ball_coords, const FirstTeam& opp_team){
 }
 
 
-void FirstTeam :: getPossesion(glm :: vec2 ball_coords, const glm :: vec2& opp_gk_coords){
+void FirstTeam :: getPossesion(vec2 ball_coords, const vec2& opp_gk_coords){
     //Moving the closest player towards the ball
     shared_m_player closest_player = getClosestPlayer(ball_coords, this->first_eleven);
     closest_player->p_move(ball_coords, *getClosestPlayer(closest_player->getCoords(), this->first_eleven));
@@ -174,11 +179,11 @@ void FirstTeam :: movePlayersWithoutBall(const MatchPlayer& player_with_ball, co
             continue;
 
         //Getting the player's and the player with the ball's coordinates
-        glm :: vec2 p_coords = player->getCoords(),
+        vec2 p_coords = player->getCoords(),
                     p_ball_coords = player_with_ball.getCoords();
                     
         const shared_m_squad& opponents = opp_team.getFirstEleven();
-        glm :: vec2 opp_gk_coords = opp_team.getGKCoords();
+        vec2 opp_gk_coords = opp_team.getGKCoords();
 
         //Getting the player's succesful pass chance
         float pass_chance = player_with_ball.getPassChance(*player);
@@ -200,7 +205,7 @@ MatchPlayer :: passing_options FirstTeam :: getPassingOptions(const MatchPlayer&
     passing_options.reserve(this->first_eleven.size() - 2);
 
     const shared_m_squad& opponents = opp_team.getFirstEleven();
-    glm :: vec2 opp_gk_coords = opp_team.getGKCoords();
+    vec2 opp_gk_coords = opp_team.getGKCoords();
 
     //Going through all the players except the one passed as argument
     for (const auto& team_mate : this->first_eleven)
@@ -208,7 +213,7 @@ MatchPlayer :: passing_options FirstTeam :: getPassingOptions(const MatchPlayer&
         if (team_mate->getPlayer() != player.getPlayer() && team_mate->getPosition() != "GK"){
             MatchPlayer :: OpponentIntersections curr_intersections = team_mate->getMarkingIntersections(opponents);
             //Getting the distance to the opponent's goal and the pass chance
-            float dist_goal = glm :: distance(team_mate->getCoords(), opp_gk_coords),
+            float dist_goal = distance(team_mate->getCoords(), opp_gk_coords),
                   pass_chance = player.getPassChance(*team_mate);
             passing_options.emplace_back(team_mate, pass_chance, dist_goal, curr_intersections);
         }
@@ -219,7 +224,7 @@ MatchPlayer :: passing_options FirstTeam :: getPassingOptions(const MatchPlayer&
 /*
 void FirstTeam :: setPitchMatrix(shared_m_matrix& pitch_matrix) const{
     for (auto player : this->first_eleven){
-        glm :: vec2 p_coords = player->getPitchMatrixcoords();
+        vec2 p_coords = player->getPitchMatrixcoords();
         //Setting the player in the pitch matrix(if coordinates are valid)
         if (p_coords.x < pitch_matrix.size() && p_coords.y < pitch_matrix.at(p_coords.x).size())
             pitch_matrix.at(p_coords.x).at(p_coords.y) = player;
@@ -242,8 +247,8 @@ bool FirstTeam :: operator<(const FirstTeam& other) const{
 }
 
 
- vector<shared_m_player> FirstTeam :: getUnmarkedPlayers(const FirstTeam& opp_team) const{
-    vector<shared_m_player> unmarked_players;
+std :: vector<shared_m_player> FirstTeam :: getUnmarkedPlayers(const FirstTeam& opp_team) const{
+    std :: vector<shared_m_player> unmarked_players;
     unmarked_players.reserve(this->first_eleven.size());
     const shared_m_squad& opponents = opp_team.getFirstEleven();
     

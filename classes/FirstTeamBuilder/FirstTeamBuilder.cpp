@@ -1,4 +1,12 @@
 #include "FirstTeamBuilder.h"
+#include "../constants/Constants.h"
+#include "../../functions/functions.h"
+
+using std :: string;
+using std :: make_pair;
+using std :: pair;
+using std :: move;
+
 
 unique_first_team FirstTeamBuilder :: buildFirstTeam(shared_team team){
     unique_first_team best_first_team;

@@ -1,4 +1,6 @@
 #include "OutFieldPlayer.h"
+#include "../../constants/Constants.h"
+#include "../../../functions/functions.h"
 
 player_ptr OutFieldPlayer :: clone() const 
 {
@@ -11,7 +13,7 @@ void OutFieldPlayer :: initStats(){
 }
 
 
-void OutFieldPlayer :: printSeasonStats(ostream& out) const{
+void OutFieldPlayer :: printSeasonStats(std :: ostream& out) const{
     Player :: printSeasonStats(out);
     out << "Goals: " << this->s_goals 
     << "\nAssists: " << this->s_assists
@@ -22,41 +24,5 @@ void OutFieldPlayer :: resetSeasonStats(){
     Player :: resetSeasonStats();
     this->s_goals = this->s_assists = this->s_blocks = 0;
 }
-/*
 
-void OutFieldPlayer :: score(){
-    this->s_goals ++;
-    pair<string, string> smallest_stats = minStats2(vector<pair<string, double>>{
-                                                make_pair((string)"DRI", stats["DRI"]), 
-                                                make_pair((string)"PAC", stats["PAC"]), 
-                                                make_pair((string)"PHY", stats["PHY"])});
-    upgradeStat("SHO");
-    upgradeStat(smallest_stats.first);
-    upgradeStat(smallest_stats.second);
-}
-
-
-void OutFieldPlayer :: assist(){
-    this->s_assists ++;
-    pair<string, string> smallest_stats = minStats2(vector<pair<string, double>>{
-                                                    make_pair((string)"DRI", stats["DRI"]), 
-                                                    make_pair((string)"PAC", stats["PAC"]), 
-                                                    make_pair((string)"PHY", stats["PHY"])});
-    upgradeStat("PAS");
-    upgradeStat(smallest_stats.first);
-    upgradeStat(smallest_stats.second);
-}
-
-
-void OutFieldPlayer :: block(){
-    this->s_blocks ++;
-    pair<string, string> smallest_stats = minStats2(vector<pair<string, double>>{
-                                                    make_pair((string)"AGG", stats["AGG"]), 
-                                                    make_pair((string)"PAC", stats["PAC"]), 
-                                                    make_pair((string)"PHY", stats["PHY"])});
-    upgradeStat("DEF");
-    upgradeStat(smallest_stats.first);
-    upgradeStat(smallest_stats.second);
-}
-*/
 

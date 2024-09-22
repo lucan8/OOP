@@ -1,12 +1,15 @@
 #include "Shader.h"
 #include "../../functions/functions.h"
+#include <iostream>
 
-Shader :: Shader(const std :: string& vertex_file_path, const std :: string& fragment_file_path){
+using std :: string;
+using std :: cout;
+Shader :: Shader(const string& vertex_file_path, const string& fragment_file_path){
     this->id =  glCreateProgram();
 
     //Reading the shaders source code
-    std :: string VertexShaderSrc = readFile(vertex_file_path);
-    std :: string FragmentShaderSrc = readFile(fragment_file_path);
+    string VertexShaderSrc = readFile(vertex_file_path);
+    string FragmentShaderSrc = readFile(fragment_file_path);
 
     //Compiling the shaders
     GLuint v_shader_id = CompileShader(VertexShaderSrc, GL_VERTEX_SHADER);
@@ -26,7 +29,7 @@ Shader :: Shader(const std :: string& vertex_file_path, const std :: string& fra
 }
 
 
-GLuint Shader :: CompileShader(const std :: string& source, GLenum shader_type) const{
+GLuint Shader :: CompileShader(const string& source, GLenum shader_type) const{
     GLuint shader_id = glCreateShader(shader_type);
     const char* src = source.c_str();
 
@@ -38,7 +41,7 @@ GLuint Shader :: CompileShader(const std :: string& source, GLenum shader_type) 
 }
 
 
-GLint Shader :: getUniformLocation(const std :: string& name){
+GLint Shader :: getUniformLocation(const string& name){
     //Checking if the uniform location is already stored
     if (this->uniform_names_cache.find(name) != this->uniform_names_cache.end())
         return this->uniform_names_cache[name];
@@ -47,7 +50,7 @@ GLint Shader :: getUniformLocation(const std :: string& name){
     GLint location = glGetUniformLocation(this->id, name.c_str());
 
     if (location == -1)
-        std :: cout << "Warning: uniform " << name << " doesn't exist\n";
+        cout << "Warning: uniform " << name << " doesn't exist\n";
     //Storing the location
     this->uniform_names_cache[name] = location;
 
@@ -55,27 +58,27 @@ GLint Shader :: getUniformLocation(const std :: string& name){
 }
 
 
-void Shader ::  setUniform1i(const std :: string& name, int value){
+void Shader ::  setUniform1i(const string& name, int value){
     glUniform1i(this->getUniformLocation(name), value);
 }
 
 
-void Shader ::  setUniform1f(const std :: string& name, float value){
+void Shader ::  setUniform1f(const string& name, float value){
     glUniform1f(this->getUniformLocation(name), value);
 }
 
 
-void Shader :: setUniform2f(const std :: string& name, const glm :: vec2& values){
+void Shader :: setUniform2f(const string& name, const glm :: vec2& values){
     glUniform2f(this->getUniformLocation(name), values.x, values.y);
 }
 
 
-void Shader :: setUniform4f(const std :: string& name, const glm :: vec4& values){
+void Shader :: setUniform4f(const string& name, const glm :: vec4& values){
     glUniform4f(this->getUniformLocation(name), values.x, values.y, values.z, values.w);
 }
 
 
-void Shader :: setUniformMat4f(const std :: string& name, const glm :: mat4& values){
+void Shader :: setUniformMat4f(const string& name, const glm :: mat4& values){
     glUniformMatrix4fv(this->getUniformLocation(name), 1, GL_FALSE, &values[0][0]);
 }
 

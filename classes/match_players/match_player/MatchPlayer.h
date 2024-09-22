@@ -1,14 +1,19 @@
 #pragma once
 #include "../../players/player/Player.h"
-#include "../../renderer/Renderer.h"
+#include "../../shader/Shader.h"
+#include "../../VB_layout/VertexBufferLayout.h"
+#include "../../IBO/IBO.h"
+#include <glm/glm.hpp>
+
+
 class MatchPlayer;
 typedef MatchPlayer* m_player_ptr;
-typedef shared_ptr<MatchPlayer> shared_m_player;
-typedef unique_ptr<MatchPlayer> unique_m_player;
-typedef vector<unique_m_player> unique_m_squad;
-typedef vector<shared_m_player> shared_m_squad;
+typedef std :: shared_ptr<MatchPlayer> shared_m_player;
+typedef std :: unique_ptr<MatchPlayer> unique_m_player;
+typedef std :: vector<unique_m_player> unique_m_squad;
+typedef std :: vector<shared_m_player> shared_m_squad;
 //vector of shared_player represented as map(for easier removal)
-typedef unordered_map<uint16_t, unique_m_player> unique_m_squad_map;
+typedef std :: unordered_map<uint16_t, unique_m_player> unique_m_squad_map;
 //typedef vector<vector<shared_m_player>> shared_m_matrix;
 
 class MatchPlayer {
@@ -37,13 +42,13 @@ public:
         OpponentIntersections opp_intersections;
     };
     
-    typedef vector<PassingInfo> passing_options;
+    typedef std :: vector<PassingInfo> passing_options;
 protected:
     //Enum for the type of radius used in the intersects method
     enum class radius_type {player, aura, ball};
 
     shared_player player;
-    const string position; //Can be either a normal position(subs) or a match position(first eleven)
+    const std ::string position; //Can be either a normal position(subs) or a match position(first eleven)
     glm :: vec2 coords;
     const float OVR;
     unsigned short yellow_cards = 0;
@@ -61,7 +66,7 @@ protected:
     
     //Should be part of an entity class
     static bool isOutsidePitch(const glm :: vec2& coords);
-    vector<glm :: vec2> getMoveOptions() const;
+    std :: vector<glm :: vec2> getMoveOptions() const;
     OpponentIntersections getOpponentIntersections(const shared_m_squad& opponents, radius_type r_type) const;
     //Target should be another player's coords for r_type = {player, aura}
     //And the ball's coords for r_type = ball
@@ -69,14 +74,14 @@ protected:
 public:
     
     MatchPlayer(shared_player player = shared_player(),
-                const string& position = "", float OVR = 0, const glm :: vec2& coords = glm :: vec2())
+                const std ::string& position = "", float OVR = 0, const glm :: vec2& coords = glm :: vec2())
      : player(move(player)), position(position), coords(coords), OVR(OVR){}
 
     virtual ~MatchPlayer(){};
 
     void addYellowCard();
     unsigned short getYellowCards() const{return yellow_cards;}
-    string getPosition() const{return position;}
+    std ::string getPosition() const{return position;}
     const shared_player& getPlayer() const{return player;}
     glm :: vec2 getCoords() const{return coords;}
     glm :: vec2 getPitchMatrixcoords()const;
@@ -129,7 +134,7 @@ public:
     OpponentIntersections getTacklingIntersections(const shared_m_squad& opponents) const;
 
     //Verifies if the player has the same detailed player type as det_p_type(DEF, MID, ATT)
-    bool verifDetPType(const string& det_p_type) const;
+    bool verifDetPType(const std ::string& det_p_type) const;
     bool isPassedMidline(pitch_half half) const;
     bool isNearBall(const glm :: vec2& ball_coords) const;
     //Compere two players by their OVR

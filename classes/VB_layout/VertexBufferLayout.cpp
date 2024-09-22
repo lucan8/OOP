@@ -1,5 +1,6 @@
 #include "VertexBufferLayout.h"
 #include "../exceptions/MyRuntimeException.h"
+#include "../exceptions/InvalidVertexAttribCount.h"
 
 template<>
 void VertexBufferLayout :: addAttribute<float>(uint32_t count){

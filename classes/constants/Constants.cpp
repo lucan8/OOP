@@ -1,5 +1,20 @@
 #include "Constants.h"
 #include <unordered_set>
+#include "../../functions/functions.h"
+#include "../exceptions/FileOpenException.h"
+#include "../exceptions/InvalidPosition.h"
+#include "../exceptions/InvalidConstName.h"
+#include "../exceptions/InvalidAgeType.h"
+#include "../exceptions/InvalidPlayerType.h"
+#include "../exceptions/InvalidFormation.h"
+#include "../exceptions/InvalidMatchPosition.h"
+#include "../exceptions/InvalidEntityType.h"
+#include <algorithm>
+#include <filesystem>
+#include <iostream>
+#include <sstream>
+#include <queue>
+using namespace std;
 unordered_map<string, uint16_t>  Constants :: values;
 unordered_map<string, unordered_map<string, uint16_t>> Constants :: age_info;
 unordered_map<string, vector<string>> Constants :: positions;

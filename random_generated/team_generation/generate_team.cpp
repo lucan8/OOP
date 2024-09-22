@@ -1,15 +1,19 @@
 #include "generate_team.h"
+#include "../../classes/constants/Constants.h"
+#include "../../functions/functions.h"
+
+using std :: string, std :: vector;
 team_ptr generateTeam(vector<string>& available_names){
     squad_ptr gks = generateGoalkeepers(), outfields = generateOutfields(); 
     //Moving the gks at the end of the outfields vector
     outfields.insert(
                         outfields.end(),
-                        make_move_iterator(gks.begin()), 
-                        make_move_iterator(gks.end())
+                        std :: make_move_iterator(gks.begin()), 
+                        std :: make_move_iterator(gks.end())
                     );
     return new Team(
                     generateTeamName(available_names),
-                    move(toSharedVector(outfields)),
+                    std :: move(toSharedVector(outfields)),
                     generateBudget()
                     );
 }
@@ -25,7 +29,6 @@ string generateTeamName(vector<string>& available_names){
 
 squad_ptr generateOutfields(){
     squad_ptr outfields;
-
     for (const auto& age_type : Constants :: getAgeTypes()){
         uint16_t nr_outfields = Constants :: generateNaturalNumber(Constants :: getAgeInfo(age_type, "MIN_NR"),
                                                                    Constants :: getAgeInfo(age_type, "MAX_NR"));

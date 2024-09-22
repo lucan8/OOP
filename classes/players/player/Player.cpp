@@ -1,6 +1,11 @@
 #include "Player.h"
 #include <numeric>
+#include <iomanip>
 #include "../../exceptions/InvalidPlayerStat.h"
+#include "../../constants/Constants.h"
+#include "../../../functions/functions.h"
+using namespace std;
+
 //TO DO: make exception for stats as well
 /*
 void Player :: Age(){

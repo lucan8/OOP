@@ -1,16 +1,19 @@
 #pragma once
+#include <glm/glm.hpp>
 #include "../../match_players/match_outfield/MatchOutfield.h"
 #include "../../match_players/match_goalkeeper/MatchGoalkeeper.h"
-#include "../../textures/Textures.h"
+#include "../../shader/Shader.h"
+#include "../../VB_layout/VertexBufferLayout.h"
+#include "../../ibo/IBO.h"
 #include "../team/Team.h"
 class FirstTeam;
-typedef unique_ptr<FirstTeam> unique_first_team;
-typedef shared_ptr<FirstTeam> shared_first_team;
+typedef std :: unique_ptr<FirstTeam> unique_first_team;
+typedef std :: shared_ptr<FirstTeam> shared_first_team;
 typedef FirstTeam* first_team_ptr;
 
 class FirstTeam{
 private:
-    string formation;
+    std :: string formation;
     shared_m_squad first_eleven;
     unique_m_squad subs;
     shared_team team;
@@ -24,10 +27,10 @@ private:
     void movePlayersWithoutBall(const MatchPlayer& player_with_ball, const FirstTeam& opp_team);
 public:
     FirstTeam(){}
-    FirstTeam(const string& formation, shared_m_squad first_eleven, unique_m_squad subs, shared_team team)
-     : formation(formation), first_eleven(move(first_eleven)), subs(move(subs)), team(move(team)){}
+    FirstTeam(const std :: string& formation, shared_m_squad first_eleven, unique_m_squad subs, shared_team team)
+     : formation(formation), first_eleven(std :: move(first_eleven)), subs(std :: move(subs)), team(std :: move(team)){}
 
-    const string& getFormation() const{return formation;}
+    const std :: string& getFormation() const{return formation;}
     const shared_m_squad& getFirstEleven() const{return first_eleven;}
     const shared_team& getTeam() const{return team;}
     MatchPlayer :: pitch_half getSide() const{return side;}
@@ -63,7 +66,7 @@ public:
     void getPossesion(glm :: vec2 ball_coords, const glm :: vec2& opp_gk_coords);
 
 
-    pair<shared_m_player, shared_m_player> getClosest2Players(const glm :: vec2& target) const;
+    std :: pair<shared_m_player, shared_m_player> getClosest2Players(const glm :: vec2& target) const;
     static shared_m_player getClosestPlayer(const glm :: vec2& target, const shared_m_squad& players);
 
     shared_m_squad getUnmarkedPlayers(const FirstTeam& opp_team) const;

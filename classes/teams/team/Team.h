@@ -1,19 +1,18 @@
 #pragma once
 #include "../../../functions/functions.h"
-#include "../../players/outfield/OutFieldPlayer.h"
-#include "../../players/goalkeeper/Goalkeeper.h"
+#include "../../players/player/Player.h"
 #include <glm/glm.hpp>
 //Add comparator for players and way to retrieve e a sorted vector of players
 
 class Team;
 typedef Team* team_ptr;
-typedef shared_ptr<Team> shared_team;
-typedef unique_ptr<Team> unique_team;
-typedef vector<shared_ptr<Team>> shared_teams;
+typedef std :: shared_ptr<Team> shared_team;
+typedef std :: unique_ptr<Team> unique_team;
+typedef std :: vector<std :: shared_ptr<Team>> shared_teams;
 
 class Team : public Printable, public Readable{
 private:
-    string name;
+    std :: string name;
     float budget;
     shared_squad Players;
     uint16_t points = 0;
@@ -21,7 +20,7 @@ private:
     
 public:
     shared_squad_split splitTeamPos() const;
-    Team(const string& name = "", shared_squad Players = {}, float budget = 0) : 
+    Team(const std :: string& name = "", shared_squad Players = {}, float budget = 0) : 
     name(name), Players(move(Players)), budget(budget){}
 
     Team(const Team& other) : name(other.name), budget(other.budget),
@@ -29,7 +28,7 @@ public:
     ~Team(){};
 
     float getBudget() const{return budget;} 
-    const string& getName() const{return name;}
+    const std :: string& getName() const{return name;}
 
     unsigned short getPoints() const{return points;}
     const shared_squad& getPlayers() const{return Players;}
@@ -39,7 +38,7 @@ public:
     void setAuraColor(const glm :: vec4& color);
 
     //Returns a map of averages calculated from the players stats
-    unordered_map<string, float> getTeamStats() const;
+    std :: unordered_map<std :: string, float> getTeamStats() const;
     team_ptr clone() const; 
 
     void setBudget(float budget){this->budget = budget;}
@@ -53,6 +52,6 @@ public:
     void resetSeasonStats();
     void addPoints(const unsigned char p);
 
-    void print(ostream&) const override;
-    void read(istream&) override;
+    void print(std :: ostream&) const override;
+    void read(std :: istream&) override;
 };

@@ -1,4 +1,7 @@
 #include "Team.h"
+#include "../../constants/Constants.h"
+#include "../../../functions/functions.h"
+using namespace std;
 
 void Team :: addPoints(const unsigned char p){
     this->points += p;

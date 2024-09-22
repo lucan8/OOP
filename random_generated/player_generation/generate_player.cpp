@@ -1,6 +1,9 @@
 #include "generate_player.h"
 #include "../../classes/exceptions/InvalidPlayerType.h"
+#include "../../classes/constants/Constants.h"
 using ng = dasmig :: ng;
+using std :: string, std :: unordered_map;
+namespace fs = std :: filesystem;
 
 player_ptr generatePlayer(const string& p_type, const string& age_type){
     player_ptr new_player;
@@ -77,7 +80,6 @@ unordered_map<string, float> generateStats(const string& p_type, const string& a
 }
 
 void loadNamegenResources(){
-    filesystem :: path resources_path = 
-                    filesystem :: current_path().parent_path() / "dasmig-src\\resources";
+    fs :: path resources_path = fs:: current_path().parent_path() / "dasmig-src\\resources";
     ng :: instance().load(resources_path);
 }

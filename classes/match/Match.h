@@ -1,9 +1,9 @@
 #pragma once
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
-#include "../renderer/Renderer.h"
 #include "../teams/first_team/FirstTeam.h"
 #include "../textures/Textures.h"
+#include "../VAO/VAO.h"
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
 #include <assert.h>
 #include <random>
 
@@ -11,12 +11,12 @@
 //Ignoring player match form for the sake of simplicity
 //t1 is in the first half of the pitch, t2 is in the second half
 class Match{
-private:
+public:
     unique_first_team team1, team2;
     glm :: vec2 ball_coords;
-    unordered_map<string, Textures> textures;
+    std :: unordered_map<std :: string, Textures> textures;
     Shader entity_shader;
-    pair<uint16_t, uint16_t> score = {0, 0};
+    std :: pair<uint16_t, uint16_t> score = {0, 0};
     //shared_m_matrix pitch_matrix;
     
 
@@ -36,8 +36,8 @@ private:
     //Returns the canvas vertices with the center at the argument and the radius as score radius
     glm :: mat4 getScoreVertices(const glm :: vec2& center) const;
 
-    //Sets the texture coordinates for the vertices
-    void setTextureCoords(glm :: mat4& entity_vertices) const;
+    // //Sets the texture coordinates for the vertices
+    // static void setTextureCoords(glm :: mat4& entity_vertices);
 
     //Loads and binds the textures needed(pitch, ball, teams)
     void loadTextures();

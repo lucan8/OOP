@@ -16,7 +16,7 @@ public:
     uint16_t getAssists() const{return s_assists;}
     uint16_t getBlocks() const{return s_blocks;}
 
-    void printSeasonStats(ostream& out) const override;
+    void printSeasonStats(std :: ostream& out) const override;
     void resetSeasonStats() override;
     player_ptr clone() const override;
 

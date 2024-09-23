@@ -73,6 +73,11 @@ void Shader :: setUniform2f(const string& name, const glm :: vec2& values){
 }
 
 
+void Shader :: setUniform3f(const string& name, const glm :: vec3& values){
+    glUniform3f(this->getUniformLocation(name), values.x, values.y, values.z);
+}
+
+
 void Shader :: setUniform4f(const string& name, const glm :: vec4& values){
     glUniform4f(this->getUniformLocation(name), values.x, values.y, values.z, values.w);
 }

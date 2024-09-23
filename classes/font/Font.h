@@ -13,7 +13,25 @@ private:
     std :: array<stbtt_bakedchar, 96> cdata;
 public:
     Font(const std :: string& f_name);
+    Font(){}
+    // Font(Font&& other) : texture(std :: move(other.texture)), cdata(std :: move(other.cdata)){}
+    // Font(const Font& other) : texture(other.texture), cdata(other.cdata){}
+    // Font& operator=(Font other){
+    //     swap(*this, other);
+    //     return *this;
+    // }
+    // void swap(Font& first, Font& second){
+    //     std :: swap(first.texture, second.texture);
+    //     std :: swap(first.cdata, second.cdata);
+    // }
     ~Font(){};
-    //Uses different projection matrix than the one used for rendering the match entities
-    void draw(Shader& shader, const std :: string& text, glm :: vec2 pos, glm :: vec4 color = glm :: vec4(1.0f));
+    glm :: mat4 getGlyphVertices(char c, glm :: vec2& pos) const;
+    glm :: mat4 getProjMatrix() const;
+    glm :: mat4 getScaleMatrix(float scale) const;
+    //Binds the texture
+    void bind() const {texture.bind();};
+    //Returns the slot of the texture
+    uint16_t getSlot() const {return texture.getSlot();};
+    //Sets the uniforms for the font
+    void setUniforms(Shader& shader, glm :: vec3 color, float scale) const;
 };

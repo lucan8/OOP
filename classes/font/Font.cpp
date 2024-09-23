@@ -1,7 +1,6 @@
 #include "Font.h"
 #include "../exceptions/FileOpenException.h"
 #include "../../functions/functions.h"
-#include "../renderer/Renderer.h"
 #include <fstream>
 #include <iostream>
 #include <filesystem>
@@ -14,7 +13,7 @@ Font :: Font(const std :: string& file_path) {
     uint16_t bitmap_width = Constants :: getVal("FONT_BITMAP_WIDTH");
     uint8_t* bitmap = new uint8_t[bitmap_width * bitmap_width];
     //Baking the font
-    stbtt_BakeFontBitmap((uint8_t*)(buffer.c_str()), 0, 24, bitmap,
+    stbtt_BakeFontBitmap((uint8_t*)(buffer.c_str()), 0, Constants :: getVal("FONT_SIZE"), bitmap,
                          bitmap_width, bitmap_width,' ', cdata.size(), cdata.data());
                          
     //Creating the texture for that font
@@ -22,36 +21,35 @@ Font :: Font(const std :: string& file_path) {
 }
 
 
-void Font :: draw(Shader& shader, const std :: string& text, glm :: vec2 pos, glm :: vec4 color){
-    VertexBufferLayout layout;
-    layout.addAttribute<float>(2);
-    layout.addAttribute<float>(2);
+glm :: mat4 Font :: getGlyphVertices(char c, glm :: vec2& pos) const{
+    stbtt_aligned_quad q;
+    stbtt_GetBakedQuad(cdata.data(), Constants :: getVal("FONT_BITMAP_WIDTH"),
+                       Constants :: getVal("FONT_BITMAP_WIDTH"), c - 32, &pos.x, &pos.y, &q, 1);
+    return glm :: mat4( q.x0, q.y0, q.s0, q.t0,
+                        q.x1, q.y0, q.s1, q.t0,
+                        q.x1, q.y1, q.s1, q.t1,
+                        q.x0, q.y1, q.s0, q.t1);
+}
 
-    VBO vbo(4 * sizeof(float) * 4);
-    VAO vao;
-    vao.addBuffer(vbo, layout);
-    vao.bind();
 
-    IBO ibo(Constants :: getVertexIndices("SQUARE"), Constants :: getVal("NR_SQUARE_INDICES"));
+void Font :: setUniforms(Shader& shader, glm :: vec3 color, float scale) const{
     shader.bind();
-    shader.setUniform1i("u_texture", texture.getSlot());
+
+    shader.setUniform3f("u_font_color", color);
     shader.setUniform1i("u_entity_type", Constants :: getEntityNumber("LETTER"));
-    texture.bind();
+    shader.setUniform1i("u_texture", this->getSlot());
 
-    glm :: mat4 projection = glm :: ortho(0.0f, (float)Constants :: getVal("WINDOW_WIDTH"),
-                                         (float)Constants :: getVal("WINDOW_HEIGHT"), 0.0f);
-    shader.setUniformMat4f("u_projection", projection);
+    shader.setUniformMat4f("u_projection", getProjMatrix());
+    shader.setUniformMat4f("u_model", getScaleMatrix(scale));
+}
 
-    uint16_t f_bitmap_width = Constants :: getVal("FONT_BITMAP_WIDTH");
-    for (const auto& c : text){
-        stbtt_aligned_quad q;
-        stbtt_GetBakedQuad(cdata.data(), f_bitmap_width, f_bitmap_width, c - 32, &pos.x, &pos.y, &q, 1);
-        glm :: mat4 vertices = glm :: mat4( q.x0, q.y0, q.s0, q.t0,
-                                            q.x1, q.y0, q.s1, q.t0,
-                                            q.x1, q.y1, q.s1, q.t1,
-                                            q.x0, q.y1, q.s0, q.t1);
-        vbo.update(&vertices[0][0], sizeof(vertices));
 
-        Renderer :: draw(vao, ibo, shader);
-    }
+glm :: mat4 Font :: getProjMatrix() const{
+    return glm :: ortho(0.0f, (float)Constants :: getVal("WINDOW_WIDTH"),
+                        (float)Constants :: getVal("WINDOW_HEIGHT"), 0.0f);
+}
+
+
+glm :: mat4 Font :: getScaleMatrix(float scale) const{
+    return glm :: scale(glm :: mat4(1.0f), glm :: vec3(scale, scale, 1.0f));
 }

@@ -3,14 +3,9 @@
 out vec4 fragColor;
 in vec2 v_texCoords;
 
-//Coordinates for the center of the screen
-uniform vec2 u_screen_center;
 uniform sampler2D u_texture;
 
-//Units relative to the screen resolution and player coordinates
-uniform vec2 u_screen_units;
-
-//Entity coordinates and radius in pitch coords
+//Entity coordinates and radius in pixel_coords
 uniform vec2 u_entity_coords;
 uniform float u_entity_radius;
 
@@ -33,10 +28,12 @@ const int letter = 5;
 vec4 getPixelColor(vec2 curr_pixel, vec2 center,  float radius){
     //Calculate the distance between the current pixel and the center
     float dist = distance(curr_pixel, center);
+    vec4 color = texture(u_texture, v_texCoords);
     //If pixel is inside circle, return texture color
-    if (dist < radius)
-        return texture(u_texture, v_texCoords);
-    discard; 
+    if (dist > radius)
+        color.a = 0.0;
+    return color;
+    
 }
 
 //Returns the player's aura color if outside player radius(but inside aura radius)
@@ -69,9 +66,8 @@ vec4 getScorePixelColor(){
 vec4 getTeamCrestPixelColor(){
     vec4 color = texture(u_texture, v_texCoords);
     if (color == white)
-        discard;
-    else
-        return color;
+        color.a = 0.0;
+    return color;
 }
 
 
@@ -82,19 +78,15 @@ vec4 getLetterPixelColor(){
 
 
 void main(){
-    //Calculate the center of the entity's circle in screen coordinates
-    vec2 entity_center = vec2(u_screen_center.x + u_screen_units.x * u_entity_coords.x + 0.5,
-                              u_screen_center.y + u_screen_units.y * u_entity_coords.y + 0.5);
-
     switch (u_entity_type){
         case pitch:
             fragColor = getPitchPixelColor();
             break;
         case ball:
-            fragColor = getBallPixelColor(gl_FragCoord.xy, entity_center, u_entity_radius * u_screen_units.x);
+            fragColor = getBallPixelColor(gl_FragCoord.xy, u_entity_coords, u_entity_radius);
             break;
         case player:
-            fragColor = getPlayerPixelColor(gl_FragCoord.xy, entity_center, u_entity_radius * u_screen_units.x);
+            fragColor = getPlayerPixelColor(gl_FragCoord.xy, u_entity_coords, u_entity_radius);
             break;
         case score:
             fragColor = getScorePixelColor();

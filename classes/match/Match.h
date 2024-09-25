@@ -2,10 +2,7 @@
 #include "../teams/first_team/FirstTeam.h"
 #include "../textures/Textures.h"
 #include "../VAO/VAO.h"
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
-#include <assert.h>
-#include <random>
+#include "../font/Font.h"
 
 //Ignoring player match stamina for the sake of simplicity
 //Ignoring player match form for the sake of simplicity
@@ -15,7 +12,8 @@ public:
     unique_first_team team1, team2;
     glm :: vec2 ball_coords;
     std :: unordered_map<std :: string, Textures> textures;
-    Shader entity_shader;
+    unique_shader entity_shader;
+    unique_font font;
     std :: pair<uint16_t, uint16_t> score = {0, 0};
     //shared_m_matrix pitch_matrix;
     
@@ -25,38 +23,32 @@ public:
     void drawBall(Shader& ball_shader, const IBO& ball_ibo);
     void drawScore(Shader& score_shader, const IBO& score_ibo);
     //Binds the texture, updates the vbo using getScoreVertices and draws the score element
-    void drawScoreElement(Shader& score_shader, const IBO& score_ibo, VBO& score_vbo, VAO& score_vao,
-                       const Textures& texture, const glm :: vec2& center);
+    void drawTeamCrest(Shader& score_shader, const IBO& score_ibo, VBO& score_vbo, VAO& score_vao,
+                              const Textures& texture, const glm :: vec2& center);
                     
     void drawTeamCrests(Shader& team_shader, const IBO& team_ibo);
     //Returns the pitch vertices(contains the position and texture coords)
     glm :: mat4 getPitchVertices() const;
     //Returns the ball vertices(contains the position and texture coords)
     glm :: mat4 getBallVertices() const;
-    //Returns the canvas vertices with the center at the argument and the radius as score radius
-    glm :: mat4 getScoreVertices(const glm :: vec2& center) const;
-
-    // //Sets the texture coordinates for the vertices
-    // static void setTextureCoords(glm :: mat4& entity_vertices);
+    //Returns the canvas vertices with the center at the argument and the radius as team_crest radius
+    glm :: mat4 getTeamCrestVertices(const glm :: vec2& center) const;
 
     //Loads and binds the textures needed(pitch, ball, teams)
     void loadTextures();
     //Loads the shaders needed for the match
     void loadShaders();
+    void loadFont();
     //Arg1 team in possesion attacks, arg2 defends
     void movePlayers(FirstTeam& poss_team, FirstTeam& opp_team);
     //Determines if any player gets possesion and sets the player with the ball
     void setPosession();
-    //Sets the uniforms that don't change during the match(projection matrix, resolution_units...)
-    void setConstUniforms();
-
-    //void setPitchMatrix();
 public:
     //Draws the pitch and players
     void draw();
     
     Match(shared_team team1, shared_team team2);
-    ~Match();
+    ~Match(){};
 
     //Moves players and ball
     void play();

@@ -4,10 +4,10 @@
 #include "../FirstTeamBuilder/FirstTeamBuilder.h"
 #include "../constants/Constants.h"
 #include <filesystem>
+#include <glm/gtc/matrix_transform.hpp>
 
 using std :: string, std :: to_string;
-using glm :: vec2, glm :: mat4;
-
+using glm :: vec2, glm :: vec3, glm :: mat4;
 namespace fs = std :: filesystem;
 
 Match :: Match(shared_team team1, shared_team team2)
@@ -20,6 +20,7 @@ Match :: Match(shared_team team1, shared_team team2)
 
     loadShaders();
     loadTextures();
+    loadFont();
 
     //Setting the aura colors for the teams
     this->team1->getTeam()->setAuraColor(textures.at("TEAM1").getAverageColor());
@@ -38,8 +39,6 @@ void Match :: loadTextures(){
                f_path = file_path.string();
         textures.emplace(f_name, f_path);       
     }
-    for (auto& texture : textures)
-        texture.second.bind();
 }
 
 
@@ -47,23 +46,30 @@ void Match :: loadShaders(){
     //Setting the shaders paths
     fs :: path shader_path = fs::current_path().parent_path() / "resources" / "shaders";
     //Loading the shaders
-    entity_shader = Shader((shader_path / "vertex" / "entity.glsl").string(),
-                           (shader_path / "fragment" / "entity.glsl").string());
+    entity_shader = std :: make_unique<Shader>((shader_path / "vertex" / "entity.glsl").string(),
+                                                (shader_path / "fragment" / "entity.glsl").string());
+}
+
+
+void Match :: loadFont(){
+    fs :: path font_path = fs::current_path().parent_path() / "resources" / "fonts" / "arial.ttf";
+    font = std :: make_unique<Font>(font_path.string());
 }
 
 
 void Match :: draw(){
-    this->entity_shader.bind();
-    this->setConstUniforms();
+    this->entity_shader->bind();
 
     //Getting the indices for the square
     IBO square_ibo(Constants :: getVertexIndices("SQUARE"), Constants :: getVal("NR_SQUARE_INDICES"));
 
-    this->drawField(entity_shader, square_ibo);
-    this->drawPlayers(entity_shader, square_ibo);
-    this->drawBall(entity_shader, square_ibo);
-    this->drawScore(entity_shader, square_ibo);
-    this->drawTeamCrests(entity_shader, square_ibo);
+    entity_shader->setUniformMat4f("u_projection", Constants :: getPitchProj());
+    entity_shader->setUniformMat4f("u_model", glm :: scale(glm :: mat4(1.0f), vec3(1.0f, 1.0f, 1.0f)));
+    this->drawField(*entity_shader, square_ibo);
+    this->drawPlayers(*entity_shader, square_ibo);
+    this->drawBall(*entity_shader, square_ibo);
+    this->drawScore(*entity_shader, square_ibo);
+    //this->drawTeamCrests(entity_shader, square_ibo);
 }
 
 
@@ -83,11 +89,13 @@ void Match :: drawPlayers(Shader& player_shader, const IBO& player_ibo){
     //Coords for vertex positions
     player_aura_layout.addAttribute<float>(2);
 
-    player_shader.setUniform1i("u_Texture", this->textures.at("TEAM1").getSlot());
+    player_shader.setUniform1i("u_texture", 0);
+    this->textures.at("TEAM1").bind(0);
     team1->drawPlayers(MatchPlayer :: pitch_half :: first, player_shader, player_ibo, player_layout, player_aura_layout);
 
     //Drawing the second team's players
-    player_shader.setUniform1i("u_Texture", this->textures.at("TEAM2").getSlot());
+    player_shader.setUniform1i("u_texture", 0);
+    this->textures.at("TEAM2").bind(0);
     team2->drawPlayers(MatchPlayer :: pitch_half :: second, player_shader, player_ibo, player_layout, player_aura_layout);
 }
 
@@ -99,14 +107,13 @@ void Match :: drawField(Shader& pitch_shader, const IBO& pitch_ibo){
     //Setting the entity type
     pitch_shader.setUniform1i("u_entity_type", Constants :: getEntityNumber("PITCH"));
 
-    //Setting the texture to slot 0
-    pitch_shader.setUniform1i("u_Texture", this->textures.at("PITCH").getSlot());
+    //Setting the texture
+    pitch_shader.setUniform1i("u_texture", 0);
+    this->textures.at("PITCH").bind(0);
 
-    //Getting the number of values for the pitch vertices
-    uint16_t pitch_vert_val_count = Constants :: getVal("SQUARE_VERTICES") * Constants :: getVal("NR_COORDS_VERTEX")
-                                    * Constants :: getVal("NR_COORDS_TEXTURE");
+    glm :: mat4 pitch_vertices = this->getPitchVertices();
     //Setting the pitch vertices
-    VBO pitch_vbo(pitch_vert_val_count * sizeof(float), &getPitchVertices()[0][0], GL_STATIC_DRAW);
+    VBO pitch_vbo(sizeof(pitch_vertices), &pitch_vertices[0][0], GL_STATIC_DRAW);
 
     //Layout for pitch
     VertexBufferLayout pitch_layout;
@@ -128,14 +135,16 @@ void Match :: drawBall(Shader& ball_shader, const IBO& ball_ibo){
     //Setting the entity type
     ball_shader.setUniform1i("u_entity_type", Constants :: getEntityNumber("BALL"));
 
-    //Setting the ball's coordinates
-    ball_shader.setUniform2f("u_entity_coords", vec2(ball_coords.x, ball_coords.y));
-
-    //Setting the ball's radius
-    ball_shader.setUniform1f("u_entity_radius", Constants :: getVal("PLAYER_RADIUS") / 2.0);
+    //Setting the ball's coordinates in the fragment pixel system
+    ball_shader.setUniform2f("u_entity_coords", Constants :: convertCoords(Constants :: getPitchProj(),
+                                                                           this->ball_coords,
+                                                                           Constants :: getPixelFragProj()));
+    //Setting the ball's radius in pixel units
+    ball_shader.setUniform1f("u_entity_radius", Constants :: changeUnit(Constants :: getVal("PLAYER_RADIUS") / 2.0));
 
     //Setting the texture
-    ball_shader.setUniform1i("u_Texture", this->textures.at("BALL").getSlot());
+    ball_shader.setUniform1i("u_texture", 0);
+    this->textures.at("BALL").bind(0);
 
     //Getting the ball canvas vertices
     mat4 ball_vertices = this->getBallVertices();
@@ -159,44 +168,29 @@ void Match :: drawBall(Shader& ball_shader, const IBO& ball_ibo){
 void Match :: drawScore(Shader& score_shader, const IBO& score_ibo){
     //Binding the shader and setting the entity type uniform
     score_shader.bind();
-    score_shader.setUniform1i("u_entity_type", Constants :: getEntityNumber("SCORE"));
-
-    //Creating layout for VAO
-    VertexBufferLayout score_layout;
-    score_layout.addAttribute<float>(2);
-    score_layout.addAttribute<float>(2);
-
-    //Getting the number of values for the score vertices
-    uint16_t score_vert_val_count = Constants :: getVal("SQUARE_VERTICES") * Constants :: getVal("NR_COORDS_VERTEX")
-                                    * Constants :: getVal("NR_COORDS_TEXTURE");
-    //Creating an empty vbo for the score line and number(with the size needed for each drawn object)
-    VBO score_vbo(sizeof(float) * score_vert_val_count);
-
-    //Binding the layout and VBO to the VAO
-    VAO score_vao;
-    score_vao.addBuffer(score_vbo, score_layout);
+    score_shader.setUniform1i("u_entity_type", Constants :: getEntityNumber("LETTER"));
 
     //Getting the coordinates needed for the score line center
     float max_y = Constants :: getVal("GOAL_LINE_LENGTH") / 2,
           padding = Constants :: getVal("PITCH_PADDING") - Constants :: getVal("PITCH_OUT_PADDING");
-    vec2 center(0, max_y + padding),
-                score_offset(Constants :: getVal("SCORE_RADIUS") * 2, 0);
-
-    //Drawing the score elements(line, team1 score, team2 score)
-    drawScoreElement(score_shader, score_ibo, score_vbo, score_vao, textures.at("LINE"), center);
-    drawScoreElement(score_shader, score_ibo, score_vbo, score_vao, textures.at(to_string(score.first)),
-                     center - score_offset);
-    drawScoreElement(score_shader, score_ibo, score_vbo, score_vao, textures.at(to_string(score.second)),
-                     center + score_offset);
+    
+    //getting from pitch to pixel coords
+    glm :: vec2 center = Constants :: convertCoords(Constants :: getPitchProj(),
+                                                    glm :: vec2(0, max_y + padding),
+                                                    Constants :: getPixelProj());
+    Renderer :: drawText(score_shader, to_string(score.first) + " - " + to_string(score.second),
+                         center, *font, 1.5f);
+  
 }
 
 
-void Match :: drawScoreElement(Shader& score_shader, const IBO& score_ibo, VBO& score_vbo, VAO& score_vao,
-                            const Textures& texture, const vec2& center){
-    score_shader.setUniform1i("u_Texture", texture.getSlot());
-    mat4 score_vertices = this->getScoreVertices(center);
-    score_vbo.update(&score_vertices[0][0], sizeof(score_vertices));
-    Renderer :: draw(score_vao, score_ibo, score_shader);
+void Match :: drawTeamCrest(Shader& shader, const IBO& ibo, VBO& vbo, VAO& vao, const Textures& texture,
+                            const vec2& center){
+    shader.setUniform1i("u_texture", 0);
+    texture.bind(0);
+    mat4 vertices = this->getTeamCrestVertices(center);
+    vbo.update(&vertices[0][0], sizeof(vertices));
+    Renderer :: draw(vao, ibo, shader);
 }
 
 
@@ -210,11 +204,8 @@ void Match :: drawTeamCrests(Shader& crest_shader, const IBO& crest_ibo){
     crest_layout.addAttribute<float>(2);
     crest_layout.addAttribute<float>(2);
 
-    //Getting the number of values for the score vertices
-    uint16_t crest_vert_val_count = Constants :: getVal("SQUARE_VERTICES") * Constants :: getVal("NR_COORDS_VERTEX")
-                                    * Constants :: getVal("NR_COORDS_TEXTURE");
     //Creating an empty vbo for the team crests
-    VBO crest_vbo(sizeof(float) * crest_vert_val_count);
+    VBO crest_vbo(sizeof(glm :: mat4));
 
     //Binding the layout and VBO to the VAO
     VAO crest_vao;
@@ -224,10 +215,10 @@ void Match :: drawTeamCrests(Shader& crest_shader, const IBO& crest_ibo){
     float max_y = Constants :: getVal("GOAL_LINE_LENGTH") / 2,
           padding = Constants :: getVal("PITCH_PADDING") - Constants :: getVal("PITCH_OUT_PADDING");
     //Drawing the team crests
-    drawScoreElement(crest_shader, crest_ibo, crest_vbo, crest_vao, textures.at("TEAM1"),
-                     vec2(-Constants :: getVal("TOUCHLINE_LENGTH") / 2, max_y + padding));
-    drawScoreElement(crest_shader, crest_ibo, crest_vbo, crest_vao, textures.at("TEAM2"),
-                     vec2(Constants :: getVal("TOUCHLINE_LENGTH") / 2, max_y + padding));
+    drawTeamCrest(crest_shader, crest_ibo, crest_vbo, crest_vao, textures.at("TEAM1"),
+                  vec2(-Constants :: getVal("TOUCHLINE_LENGTH") / 2, max_y + padding));
+    drawTeamCrest(crest_shader, crest_ibo, crest_vbo, crest_vao, textures.at("TEAM2"),
+                  vec2(Constants :: getVal("TOUCHLINE_LENGTH") / 2, max_y + padding));
 }
 /*
 void Match :: setPitchMatrix(){
@@ -260,8 +251,8 @@ mat4 Match :: getBallVertices() const{
 }
 
 
-mat4 Match :: getScoreVertices(const vec2& center) const{
-    mat4 score_vertices = toMat4(getCanvasPositions(center, Constants :: getVal("SCORE_RADIUS")));
+mat4 Match :: getTeamCrestVertices(const vec2& center) const{
+    mat4 score_vertices = toMat4(getCanvasPositions(center, Constants :: getVal("TEAM_CREST_RADIUS")));
     setTextureCoords(score_vertices);
 
     return score_vertices;
@@ -304,31 +295,4 @@ void Match :: setPosession(){
             closest1->setPossesion(true);
     else if (closest2->isNearBall(ball_coords))
         closest2->setPossesion(true);
-}
-
-
-void Match :: setConstUniforms(){
-    //Getting the aspect ratio of the pitch and setting the padding accordingly
-    float aspect_ratio = Constants :: getVal("TOUCHLINE_LENGTH") / Constants :: getVal("GOAL_LINE_LENGTH"),
-          pitch_padding_y = Constants :: getVal("PITCH_PADDING"),
-          pitch_padding_x = pitch_padding_y * aspect_ratio;
-    //Setting the window resolution and the pitch resolution and the units for the window relative to the pitch
-    const vec2 halfed_window_res(Constants :: getVal("WINDOW_WIDTH") / 2,
-                                        Constants :: getVal("WINDOW_HEIGHT") / 2),
-                      halfed_pitch_res (Constants :: getVal("TOUCHLINE_LENGTH") / 2 + pitch_padding_x,
-                                        Constants :: getVal("GOAL_LINE_LENGTH") / 2 + pitch_padding_y),
-                      res_units(halfed_window_res / halfed_pitch_res);
-
-    //Setting the projection matrix                       
-    mat4 proj = glm :: ortho(-halfed_pitch_res.x, halfed_pitch_res.x,
-                             -halfed_pitch_res.y, halfed_pitch_res.y);
-    this->entity_shader.setUniformMat4f("u_projection", proj);
-
-    //Setting the uniforms for determining the entity's coordinates according to the window resolution
-    this->entity_shader.setUniform2f("u_screen_units", res_units);
-    this->entity_shader.setUniform2f("u_screen_center", halfed_window_res);
-}
-
-Match :: ~Match(){
-    this->entity_shader.deleteProgram();
 }

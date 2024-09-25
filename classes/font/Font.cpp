@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iostream>
 #include <filesystem>
+#include <glm/gtc/matrix_transform.hpp>
 #include <memory>
 
 Font :: Font(const std :: string& file_path) {
@@ -17,7 +18,7 @@ Font :: Font(const std :: string& file_path) {
                          bitmap_width, bitmap_width,' ', cdata.size(), cdata.data());
                          
     //Creating the texture for that font
-    this->texture = Textures(bitmap, bitmap_width, bitmap_width);
+    this->texture = std :: make_unique<Textures>(bitmap, bitmap_width, bitmap_width);
 }
 
 
@@ -37,19 +38,13 @@ void Font :: setUniforms(Shader& shader, glm :: vec3 color, float scale) const{
 
     shader.setUniform3f("u_font_color", color);
     shader.setUniform1i("u_entity_type", Constants :: getEntityNumber("LETTER"));
-    shader.setUniform1i("u_texture", this->getSlot());
+    shader.setUniform1i("u_texture", 0);
 
-    shader.setUniformMat4f("u_projection", getProjMatrix());
-    shader.setUniformMat4f("u_model", getScaleMatrix(scale));
+    shader.setUniformMat4f("u_projection", Constants :: getPixelProj());
+    shader.setUniformMat4f("u_model", glm :: scale(glm :: mat4(1.0f), glm :: vec3(scale, scale, 1.0f)));
 }
 
 
-glm :: mat4 Font :: getProjMatrix() const{
-    return glm :: ortho(0.0f, (float)Constants :: getVal("WINDOW_WIDTH"),
-                        (float)Constants :: getVal("WINDOW_HEIGHT"), 0.0f);
-}
-
-
-glm :: mat4 Font :: getScaleMatrix(float scale) const{
-    return glm :: scale(glm :: mat4(1.0f), glm :: vec3(scale, scale, 1.0f));
+void Font :: bind(uint16_t slot) const{
+    texture->bind(slot);
 }

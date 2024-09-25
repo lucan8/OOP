@@ -4,7 +4,10 @@
 #include <string>
 #include <unordered_map>
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
+#include <memory>
+
+class Shader;
+typedef std :: unique_ptr<Shader> unique_shader;
 
 class Shader{
 private:
@@ -13,16 +16,17 @@ private:
     
     //Creates and compiles a shader(helper function for the constructor)
     GLuint CompileShader(const std :: string& source, GLenum shader_type) const;
-    
-    std :: string getCompileErorrMessage(GLuint shader_id) const;
-    std :: string getLinkErrorMessage() const;
 public:
     //Loads and compiles the shaders into a single program
     Shader(const std :: string& vertex_file_path, const std :: string& fragment_file_path);
     Shader(): id(0){}
-    ~Shader(){};
-    //Frees the memory and invalides the program
-    void deleteProgram();
+    //Two shaders can't have the same id(if one gets deleted, the other will be invalid)
+    Shader(const Shader& other) = delete;
+    //Moving means we now have a shader with the same id as the other, which is invalid
+    Shader(Shader&& other) = delete;
+    Shader& operator=(const Shader& other) = delete;
+    //Deletes the program
+    ~Shader();
     
     void bind() const{glUseProgram(this->id);}
     void unbind() const{glUseProgram(0);}

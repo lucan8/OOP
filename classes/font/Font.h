@@ -13,6 +13,8 @@ private:
     unique_texture texture;
     //96 is the number of characters in the font
     std :: array<stbtt_bakedchar, 96> cdata;
+    //Scale the width and height of the quad, but keep the middle point and the aspect ratio the same
+    void scaleQuad(stbtt_aligned_quad& q, float scale) const;
 public:
     Font(const std :: string& f_name);
     Font(){}
@@ -21,12 +23,11 @@ public:
     Font& operator=(const Font& other) = delete;
         
     ~Font(){};
-    glm :: mat4 getGlyphVertices(char c, glm :: vec2& pos) const;
-    glm :: vec2 getTextStartPos(const std :: string& text, glm :: vec2& pos, float scale) const{
-        pos.x -= text.size() * scale * Constants :: getVal("FONT_SIZE") / 2;
-        pos.y -= scale * Constants :: getVal("FONT_SIZE") / 2;
-        return pos;
-    }
+    //Returns the vertices of the glyph, and updates the position for the next glyph
+    glm :: mat4 getGlyphVertices(char c, glm :: vec2& pos, float scale = 1.0) const;
+    //Returns the position of the text
+    //Argument "pos" is the center point of the text
+    glm :: vec2 getTextStartPos(const std :: string& text, const glm :: vec2& pos, float scale = 1.0) const;
     //Binds the texture
     void bind(uint16_t slot) const;
     //Returns the slot of the texture

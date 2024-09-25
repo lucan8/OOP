@@ -5,7 +5,7 @@
 #include "../../IBO/IBO.h"
 #include <glm/glm.hpp>
 
-
+//TODO: Maybe hold the vbo and vao of the player
 class MatchPlayer;
 typedef MatchPlayer* m_player_ptr;
 typedef std :: shared_ptr<MatchPlayer> shared_m_player;

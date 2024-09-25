@@ -33,8 +33,8 @@ void MatchPlayer :: changeSide1(){
 void MatchPlayer :: draw(pitch_half half, Shader& p_shader, const IBO& player_ibo,
                          const VertexBufferLayout& player_layout, 
                          const VertexBufferLayout& player_aura_layout) const{
-
-    const float player_radius = Constants :: getVal("PLAYER_RADIUS");        
+    //Getting the player's radius in pitch units                    
+    float player_radius = Constants :: getVal("PLAYER_RADIUS");        
     //Getting the player's vertices  
     mat4 player_vert = this->getPlayerVertices(half, player_radius);
 
@@ -43,15 +43,17 @@ void MatchPlayer :: draw(pitch_half half, Shader& p_shader, const IBO& player_ib
     VAO player_vao;
     player_vao.addBuffer(player_vbo, player_layout);
 
-    //Setting the player's coordinates
-    p_shader.setUniform2f("u_entity_coords", vec2(coords.x, coords.y));
+    //Setting the player's coordinates in pixel units
+    p_shader.setUniform2f("u_entity_coords", Constants :: convertCoords(Constants :: getPitchProj(),
+                                                                        this->coords,
+                                                                        Constants :: getPixelFragProj()));
 
-    //Setting the radius for the aura circle
-    p_shader.setUniform1f("u_entity_radius", player_radius * 2);
+    //Setting the radius for the aura circle in pixel units
+    p_shader.setUniform1f("u_entity_radius", Constants :: changeUnit(player_radius) * 2);
     drawAura(half, p_shader, player_aura_layout, player_ibo, player_radius * 2);
 
-    //Setting the radius for the player circle
-    p_shader.setUniform1f("u_entity_radius", player_radius);
+    //Setting the radius for the player's circle in pixel units
+    p_shader.setUniform1f("u_entity_radius", Constants :: changeUnit(player_radius));
     Renderer :: draw(player_vao, player_ibo, p_shader);
 }
 

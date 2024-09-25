@@ -1,11 +1,11 @@
 #pragma once
-#include <glm/glm.hpp>
 #include "../../match_players/match_outfield/MatchOutfield.h"
 #include "../../match_players/match_goalkeeper/MatchGoalkeeper.h"
 #include "../../shader/Shader.h"
 #include "../../VB_layout/VertexBufferLayout.h"
 #include "../../ibo/IBO.h"
 #include "../team/Team.h"
+#include <glm/glm.hpp>
 class FirstTeam;
 typedef std :: unique_ptr<FirstTeam> unique_first_team;
 typedef std :: shared_ptr<FirstTeam> shared_first_team;

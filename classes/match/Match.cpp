@@ -64,12 +64,13 @@ void Match :: draw(){
     IBO square_ibo(Constants :: getVertexIndices("SQUARE"), Constants :: getVal("NR_SQUARE_INDICES"));
 
     entity_shader->setUniformMat4f("u_projection", Constants :: getPitchProj());
-    entity_shader->setUniformMat4f("u_model", glm :: scale(glm :: mat4(1.0f), vec3(1.0f, 1.0f, 1.0f)));
+    //entity_shader->setUniformMat4f("u_model", glm :: scale(glm :: mat4(1.0f), vec3(1.0f, 1.0f, 1.0f)));
     this->drawField(*entity_shader, square_ibo);
     this->drawPlayers(*entity_shader, square_ibo);
     this->drawBall(*entity_shader, square_ibo);
+    this->drawTeamCrests(*entity_shader, square_ibo);
+    //Uses different projection matrix
     this->drawScore(*entity_shader, square_ibo);
-    //this->drawTeamCrests(entity_shader, square_ibo);
 }
 
 
@@ -179,7 +180,7 @@ void Match :: drawScore(Shader& score_shader, const IBO& score_ibo){
                                                     glm :: vec2(0, max_y + padding),
                                                     Constants :: getPixelProj());
     Renderer :: drawText(score_shader, to_string(score.first) + " - " + to_string(score.second),
-                         center, *font, 1.5f);
+                         center, *font, 2.0f);
   
 }
 
@@ -252,10 +253,10 @@ mat4 Match :: getBallVertices() const{
 
 
 mat4 Match :: getTeamCrestVertices(const vec2& center) const{
-    mat4 score_vertices = toMat4(getCanvasPositions(center, Constants :: getVal("TEAM_CREST_RADIUS")));
-    setTextureCoords(score_vertices);
+    mat4 vertices = toMat4(getCanvasPositions(center, Constants :: getVal("TEAM_CREST_RADIUS")));
+    setTextureCoords(vertices);
 
-    return score_vertices;
+    return vertices;
 }
 
 

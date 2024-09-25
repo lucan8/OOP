@@ -19,7 +19,7 @@ void Renderer :: drawLine(const VAO& vao, const IBO& ibo, const Shader& shader){
 void Renderer :: drawText(Shader& shader, const std :: string& text, glm :: vec2 pos, const Font& font,
                          float scale, const glm :: vec3& color){
     font.setUniforms(shader, color, scale);
-    font.bind();
+    font.bind(0);
 
     VertexBufferLayout layout;
     layout.addAttribute<float>(2);
@@ -29,12 +29,12 @@ void Renderer :: drawText(Shader& shader, const std :: string& text, glm :: vec2
     VBO vbo(sizeof(glm :: mat4));
     VAO vao;
     vao.addBuffer(vbo, layout);
-    vao.bind();
 
     IBO ibo(Constants :: getVertexIndices("SQUARE"), 6);
 
+    pos = font.getTextStartPos(text, pos, scale);
     for (const auto& c : text){
-        glm :: mat4 vertices = font.getGlyphVertices(c, pos);
+        glm :: mat4 vertices = font.getGlyphVertices(c, pos, scale);
         vbo.update(&vertices[0][0], 4 * sizeof(float) * 4);
         Renderer :: draw(vao, ibo, shader);
     }

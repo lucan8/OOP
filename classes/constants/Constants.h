@@ -130,4 +130,23 @@ public:
     static uint16_t generateNaturalNumber(uint16_t min, uint16_t max);
     //Returns index of chosen element from the weights std :: vector
     static uint16_t generateDiscreteNumber(const std :: vector<uint16_t>& weights);
+
+    //Retruns the projection matrix for the pitch coordinate system
+    //center is 0,0
+    static glm :: mat4 getPitchProj();
+    //Returns the projection matrix for the normal pixel coordinate system
+    //top left corner is 0,0
+    static glm :: mat4 getPixelProj();
+    //Returns the projection matrix for the fragment shader pixel coordinate system
+    //bottom left corner is 0,0
+    static glm :: mat4 getPixelFragProj();
+    //Converts coordinates from one system to another
+    //from_proj is the projection matrix that has the same system as from_coords
+    //to_proj is the projection matrix that has the same system as the return value
+    static glm :: vec4 convertCoords(const glm :: mat4& from_proj, const glm :: vec2& from_coords,
+                                     const glm :: mat4& to_proj);
+    //Converts value from one unit to another
+    //Default values are for pitch meters to pixels
+    static float changeUnit(float value, float nr_units_from = getVal("GOAL_LINE_LENGTH") + getVal("PITCH_PADDING") * 2,
+                            float nr_units_to = getVal("WINDOW_HEIGHT"));
 };

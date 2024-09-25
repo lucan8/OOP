@@ -1,5 +1,4 @@
 #include "Constants.h"
-#include <unordered_set>
 #include "../../functions/functions.h"
 #include "../exceptions/FileOpenException.h"
 #include "../exceptions/InvalidPosition.h"
@@ -9,12 +8,15 @@
 #include "../exceptions/InvalidFormation.h"
 #include "../exceptions/InvalidMatchPosition.h"
 #include "../exceptions/InvalidEntityType.h"
-#include <algorithm>
 #include <filesystem>
+#include <algorithm>
 #include <iostream>
 #include <sstream>
 #include <queue>
+#include <unordered_set>
+#include <glm/gtc/matrix_transform.hpp>
 using namespace std;
+
 unordered_map<string, uint16_t>  Constants :: values;
 unordered_map<string, unordered_map<string, uint16_t>> Constants :: age_info;
 unordered_map<string, vector<string>> Constants :: positions;
@@ -532,12 +534,49 @@ float Constants :: generateRealNumber(float min, float max){
     return dist(rng);
 }
 
+
 uint16_t  Constants :: generateNaturalNumber(uint16_t min, uint16_t max){
     uniform_int_distribution<uint16_t> dist(min, max);
     return dist(rng);
 }
 
+
 uint16_t Constants :: generateDiscreteNumber(const vector<uint16_t>& weights){
     discrete_distribution<> dist(weights.begin(), weights.end());
     return dist(rng);
+}
+
+
+glm :: mat4 Constants :: getPitchProj(){
+    //Getting the pitch's padding for x and y
+    float aspect_ratio = getVal("TOUCHLINE_LENGTH") / getVal("GOAL_LINE_LENGTH"),
+          pitch_padding_y = getVal("PITCH_PADDING"),
+          pitch_padding_x = pitch_padding_y * aspect_ratio;
+    //Getting the pitch's max x and y values
+    glm :: vec2 halfed_pitch_res(getVal("TOUCHLINE_LENGTH") / 2 + pitch_padding_x,
+                                 getVal("GOAL_LINE_LENGTH") / 2 + pitch_padding_y);
+                             
+    return glm :: ortho(-halfed_pitch_res.x, halfed_pitch_res.x,
+                        -halfed_pitch_res.y, halfed_pitch_res.y);
+}
+
+
+glm :: mat4 Constants :: getPixelFragProj(){
+    return glm :: ortho(0.5f, (float)getVal("WINDOW_WIDTH") + 0.5f, 0.5f, (float)getVal("WINDOW_HEIGHT") + 0.5f);
+}
+
+
+glm :: mat4 Constants :: getPixelProj(){
+    return glm :: ortho(0.0f, (float)getVal("WINDOW_WIDTH"), (float)getVal("WINDOW_HEIGHT"), 0.0f);
+}
+
+
+glm :: vec4 Constants :: convertCoords(const glm :: mat4& from_proj, const glm :: vec2& from_coords,
+                                       const glm :: mat4& to_proj){
+    return glm :: inverse(to_proj) * from_proj * glm :: vec4(from_coords, 0.0f, 1.0f);
+}
+
+
+float Constants :: changeUnit(float value, float nr_units_from, float nr_units_to){
+    return value * nr_units_to / nr_units_from;
 }

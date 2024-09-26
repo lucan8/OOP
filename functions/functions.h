@@ -5,6 +5,8 @@
 #include <memory>
 #include <stdint.h>
 #include <glm/glm.hpp>
+#include "../classes/constants/Constants.h"
+#include "../classes/match_players/match_player/MatchPlayer.h"
 
 //Splits a string by a separator
 std :: vector<std :: string> split(const std :: string& str, char sep = ' ');
@@ -18,10 +20,20 @@ glm :: mat4x2 getCanvasPositions(glm :: vec2 coords, float radius);
 //left bottom, left top, right top, right bottom
 glm :: mat4x2 getCanvasPositions(glm :: vec2 coords, float max_x, float max_y);
 bool isBetween(float val, float min_val, float max_val);
+//Sets the texture coordinates for the entity
 void setTextureCoords(glm :: mat4& entity_vertices);
+//Converts coordinates from one system to another
+//from_proj is the projection matrix that has the same system as from_coords
+//to_proj is the projection matrix that has the same system as the return value
+glm :: vec4 convertCoords(const glm :: vec2& from_coords, const glm :: mat4& from_pro,
+                          const glm :: mat4& to_proj);
+//Converts value from one unit to another
+//Default values are for pitch meters to pixels
+float changeUnit(float value, float nr_units_from = 
+                        Constants :: getVal("GOAL_LINE_LENGTH") + Constants :: getVal("PITCH_PADDING") * 2,
+                        float nr_units_to = Constants :: getVal("WINDOW_HEIGHT"));
+//Returns the normalized color(values between 0 and 1)
 glm :: vec4 normalizeColor(glm :: vec4 color);
-
-
 
 //Initializes a map with keys from a vector
 template <typename key, typename val>

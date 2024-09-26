@@ -569,14 +569,3 @@ glm :: mat4 Constants :: getPixelFragProj(){
 glm :: mat4 Constants :: getPixelProj(){
     return glm :: ortho(0.0f, (float)getVal("WINDOW_WIDTH"), (float)getVal("WINDOW_HEIGHT"), 0.0f);
 }
-
-
-glm :: vec4 Constants :: convertCoords(const glm :: mat4& from_proj, const glm :: vec2& from_coords,
-                                       const glm :: mat4& to_proj){
-    return glm :: inverse(to_proj) * from_proj * glm :: vec4(from_coords, 0.0f, 1.0f);
-}
-
-
-float Constants :: changeUnit(float value, float nr_units_from, float nr_units_to){
-    return value * nr_units_to / nr_units_from;
-}

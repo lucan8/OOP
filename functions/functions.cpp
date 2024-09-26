@@ -71,6 +71,17 @@ bool isBetween(float val, float min_val, float max_val){
 }
 
 
+glm :: vec4 convertCoords(const glm :: vec2& from_coords, const glm :: mat4& from_proj,
+                          const glm :: mat4& to_proj){
+    return glm :: inverse(to_proj) * from_proj * glm :: vec4(from_coords, 0.0f, 1.0f);
+}
+
+
+float changeUnit(float value, float nr_units_from, float nr_units_to){
+    return value * nr_units_to / nr_units_from;
+}
+
+
 glm :: vec4 normalizeColor(glm :: vec4 color){
     const float max_color_val = 255;
     return glm :: vec4(color.r / max_color_val, color.g / max_color_val,

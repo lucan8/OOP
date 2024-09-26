@@ -22,14 +22,22 @@ Font :: Font(const std :: string& file_path) {
 }
 
 
-glm :: mat4 Font :: getGlyphVertices(char c, glm :: vec2& pos, float scale) const{
+glm :: mat4 Font :: getGlyphVertices(char c, glm :: vec2& pos, float scale, TextDirection text_dir) const{
     stbtt_aligned_quad q;
+
+    //Creating the quad for the glyph
+    //This moves the pos.x to the right with the xadvance of the character
     stbtt_GetBakedQuad(cdata.data(), Constants :: getVal("FONT_BITMAP_WIDTH"),
                        Constants :: getVal("FONT_BITMAP_WIDTH"), c - 32, &pos.x, &pos.y, &q, 1);
     
+    //Scaling the quad
     scaleQuad(q, scale);
+    
     //Updating the position for the next glyph
-    pos.x += cdata[c - 32].xadvance * (scale - 1);
+    if (text_dir == TextDirection :: RIGHT)
+        pos.x += cdata[c - 32].xadvance * (scale - 1);
+    else
+        pos.x -= cdata[c - 32].xadvance * (scale + 1);
 
     return glm :: mat4( q.x0, q.y0, q.s0, q.t0,
                         q.x1, q.y0, q.s1, q.t0,
@@ -51,7 +59,7 @@ void Font :: setUniforms(Shader& shader, glm :: vec3 color, float scale) const{
 }
 
 
-glm :: vec2  Font :: getTextStartPos(const std :: string& text, const glm :: vec2& pos, float scale) const{
+glm :: vec2  Font :: getCenteredTextStartPos(const std :: string& text, const glm :: vec2& pos, float scale) const{
     //The offset is half the sum of the xadvance of each character(the width of the character)
     float offset = 0;
     for (uint16_t i = 0; i < text.size(); ++i)

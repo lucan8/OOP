@@ -3,6 +3,7 @@
 #include "../../shader/Shader.h"
 #include "../../VB_layout/VertexBufferLayout.h"
 #include "../../IBO/IBO.h"
+#include "../../font/Font.h"
 #include <glm/glm.hpp>
 
 //TODO: Maybe hold the vbo and vao of the player
@@ -19,9 +20,9 @@ typedef std :: unordered_map<uint16_t, unique_m_player> unique_m_squad_map;
 class MatchPlayer {
 public:
     //Enum for the pitch half in which the player starts
-    enum class pitch_half {first, second};
+    enum pitch_half{first, second};
     friend pitch_half operator!(pitch_half half){return half == pitch_half :: first ? pitch_half :: second : pitch_half :: first;}
-
+    static Font :: TextDirection toTextDir(pitch_half half){return half == pitch_half :: first ? Font :: TextDirection :: RIGHT : Font :: TextDirection :: LEFT;}
     //Struct holding the number of players marking this one and a pointer to the opponent(if there is one)
     //Possible nr of intersections: 0, 1, 2(everything above 2 is considered 2)
     //For 0 and 2 intersections there is shoudl be no opponent
@@ -96,9 +97,13 @@ public:
     //From vertical pitch to horizontal pitch(and vice versa)
     void changeSide1();
 
-    //Draws the player as a circle
-    void draw(pitch_half half, Shader& p_shader, const IBO& player_ibo,
-              const VertexBufferLayout& player_layout, const VertexBufferLayout& player_aura_layout) const;
+    //Draws the player as a circle(used for players in the first eleven)
+    void drawPlaying(pitch_half half, Shader& p_shader, const IBO& player_ibo,
+                        const VertexBufferLayout& player_layout, const VertexBufferLayout& player_aura_layout) const;
+    
+    //Draws the player's information as text(used for players in the subs)
+    void drawUnplaying(Shader& shader, const IBO& ibo, const Font& font, glm :: vec2 s_text_pos,
+                       Font :: TextDirection text_dir = Font :: TextDirection :: RIGHT) const;
     
     //Decides what to do with the ball depending on the number of intersections with the opposing players
     //The the opponent's stats and passing options(for 0 and 2 intersections there should be no opponent passed)

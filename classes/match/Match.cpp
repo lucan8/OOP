@@ -71,6 +71,7 @@ void Match :: draw(){
     this->drawTeamCrests(*entity_shader, square_ibo);
     //Uses different projection matrix
     this->drawScore(*entity_shader, square_ibo);
+    this->drawSubs(*entity_shader, square_ibo);
 }
 
 
@@ -92,12 +93,12 @@ void Match :: drawPlayers(Shader& player_shader, const IBO& player_ibo){
 
     player_shader.setUniform1i("u_texture", 0);
     this->textures.at("TEAM1").bind(0);
-    team1->drawPlayers(MatchPlayer :: pitch_half :: first, player_shader, player_ibo, player_layout, player_aura_layout);
+    team1->drawPlaying(MatchPlayer :: pitch_half :: first, player_shader, player_ibo, player_layout, player_aura_layout);
 
     //Drawing the second team's players
     player_shader.setUniform1i("u_texture", 0);
     this->textures.at("TEAM2").bind(0);
-    team2->drawPlayers(MatchPlayer :: pitch_half :: second, player_shader, player_ibo, player_layout, player_aura_layout);
+    team2->drawPlaying(MatchPlayer :: pitch_half :: second, player_shader, player_ibo, player_layout, player_aura_layout);
 }
 
 
@@ -137,11 +138,11 @@ void Match :: drawBall(Shader& ball_shader, const IBO& ball_ibo){
     ball_shader.setUniform1i("u_entity_type", Constants :: getEntityNumber("BALL"));
 
     //Setting the ball's coordinates in the fragment pixel system
-    ball_shader.setUniform2f("u_entity_coords", Constants :: convertCoords(Constants :: getPitchProj(),
-                                                                           this->ball_coords,
-                                                                           Constants :: getPixelFragProj()));
+    ball_shader.setUniform2f("u_entity_coords",convertCoords(this->ball_coords,
+                                                             Constants :: getPitchProj(),
+                                                             Constants :: getPixelFragProj()));
     //Setting the ball's radius in pixel units
-    ball_shader.setUniform1f("u_entity_radius", Constants :: changeUnit(Constants :: getVal("PLAYER_RADIUS") / 2.0));
+    ball_shader.setUniform1f("u_entity_radius", changeUnit(Constants :: getVal("PLAYER_RADIUS") / 2.0));
 
     //Setting the texture
     ball_shader.setUniform1i("u_texture", 0);
@@ -166,32 +167,22 @@ void Match :: drawBall(Shader& ball_shader, const IBO& ball_ibo){
 }
 
 
-void Match :: drawScore(Shader& score_shader, const IBO& score_ibo){
+void Match :: drawScore(Shader& shader, const IBO& ibo){
     //Binding the shader and setting the entity type uniform
-    score_shader.bind();
-    score_shader.setUniform1i("u_entity_type", Constants :: getEntityNumber("LETTER"));
+    shader.bind();
+    shader.setUniform1i("u_entity_type", Constants :: getEntityNumber("LETTER"));
 
     //Getting the coordinates needed for the score line center
     float max_y = Constants :: getVal("GOAL_LINE_LENGTH") / 2,
           padding = Constants :: getVal("PITCH_PADDING") - Constants :: getVal("PITCH_OUT_PADDING");
     
     //getting from pitch to pixel coords
-    glm :: vec2 center = Constants :: convertCoords(Constants :: getPitchProj(),
-                                                    glm :: vec2(0, max_y + padding),
-                                                    Constants :: getPixelProj());
-    Renderer :: drawText(score_shader, to_string(score.first) + " - " + to_string(score.second),
-                         center, *font, 2.0f);
+    glm :: vec2 center = convertCoords(glm :: vec2(0, max_y + padding),
+                                       Constants :: getPitchProj(),
+                                       Constants :: getPixelProj());
+    Renderer :: drawText(shader, ibo, to_string(score.first) + " - " + to_string(score.second),
+                         center, *font, 2.0f, true);
   
-}
-
-
-void Match :: drawTeamCrest(Shader& shader, const IBO& ibo, VBO& vbo, VAO& vao, const Textures& texture,
-                            const vec2& center){
-    shader.setUniform1i("u_texture", 0);
-    texture.bind(0);
-    mat4 vertices = this->getTeamCrestVertices(center);
-    vbo.update(&vertices[0][0], sizeof(vertices));
-    Renderer :: draw(vao, ibo, shader);
 }
 
 
@@ -220,6 +211,24 @@ void Match :: drawTeamCrests(Shader& crest_shader, const IBO& crest_ibo){
                   vec2(-Constants :: getVal("TOUCHLINE_LENGTH") / 2, max_y + padding));
     drawTeamCrest(crest_shader, crest_ibo, crest_vbo, crest_vao, textures.at("TEAM2"),
                   vec2(Constants :: getVal("TOUCHLINE_LENGTH") / 2, max_y + padding));
+}
+
+void Match :: drawSubs(Shader& shader, const IBO& ibo){
+    //Binding the shader and setting the entity type uniform
+    shader.bind();
+    shader.setUniform1i("u_entity_type", Constants :: getEntityNumber("LETTER"));
+    team1->drawUnplaying(shader, ibo, *font);
+    team2->drawUnplaying(shader, ibo, *font);
+}
+
+
+void Match :: drawTeamCrest(Shader& shader, const IBO& ibo, VBO& vbo, VAO& vao, const Textures& texture,
+                            const vec2& center){
+    shader.setUniform1i("u_texture", 0);
+    texture.bind(0);
+    mat4 vertices = this->getTeamCrestVertices(center);
+    vbo.update(&vertices[0][0], sizeof(vertices));
+    Renderer :: draw(vao, ibo, shader);
 }
 /*
 void Match :: setPitchMatrix(){

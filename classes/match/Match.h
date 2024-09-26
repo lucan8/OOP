@@ -18,15 +18,15 @@ public:
     //shared_m_matrix pitch_matrix;
     
 
-    void drawPlayers(Shader& player_shader, const IBO& player_ibo);
-    void drawField(Shader& pitch_shader, const IBO& pitch_ibo);
-    void drawBall(Shader& ball_shader, const IBO& ball_ibo);
-    void drawScore(Shader& score_shader, const IBO& score_ibo);
-    //Binds the texture, updates the vbo using getScoreVertices and draws the score element
+    void drawPlayers(Shader& player_shader, const IBO& ibo);
+    void drawField(Shader& pitch_shader, const IBO& ibo);
+    void drawBall(Shader& ball_shader, const IBO& ibo);
+    void drawScore(Shader& score_shader, const IBO& ibo);
+    void drawTeamCrests(Shader& team_shader, const IBO& ibo);
+    void drawSubs(Shader& subs_shader, const IBO& ibo);
+     //Binds the texture, updates the vbo using getScoreVertices and draws the team_crest
     void drawTeamCrest(Shader& score_shader, const IBO& score_ibo, VBO& score_vbo, VAO& score_vao,
                               const Textures& texture, const glm :: vec2& center);
-                    
-    void drawTeamCrests(Shader& team_shader, const IBO& team_ibo);
     //Returns the pitch vertices(contains the position and texture coords)
     glm :: mat4 getPitchVertices() const;
     //Returns the ball vertices(contains the position and texture coords)

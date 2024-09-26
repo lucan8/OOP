@@ -30,9 +30,9 @@ void MatchPlayer :: changeSide1(){
 }
 
 
-void MatchPlayer :: draw(pitch_half half, Shader& p_shader, const IBO& player_ibo,
-                         const VertexBufferLayout& player_layout, 
-                         const VertexBufferLayout& player_aura_layout) const{
+void MatchPlayer :: drawPlaying(pitch_half half, Shader& p_shader, const IBO& player_ibo,
+                                   const VertexBufferLayout& player_layout, 
+                                   const VertexBufferLayout& player_aura_layout) const{
     //Getting the player's radius in pitch units                    
     float player_radius = Constants :: getVal("PLAYER_RADIUS");        
     //Getting the player's vertices  
@@ -44,16 +44,16 @@ void MatchPlayer :: draw(pitch_half half, Shader& p_shader, const IBO& player_ib
     player_vao.addBuffer(player_vbo, player_layout);
 
     //Setting the player's coordinates in pixel units
-    p_shader.setUniform2f("u_entity_coords", Constants :: convertCoords(Constants :: getPitchProj(),
-                                                                        this->coords,
-                                                                        Constants :: getPixelFragProj()));
+    p_shader.setUniform2f("u_entity_coords", convertCoords(this->coords,
+                                                           Constants :: getPitchProj(),
+                                                           Constants :: getPixelFragProj()));
 
     //Setting the radius for the aura circle in pixel units
-    p_shader.setUniform1f("u_entity_radius", Constants :: changeUnit(player_radius) * 2);
+    p_shader.setUniform1f("u_entity_radius", changeUnit(player_radius) * 2);
     drawAura(half, p_shader, player_aura_layout, player_ibo, player_radius * 2);
 
     //Setting the radius for the player's circle in pixel units
-    p_shader.setUniform1f("u_entity_radius", Constants :: changeUnit(player_radius));
+    p_shader.setUniform1f("u_entity_radius", changeUnit(player_radius));
     Renderer :: draw(player_vao, player_ibo, p_shader);
 }
 
@@ -70,6 +70,15 @@ void MatchPlayer :: drawAura(pitch_half half, Shader& p_shader,
 
     //Drawing the player's aura
     Renderer :: draw(player_vao_big, player_ibo, p_shader);
+}
+
+
+void MatchPlayer :: drawUnplaying(Shader& shader, const IBO& ibo, const Font& font, glm :: vec2 s_text_pos, 
+                                  Font :: TextDirection text_dir) const{
+    //Setting the player's number as text
+    std :: string p_info = " - " + std :: to_string(player->getShirt()) + " | " + player->getPosition() + " | " +
+                           player->getName() +  " " + std :: to_string((int)this->OVR);
+    Renderer :: drawText(shader, ibo, p_info, s_text_pos, font, 0.7, false, text_dir);
 }
 
 

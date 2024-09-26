@@ -47,12 +47,37 @@ void FirstTeam :: changeSide1(){
 }
 
 
-void FirstTeam :: drawPlayers(MatchPlayer :: pitch_half half, Shader& p_shader, const IBO& player_ibo,
+void FirstTeam :: drawPlaying(MatchPlayer :: pitch_half half, Shader& p_shader, const IBO& player_ibo,
                               const VertexBufferLayout& player_layout, 
                               const VertexBufferLayout& player_aura_layout)const {
     p_shader.setUniform4f("u_aura_color", this->team->getAuraColor());
     for (const auto& p : this->first_eleven)
-        p->draw(half, p_shader, player_ibo, player_layout, player_aura_layout);
+        p->drawPlaying(half, p_shader, player_ibo, player_layout, player_aura_layout);
+}
+
+
+void FirstTeam :: drawUnplaying(Shader& shader, const IBO& ibo, const Font& font) const{
+    glm :: vec2 pos;
+    //Converting the pitch coordinates to the pixel coordinate system
+    pos = convertCoords(getSubsTextStartPos(), Constants :: getPitchProj(), Constants :: getPixelProj());
+    for (const auto& p : this->subs){
+        p->drawUnplaying(shader, ibo, font, pos, MatchPlayer :: toTextDir(this->side));
+        //Moving the text position downwards for the next sub
+        pos.y -= Constants :: getVal("FONT_SIZE");
+    }
+}
+
+
+glm :: vec2 FirstTeam :: getSubsTextStartPos() const{
+    float max_pitch_x = Constants :: getVal("TOUCHLINE_LENGTH") / 2,
+          max_pitch_y = Constants :: getVal("GOAL_LINE_LENGTH") / 2,
+          aspect_ratio = max_pitch_x / max_pitch_y,
+          padding_x = Constants :: getVal("PITCH_PADDING") * aspect_ratio;
+    
+    //Setting the position of the first sub depending on the side of the pitch
+    if (this->side == MatchPlayer :: pitch_half :: first)
+        return vec2(-max_pitch_x - padding_x, max_pitch_y);
+    return vec2(max_pitch_x + padding_x, max_pitch_y);
 }
 
 

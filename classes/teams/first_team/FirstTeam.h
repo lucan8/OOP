@@ -1,10 +1,11 @@
 #pragma once
 #include "../../match_players/match_outfield/MatchOutfield.h"
 #include "../../match_players/match_goalkeeper/MatchGoalkeeper.h"
+#include "../team/Team.h"
 #include "../../shader/Shader.h"
+#include "../../font/Font.h"
 #include "../../VB_layout/VertexBufferLayout.h"
 #include "../../ibo/IBO.h"
-#include "../team/Team.h"
 #include <glm/glm.hpp>
 class FirstTeam;
 typedef std :: unique_ptr<FirstTeam> unique_first_team;
@@ -25,6 +26,8 @@ private:
     MatchPlayer :: passing_options getPassingOptions(const MatchPlayer& player, const FirstTeam& opp_team) const;
     //Moves players in the passing range of the player with the ball and towards ooponent's goal
     void movePlayersWithoutBall(const MatchPlayer& player_with_ball, const FirstTeam& opp_team);
+    //Returns the starting position for the substitutes text(in pitch coordinates) 
+    glm :: vec2 getSubsTextStartPos() const;
 public:
     FirstTeam(){}
     FirstTeam(const std :: string& formation, shared_m_squad first_eleven, unique_m_squad subs, shared_team team)
@@ -52,10 +55,12 @@ public:
     void changeSide();
     //From vertical pitch to horizontal pitch(and vice versa)
     void changeSide1();
-    
-    void drawPlayers(MatchPlayer :: pitch_half half, Shader& p_shader, const IBO& player_ibo,
-                     const VertexBufferLayout& player_layout,
-                     const VertexBufferLayout& player_aura_layout) const;
+    //Draws the players on the pitch as circles
+    void drawPlaying(MatchPlayer :: pitch_half half, Shader& p_shader, const IBO& player_ibo,
+                           const VertexBufferLayout& player_layout,
+                           const VertexBufferLayout& player_aura_layout) const;
+    //Draws the players off the pitch as text of their information
+    void drawUnplaying(Shader& shader, const IBO& ibo, const Font& font) const;
     
     //Moves the player with the ball and the rest either towards the opponent's goal 
     //Or in the passing range of the player with the ball

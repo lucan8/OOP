@@ -16,8 +16,9 @@ void Renderer :: drawLine(const VAO& vao, const IBO& ibo, const Shader& shader){
 }
 
 
-void Renderer :: drawText(Shader& shader, const std :: string& text, glm :: vec2 pos, const Font& font,
-                         float scale, const glm :: vec3& color){
+void Renderer :: drawText(Shader& shader, const IBO& quad_ibo, const std :: string& text, glm :: vec2 pos,
+                          const Font& font, float scale, bool centered, Font :: TextDirection text_dir,
+                          const glm :: vec3& color){
     font.setUniforms(shader, color, scale);
     font.bind(0);
 
@@ -29,13 +30,11 @@ void Renderer :: drawText(Shader& shader, const std :: string& text, glm :: vec2
     VBO vbo(sizeof(glm :: mat4));
     VAO vao;
     vao.addBuffer(vbo, layout);
-
-    IBO ibo(Constants :: getVertexIndices("SQUARE"), 6);
-
-    pos = font.getTextStartPos(text, pos, scale);
+    //If the text is centered we need to calculate the start position
+    pos = centered ? font.getCenteredTextStartPos(text, pos, scale) : pos;
     for (const auto& c : text){
-        glm :: mat4 vertices = font.getGlyphVertices(c, pos, scale);
+        glm :: mat4 vertices = font.getGlyphVertices(c, pos, scale, text_dir);
         vbo.update(&vertices[0][0], 4 * sizeof(float) * 4);
-        Renderer :: draw(vao, ibo, shader);
+        Renderer :: draw(vao, quad_ibo, shader);
     }
 }   

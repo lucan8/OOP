@@ -5,7 +5,9 @@
 #include "../../renderer/Renderer.h"
 #include <random>
 #include <algorithm>
+#include <cstring>
 using glm :: vec2, glm :: mat4, glm :: mat4x2;
+using std :: make_pair, std :: to_string;
 
 void MatchPlayer :: addYellowCard(){
     ++yellow_cards;
@@ -32,7 +34,7 @@ void MatchPlayer :: changeSide1(){
 
 void MatchPlayer :: drawPlaying(pitch_half half, Shader& p_shader, const IBO& player_ibo,
                                    const VertexBufferLayout& player_layout, 
-                                   const VertexBufferLayout& player_aura_layout) const{
+                                   const VertexBufferLayout& player_aura_layout, const Font& font) const{
     //Getting the player's radius in pitch units                    
     float player_radius = Constants :: getVal("PLAYER_RADIUS");        
     //Getting the player's vertices  
@@ -73,12 +75,28 @@ void MatchPlayer :: drawAura(pitch_half half, Shader& p_shader,
 }
 
 
-void MatchPlayer :: drawUnplaying(Shader& shader, const IBO& ibo, const Font& font, glm :: vec2 s_text_pos, 
-                                  Font :: TextDirection text_dir) const{
-    //Setting the player's number as text
-    std :: string p_info = " - " + std :: to_string(player->getShirt()) + " | " + player->getPosition() + " | " +
-                           player->getName() +  " " + std :: to_string((int)this->OVR);
-    Renderer :: drawText(shader, ibo, p_info, s_text_pos, font, 0.7, false, text_dir);
+void MatchPlayer :: drawUnplaying(Shader& shader, const IBO& ibo, const Font& font, glm :: vec2 s_text_pos,
+                                  pitch_half side) const{
+    float font_scale = 0.6;
+    for (const auto& info : this->getUnplayingInfo(side, font)){
+        Renderer :: drawText(shader, ibo, info.first, s_text_pos, font, font_scale);
+        s_text_pos.x += font_scale * info.second;
+    }
+}
+
+
+std :: array<std :: pair<std :: string, uint16_t>, 4> MatchPlayer :: getUnplayingInfo(pitch_half side, const Font& font) const{
+    //The order of the info is different depending on the side
+    if (side == pitch_half :: second)
+        return {make_pair(to_string((int)this->OVR), 3 * font.getMaxDigitWidth()),
+                make_pair(toUpper(player->getSurname()), 10 * font.getMaxLetterWidth()),
+                make_pair(player->getPosition(), 8 * font.getMaxLetterWidth()),
+                make_pair(to_string(player->getShirt()), 3 * font.getMaxDigitWidth())};
+    
+    return {make_pair(to_string(player->getShirt()), 3 * font.getMaxDigitWidth()),
+            make_pair(player->getPosition(), 8 * font.getMaxLetterWidth()), 
+            make_pair(toUpper(player->getSurname()), 10 * font.getMaxLetterWidth()),
+            make_pair(to_string((int)this->OVR), 3 * font.getMaxDigitWidth())};
 }
 
 

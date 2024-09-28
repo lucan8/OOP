@@ -22,7 +22,6 @@ public:
     //Enum for the pitch half in which the player starts
     enum pitch_half{first, second};
     friend pitch_half operator!(pitch_half half){return half == pitch_half :: first ? pitch_half :: second : pitch_half :: first;}
-    static Font :: TextDirection toTextDir(pitch_half half){return half == pitch_half :: first ? Font :: TextDirection :: RIGHT : Font :: TextDirection :: LEFT;}
     //Struct holding the number of players marking this one and a pointer to the opponent(if there is one)
     //Possible nr of intersections: 0, 1, 2(everything above 2 is considered 2)
     //For 0 and 2 intersections there is shoudl be no opponent
@@ -72,6 +71,9 @@ protected:
     //Target should be another player's coords for r_type = {player, aura}
     //And the ball's coords for r_type = ball
     bool intersects(const glm :: vec2& target, radius_type r_type) const;
+    //ovr, position, surname and shirt number paired with the number of with the space ocupied by each(in pixels)
+    //the space is calculated as max number of characters * max char width
+    std :: array<std :: pair<std :: string, uint16_t>, 4> getUnplayingInfo(pitch_half side, const Font& font) const;
 public:
     
     MatchPlayer(shared_player player = shared_player(),
@@ -99,11 +101,11 @@ public:
 
     //Draws the player as a circle(used for players in the first eleven)
     void drawPlaying(pitch_half half, Shader& p_shader, const IBO& player_ibo,
-                        const VertexBufferLayout& player_layout, const VertexBufferLayout& player_aura_layout) const;
+                     const VertexBufferLayout& player_layout, const VertexBufferLayout& player_aura_layout,
+                     const Font& font) const;
     
     //Draws the player's information as text(used for players in the subs)
-    void drawUnplaying(Shader& shader, const IBO& ibo, const Font& font, glm :: vec2 s_text_pos,
-                       Font :: TextDirection text_dir = Font :: TextDirection :: RIGHT) const;
+    void drawUnplaying(Shader& shader, const IBO& ibo, const Font& font, glm :: vec2 s_text_pos, pitch_half side) const;
     
     //Decides what to do with the ball depending on the number of intersections with the opposing players
     //The the opponent's stats and passing options(for 0 and 2 intersections there should be no opponent passed)

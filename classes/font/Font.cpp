@@ -1,6 +1,7 @@
 #include "Font.h"
 #include "../exceptions/FileOpenException.h"
 #include "../../functions/functions.h"
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <filesystem>
@@ -19,10 +20,11 @@ Font :: Font(const std :: string& file_path) {
                          
     //Creating the texture for that font
     this->texture = std :: make_unique<Textures>(bitmap, bitmap_width, bitmap_width);
+    setMaxCharWidth();
 }
 
 
-glm :: mat4 Font :: getGlyphVertices(char c, glm :: vec2& pos, float scale, TextDirection text_dir) const{
+glm :: mat4 Font :: getGlyphVertices(char c, glm :: vec2& pos, float scale) const{
     stbtt_aligned_quad q;
 
     //Creating the quad for the glyph
@@ -33,17 +35,13 @@ glm :: mat4 Font :: getGlyphVertices(char c, glm :: vec2& pos, float scale, Text
     //Scaling the quad
     scaleQuad(q, scale);
     
-    //Updating the position for the next glyph
-    if (text_dir == TextDirection :: RIGHT)
-        pos.x += cdata[c - 32].xadvance * (scale - 1);
-    else
-        pos.x -= cdata[c - 32].xadvance * (scale + 1);
+    //Updating the position for the next glyph(it's scale - 1 because stbtt_GetBakedQuad already moves the position)
+    pos.x += cdata[c - 32].xadvance * (scale - 1);
 
     return glm :: mat4( q.x0, q.y0, q.s0, q.t0,
                         q.x1, q.y0, q.s1, q.t0,
                         q.x1, q.y1, q.s1, q.t1,
                         q.x0, q.y1, q.s0, q.t1);
-
 }
 
 
@@ -84,4 +82,11 @@ void Font :: scaleQuad(stbtt_aligned_quad& q, float scale) const{
 
 void Font :: bind(uint16_t slot) const{
     texture->bind(slot);
+}
+
+
+void Font :: setMaxCharWidth(){
+    std :: array<stbtt_bakedchar, 96> :: iterator start = cdata.begin();
+    max_digit_width = std :: max_element(start + '0' - ' ', start + '9' - ' ' + 1, compCharWidth)->xadvance;
+    max_letter_width = std :: max_element(start + 'A' - ' ', start + 'Z' - ' ' + 1, compCharWidth)->xadvance;
 }

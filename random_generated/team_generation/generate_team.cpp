@@ -1,6 +1,8 @@
 #include "generate_team.h"
 #include "../../classes/constants/Constants.h"
 #include "../../functions/functions.h"
+#include <unordered_set>
+#include <array>
 
 using std :: string, std :: vector;
 team_ptr generateTeam(vector<string>& available_names){
@@ -27,13 +29,28 @@ string generateTeamName(vector<string>& available_names){
 }
 
 
-squad_ptr generateOutfields(){
+squad_ptr generateOutfields(){  
     squad_ptr outfields;
+
+    uint16_t start_shirt = 2,
+             end_shirt = 99;
+    //Allthe numbers except 1 and 12(used for gks)
+    vector<uint16_t> shirt_numbers(end_shirt - start_shirt + 1);
+    std :: iota(shirt_numbers.begin(), shirt_numbers.end(), start_shirt);
+    shirt_numbers.erase(shirt_numbers.begin() + 10);
+
     for (const auto& age_type : Constants :: getAgeTypes()){
         uint16_t nr_outfields = Constants :: generateNaturalNumber(Constants :: getAgeInfo(age_type, "MIN_NR"),
                                                                    Constants :: getAgeInfo(age_type, "MAX_NR"));
-        for (uint16_t i = 0; i < nr_outfields; ++i)
+        for (uint16_t i = 0; i < nr_outfields; ++i){
+            //Generating the player
             outfields.push_back(generatePlayer("OUTFIELD", age_type));
+            //Choosing a random shirt number
+            uint16_t shirt_index = Constants :: generateNaturalNumber(start_shirt, end_shirt) - start_shirt;
+            outfields.back()->setShirt(shirt_numbers[shirt_index]);
+            //Removing the chosen shirt number
+            shirt_numbers.erase(shirt_numbers.begin() + shirt_index);
+        }
     }
     return outfields;                           
 }
@@ -51,6 +68,9 @@ squad_ptr generateGoalkeepers(){
         //Make sure the same age_type is not chosen again
         age_types.erase(age_types.begin() + chosen_index);
     }
+    //Setting the shirts for the gks
+    gks[0]->setShirt(1);
+    gks[1]->setShirt(12);
     return gks;
 }
 

@@ -18,7 +18,9 @@ public:
     uint16_t getAge() const{return age;}
     float getWage() const{return wage;}
     const std :: string& getNationality() const{return nationality;}
+    //Returns the full name
     const std :: string& getName() const{return name;}
+    std :: string getSurname() const{return name.substr(name.find(' ') + 1);}
 
     void setWage(double wage){this->wage = wage;}
     void setAge(uint16_t age){this->age = age;}

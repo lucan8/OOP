@@ -1,8 +1,9 @@
 #include "functions.h"
-#include <sstream>
-#include <fstream>
 #include "../classes/exceptions/FileOpenException.h"
 #include "../classes/constants/Constants.h"
+#include <sstream>
+#include <fstream>
+#include <algorithm>
 
 std :: vector<std :: string> split(const std :: string& str, char sep){
     std :: istringstream str_stream(str);
@@ -86,4 +87,10 @@ glm :: vec4 normalizeColor(glm :: vec4 color){
     const float max_color_val = 255;
     return glm :: vec4(color.r / max_color_val, color.g / max_color_val,
                        color.b / max_color_val, color.a / max_color_val);
+}
+
+
+std :: string toUpper(std :: string str){
+    std :: transform(str.begin(), str.end(), str.begin(), ::toupper);
+    return str;
 }

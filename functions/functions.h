@@ -32,6 +32,7 @@ glm :: vec4 convertCoords(const glm :: vec2& from_coords, const glm :: mat4& fro
 float changeUnit(float value, float nr_units_from = 
                         Constants :: getVal("GOAL_LINE_LENGTH") + Constants :: getVal("PITCH_PADDING") * 2,
                         float nr_units_to = Constants :: getVal("WINDOW_HEIGHT"));
+std :: string toUpper(std :: string str);
 //Returns the normalized color(values between 0 and 1)
 glm :: vec4 normalizeColor(glm :: vec4 color);
 

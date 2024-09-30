@@ -247,7 +247,7 @@ void Constants :: initMPosCoords(const string& file_name){
 
 void Constants :: Formation :: initPlayersCoords(){
     unordered_set<string> visited;
-    p_coords["GK"] = glm :: vec2(0, -Constants :: getVal("TOUCHLINE_LENGTH") / 2);
+    p_coords["GK"] = glm :: vec2(0, -Constants :: getVal("TOUCHLINE_LENGTH") / 2 - Constants :: getVal("PITCH_OUT_PADDING"));
     visited.insert("GK");
 
     queue<string> p_pos;

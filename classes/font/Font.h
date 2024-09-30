@@ -5,7 +5,6 @@
 #include "../constants/Constants.h"
 #include <array>
 #include <string>
-//TODO: Add font sizes
 class Font;
 typedef std :: unique_ptr<Font> unique_font;
 class Font{
@@ -38,7 +37,7 @@ public:
     float getMaxDigitWidth() const{return max_digit_width;};
     //Returns the slot of the texture
     //Sets the uniforms for the font
-    void setUniforms(Shader& shader, glm :: vec3 color, float scale) const;
+    void setUniforms(Shader& shader, glm :: vec3 color) const;
     static bool compCharWidth(const stbtt_bakedchar& a, const stbtt_bakedchar& b) {return a.xadvance < b.xadvance;}
 
     //Used for text that goes from right to left

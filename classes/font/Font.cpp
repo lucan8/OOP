@@ -45,7 +45,7 @@ glm :: mat4 Font :: getGlyphVertices(char c, glm :: vec2& pos, float scale) cons
 }
 
 
-void Font :: setUniforms(Shader& shader, glm :: vec3 color, float scale) const{
+void Font :: setUniforms(Shader& shader, glm :: vec3 color) const{
     shader.bind();
 
     shader.setUniform3f("u_font_color", color);
@@ -53,7 +53,6 @@ void Font :: setUniforms(Shader& shader, glm :: vec3 color, float scale) const{
     shader.setUniform1i("u_texture", 0);
 
     shader.setUniformMat4f("u_projection", Constants :: getPixelProj());
-    //shader.setUniformMat4f("u_model", glm :: scale(glm :: mat4(1.0f), glm :: vec3(scale, scale, 1.0f)));
 }
 
 

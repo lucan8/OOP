@@ -24,7 +24,7 @@ public:
     void drawScore(Shader& score_shader, const IBO& ibo);
     void drawTeamCrests(Shader& team_shader, const IBO& ibo);
     void drawSubs(Shader& subs_shader, const IBO& ibo);
-     //Binds the texture, updates the vbo using getScoreVertices and draws the team_crest
+    //Binds the texture, updates the vbo using getScoreVertices and draws the team_crest
     void drawTeamCrest(Shader& score_shader, const IBO& score_ibo, VBO& score_vbo, VAO& score_vao,
                               const Textures& texture, const glm :: vec2& center);
     //Returns the pitch vertices(contains the position and texture coords)
@@ -34,15 +34,13 @@ public:
     //Returns the canvas vertices with the center at the argument and the radius as team_crest radius
     glm :: mat4 getTeamCrestVertices(const glm :: vec2& center) const;
 
-    //Loads and binds the textures needed(pitch, ball, teams)
     void loadTextures();
-    //Loads the shaders needed for the match
     void loadShaders();
     void loadFont();
-    //Arg1 team in possesion attacks, arg2 defends
-    void movePlayers(FirstTeam& poss_team, FirstTeam& opp_team);
-    //Determines if any player gets possesion and sets the player with the ball
-    void setPosession();
+    //Players move to their initial positions and the ball is placed in the center
+    void resetGameState();
+    //Chosses a random player to act, returns true if a goal was scored
+    bool usePlayer(std :: vector<uint16_t>& p_indices, FirstTeam& acting_team, FirstTeam& opp_team);
 public:
     //Draws the pitch and players
     void draw();

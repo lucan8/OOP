@@ -5,6 +5,7 @@
 #include "../../IBO/IBO.h"
 #include "../../font/Font.h"
 #include <glm/glm.hpp>
+#include <vector>
 
 //TODO: Maybe hold the vbo and vao of the player
 class MatchPlayer;
@@ -19,6 +20,8 @@ typedef std :: unordered_map<uint16_t, unique_m_player> unique_m_squad_map;
 
 class MatchPlayer {
 public:
+    struct PassingInfo;
+    typedef std :: vector<PassingInfo> passing_options;
     //Enum for the pitch half in which the player starts
     enum pitch_half{first, second};
     friend pitch_half operator!(pitch_half half){return half == pitch_half :: first ? pitch_half :: second : pitch_half :: first;}
@@ -38,11 +41,9 @@ public:
         shared_m_player team_mate;
         float pass_success_chance;
         float distance_from_goal;
-
         OpponentIntersections opp_intersections;
+
     };
-    
-    typedef std :: vector<PassingInfo> passing_options;
 protected:
     //Enum for the type of radius used in the intersects method
     enum class radius_type {player, aura, ball};
@@ -62,7 +63,7 @@ protected:
 
     //Decides whether to pass or dribble depending on the opponent's stats and passing options
     void decidePassDribble(glm :: vec2& ball_coords, const MatchPlayer& opp_intersections,
-                           const passing_options& passing_options, const glm :: vec2& opp_gk_coords);
+                           const PassingInfo& best_pass_option, const glm :: vec2& opp_gk_coords);
     
     //Should be part of an entity class
     static bool isOutsidePitch(const glm :: vec2& coords);
@@ -84,7 +85,7 @@ public:
 
     void addYellowCard();
     unsigned short getYellowCards() const{return yellow_cards;}
-    std ::string getPosition() const{return position;}
+    const std ::string& getPosition() const{return position;}
     const shared_player& getPlayer() const{return player;}
     glm :: vec2 getCoords() const{return coords;}
     glm :: vec2 getPitchMatrixcoords()const;
@@ -101,20 +102,19 @@ public:
 
     //Draws the player as a circle(used for players in the first eleven)
     void drawPlaying(pitch_half half, Shader& p_shader, const IBO& player_ibo,
-                     const VertexBufferLayout& player_layout, const VertexBufferLayout& player_aura_layout,
-                     const Font& font) const;
+                     const VertexBufferLayout& player_layout, const VertexBufferLayout& player_aura_layout) const;
     
     //Draws the player's information as text(used for players in the subs)
     void drawUnplaying(Shader& shader, const IBO& ibo, const Font& font, glm :: vec2 s_text_pos, pitch_half side) const;
     
     //Decides what to do with the ball depending on the number of intersections with the opposing players
     //The the opponent's stats and passing options(for 0 and 2 intersections there should be no opponent passed)
-    void decide(glm :: vec2& ball_coords, const OpponentIntersections& opp_intersections,
-                const passing_options& passing_options, const glm :: vec2& opp_gk_coords,
+    bool decide(glm :: vec2& ball_coords, const OpponentIntersections& opp_intersections,
+                const passing_options& passing_options, MatchPlayer& opp_gk,
                 const MatchPlayer& closest_team_mate);
 
     //Passes the ball to the best option
-    virtual void pass(glm :: vec2& ball_coords, const passing_options& passing_options);
+    virtual void pass(glm :: vec2& ball_coords, const PassingInfo& best_pass_option);
     //Gets the chence of sending a succesful pass to a teammate
     float getPassChance(const MatchPlayer& team_mate) const;
     //Calcualtes the chance of choosing this PassingInfo option
@@ -130,9 +130,11 @@ public:
 
     virtual void block() = 0;
     virtual void tackle(glm :: vec2& ball_coords, MatchPlayer& opponent);
-    void dribble(glm :: vec2& ball_coords, const MatchPlayer& opponent, const glm :: vec2& opp_gk_coords);
+    void dribble(glm :: vec2& ball_coords, const MatchPlayer& opponent, const glm :: vec2& opp_gk_coords,
+                 float dribble_chance);
 
-    void shoot(glm :: vec2& ball_coords, MatchPlayer& opp_gk);
+    //Returns true if he scored a goal, false otherwise
+    bool shoot(glm :: vec2& ball_coords, MatchPlayer& opp_gk);
     float getScoringChance(const MatchPlayer& opp_gk) const;
     
     bool inTackleRange(const MatchPlayer& opponent) const;

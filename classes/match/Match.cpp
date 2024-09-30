@@ -70,6 +70,8 @@ void Match :: draw(){
     this->drawBall(*entity_shader, square_ibo);
     this->drawTeamCrests(*entity_shader, square_ibo);
     //Uses different projection matrix
+    font->setUniforms(*entity_shader, vec3(1.0f));
+    font->bind(0);
     this->drawScore(*entity_shader, square_ibo);
     this->drawSubs(*entity_shader, square_ibo);
 }
@@ -82,23 +84,22 @@ void Match :: drawPlayers(Shader& player_shader, const IBO& player_ibo){
     //Setting the entity type
     player_shader.setUniform1i("u_entity_type", Constants :: getEntityNumber("PLAYER"));
 
-    //Layout for player's triangles(2 coords for position, 2 coords for texture)
     VertexBufferLayout player_layout, player_aura_layout;
-    //Coords for vertex positions and texture
+    //Coords for vertex positions and team crest texture coords
     player_layout.addAttribute<float>(2);
     player_layout.addAttribute<float>(2);
-
     //Coords for vertex positions
     player_aura_layout.addAttribute<float>(2);
 
     player_shader.setUniform1i("u_texture", 0);
+    //Drawing the players
     this->textures.at("TEAM1").bind(0);
-    team1->drawPlaying(MatchPlayer :: pitch_half :: first, player_shader, player_ibo, player_layout, player_aura_layout);
+    team1->drawPlaying(MatchPlayer :: pitch_half :: first, player_shader, player_ibo, player_layout,
+                       player_aura_layout);
 
-    //Drawing the second team's players
-    player_shader.setUniform1i("u_texture", 0);
     this->textures.at("TEAM2").bind(0);
-    team2->drawPlaying(MatchPlayer :: pitch_half :: second, player_shader, player_ibo, player_layout, player_aura_layout);
+    team2->drawPlaying(MatchPlayer :: pitch_half :: second, player_shader, player_ibo, player_layout,
+                       player_aura_layout);
 }
 
 
@@ -167,25 +168,6 @@ void Match :: drawBall(Shader& ball_shader, const IBO& ball_ibo){
 }
 
 
-void Match :: drawScore(Shader& shader, const IBO& ibo){
-    //Binding the shader and setting the entity type uniform
-    shader.bind();
-    shader.setUniform1i("u_entity_type", Constants :: getEntityNumber("LETTER"));
-
-    //Getting the coordinates needed for the score line center
-    float max_y = Constants :: getVal("GOAL_LINE_LENGTH") / 2,
-          padding = Constants :: getVal("PITCH_PADDING") - Constants :: getVal("PITCH_OUT_PADDING");
-    
-    //getting from pitch to pixel coords
-    glm :: vec2 center = convertCoords(glm :: vec2(0, max_y + padding),
-                                       Constants :: getPitchProj(),
-                                       Constants :: getPixelProj());
-    Renderer :: drawText(shader, ibo, to_string(score.first) + " - " + to_string(score.second),
-                         center, *font, 2.0f, true);
-  
-}
-
-
 void Match :: drawTeamCrests(Shader& crest_shader, const IBO& crest_ibo){
     //Binding the shader and setting the uniforms
     crest_shader.bind();
@@ -213,10 +195,29 @@ void Match :: drawTeamCrests(Shader& crest_shader, const IBO& crest_ibo){
                   vec2(Constants :: getVal("TOUCHLINE_LENGTH") / 2, max_y + padding));
 }
 
+
+void Match :: drawScore(Shader& shader, const IBO& ibo){
+    //Binding the shader and setting the entity type uniform
+    shader.bind();
+
+    //Getting the coordinates needed for the score line center
+    float max_y = Constants :: getVal("GOAL_LINE_LENGTH") / 2,
+          padding = Constants :: getVal("PITCH_PADDING") - Constants :: getVal("PITCH_OUT_PADDING");
+    
+    //getting from pitch to pixel coords
+    glm :: vec2 center = convertCoords(glm :: vec2(0, max_y + padding),
+                                       Constants :: getPitchProj(),
+                                       Constants :: getPixelProj());
+    
+    Renderer :: drawText(shader, ibo, to_string(score.first) + " - " + to_string(score.second),
+                         center, *font, 2.0f, true);
+  
+}
+
+
 void Match :: drawSubs(Shader& shader, const IBO& ibo){
     //Binding the shader and setting the entity type uniform
     shader.bind();
-    shader.setUniform1i("u_entity_type", Constants :: getEntityNumber("LETTER"));
     team1->drawUnplaying(shader, ibo, *font);
     team2->drawUnplaying(shader, ibo, *font);
 }
@@ -230,12 +231,6 @@ void Match :: drawTeamCrest(Shader& shader, const IBO& ibo, VBO& vbo, VAO& vao, 
     vbo.update(&vertices[0][0], sizeof(vertices));
     Renderer :: draw(vao, ibo, shader);
 }
-/*
-void Match :: setPitchMatrix(){
-    team1->setPitchMatrix(pitch_matrix);
-    team2->setPitchMatrix(pitch_matrix);
-}
-*/
 
 
 mat4 Match :: getPitchVertices() const{
@@ -270,39 +265,45 @@ mat4 Match :: getTeamCrestVertices(const vec2& center) const{
 
 
 void Match :: play(){
-    if (team1->inPossesion())
-        movePlayers(*team1, *team2);
-    else if (team2->inPossesion())
-        movePlayers(*team2, *team1);
-    else{
-        //Moving both teams to get possesion
-        team1->getPossesion(ball_coords, team2->getGKCoords());
-        team2->getPossesion(ball_coords, team1->getGKCoords());
-        setPosession();
-    }
+    bool inteurrupted = false;
+    //Indices of the players that have not moved yet
+    std :: vector<uint16_t> remaining_players1(team1->getFirstEleven().size()),
+                            remaining_players2(team2->getFirstEleven().size());
+    std :: iota(remaining_players1.begin(), remaining_players1.end(), 0);
+    std :: iota(remaining_players2.begin(), remaining_players2.end(), 0);
+    
+    while (!remaining_players1.empty() && !remaining_players2.empty() && !inteurrupted)
+        //Flipping a coin to see which team moves a player 
+        if (Constants :: generateNaturalNumber(0, 1) == 0){
+            if (usePlayer(remaining_players1, *team1, *team2)){
+                score.first++;
+                inteurrupted = true;
+            }
+        }
+        else if (usePlayer(remaining_players1, *team2, *team1)){
+                score.second++;
+                inteurrupted = true;
+            }
+    if (inteurrupted)
+        resetGameState();
 }
 
 
-void Match :: movePlayers(FirstTeam& poss_team, FirstTeam& opp_team){
-    poss_team.attack(ball_coords, opp_team);
-    opp_team.defend(ball_coords, poss_team);
+bool Match :: usePlayer(std :: vector<uint16_t>& p_indices, FirstTeam& acting_team, FirstTeam& opp_team){
+    uint16_t index = Constants :: generateNaturalNumber(0, p_indices.size() - 1),
+             p_index = p_indices[index];
+             p_indices.erase(p_indices.begin() + index);
+    return acting_team.usePlayer(p_index, ball_coords, opp_team);
 }
 
 
-void Match :: setPosession(){
-    //Getting the closest two players to the ball
-    shared_m_player closest1 = team1->getClosestPlayer(ball_coords, team1->getFirstEleven());
-    shared_m_player closest2 = team2->getClosestPlayer(ball_coords, team2->getFirstEleven());
+void Match :: resetGameState(){
+    team1->resetPlayers();
+    team1->changeSide1();
+    
+    team2->resetPlayers();
+    team2->changeSide1();
+    team2->changeSide();
 
-    if (closest1->isNearBall(ball_coords))
-        if (closest2->isNearBall(ball_coords))
-            //Player with the highest pace gets the ball
-            if (closest1->getPlayer()->getStat("PAC") > closest2->getPlayer()->getStat("PAC"))
-                closest1->setPossesion(true);
-            else
-                closest2->setPossesion(true);
-        else
-            closest1->setPossesion(true);
-    else if (closest2->isNearBall(ball_coords))
-        closest2->setPossesion(true);
+    ball_coords = glm :: vec2(0, 0);
 }

@@ -7,7 +7,7 @@
 #include <algorithm>
 #include <cstring>
 using glm :: vec2, glm :: mat4, glm :: mat4x2;
-using std :: make_pair, std :: to_string;
+using std :: make_pair, std :: to_string, std :: vector;
 
 void MatchPlayer :: addYellowCard(){
     ++yellow_cards;
@@ -34,11 +34,11 @@ void MatchPlayer :: changeSide1(){
 
 void MatchPlayer :: drawPlaying(pitch_half half, Shader& p_shader, const IBO& player_ibo,
                                    const VertexBufferLayout& player_layout, 
-                                   const VertexBufferLayout& player_aura_layout, const Font& font) const{
+                                   const VertexBufferLayout& player_aura_layout) const{
     //Getting the player's radius in pitch units                    
     float player_radius = Constants :: getVal("PLAYER_RADIUS");        
     //Getting the player's vertices  
-    mat4 player_vert = this->getPlayerVertices(half, player_radius);
+    glm :: mat4 player_vert = this->getPlayerVertices(half, player_radius);
 
     //Setting and linking the VBO and VAO
     VBO player_vbo(sizeof(player_vert), &player_vert[0][0], GL_STATIC_DRAW);
@@ -100,7 +100,7 @@ std :: array<std :: pair<std :: string, uint16_t>, 4> MatchPlayer :: getUnplayin
 }
 
 
-mat4 MatchPlayer :: getPlayerVertices(pitch_half half, float radius) const{
+glm :: mat4 MatchPlayer :: getPlayerVertices(pitch_half half, float radius) const{
     //Getting the player's canvas vertex positions coordinates
     mat4 player_vertices = toMat4(getCanvasPositions(this->coords, radius));
     
@@ -121,26 +121,39 @@ mat4 MatchPlayer :: getPlayerVertices(pitch_half half, float radius) const{
         std ::swap(player_vertices[3][3], player_vertices[0][3]),
         std ::swap(player_vertices[2][2], player_vertices[1][2]),
         std ::swap(player_vertices[2][3], player_vertices[1][3]);
-            
-    
+
+
     return player_vertices;
 }
 
 
-void MatchPlayer :: decide(vec2& ball_coords, const OpponentIntersections& opp_intersections,
-                           const passing_options& pass_options, const vec2& opp_gk_coords,
+bool MatchPlayer :: decide(vec2& ball_coords, const OpponentIntersections& opp_intersections,
+                           const passing_options& pass_options, MatchPlayer& opp_gk,
                            const MatchPlayer& closest_team_mate){
+    //Getting the scoring chance for this player and the team mate who is the best passing option
+    PassingInfo best_passing_option = *std :: max_element(pass_options.begin(), pass_options.end(),
+                                                          [this](const PassingInfo& p1, const PassingInfo& p2){
+                                                            return this->getFinalPassChance(p1) < this->getFinalPassChance(p2);
+                                                          });
+    float scoring_chance = this->getScoringChance(opp_gk),
+          team_mate_scoring_chance = best_passing_option.team_mate->getScoringChance(opp_gk);
+    
+    //If the scoring chance is greater than the team mate's scoring chance, the player will shoot
+    if (scoring_chance > team_mate_scoring_chance)
+        return this->shoot(ball_coords, opp_gk);
+
     switch (opp_intersections.nr_intersections){
         case 0:
-            this->p_move(opp_gk_coords, closest_team_mate);
+            this->p_move(opp_gk.getCoords(), closest_team_mate);
             ball_coords = this->coords;
             break;
         case 1:
-            this->decidePassDribble(ball_coords, *opp_intersections.opponent, pass_options, opp_gk_coords);
+            this->decidePassDribble(ball_coords, *opp_intersections.opponent, best_passing_option, opp_gk.getCoords());
             break;
         default:
-            this->pass(ball_coords, pass_options);
+            this->pass(ball_coords, best_passing_option);
     }
+    return false;
 }
 
 
@@ -215,14 +228,40 @@ void MatchPlayer :: moveTowards(const vec2& target, const vec2& move_values){
 
 
 void MatchPlayer :: decidePassDribble(vec2& ball_coords, const MatchPlayer& opponent, 
-                                      const passing_options& passing_options, const vec2& opp_gk_coords){
-    float tackle_chance = opponent.getTackleChance(*this);
-    if (Constants :: generateRealNumber(0, 100) < tackle_chance)
-        this->pass(ball_coords, passing_options);
-    else
-        this->dribble(ball_coords, opponent, opp_gk_coords);
+                                      const PassingInfo& best_pass_option,const vec2& opp_gk_coords){
+    float dribble_chance = 100 - this->getTackleChance(opponent);
+    
+    if (dribble_chance < best_pass_option.pass_success_chance)
+        this->pass(ball_coords, best_pass_option);
+    else 
+        this->dribble(ball_coords, opponent, opp_gk_coords, dribble_chance);
 
 }
+
+
+void MatchPlayer :: pass(vec2& ball_coords, const PassingInfo& chosen_pass_option){
+    vec2 team_mate_coords = chosen_pass_option.team_mate->getCoords();
+    //Trying to pass to the chosen team mate
+    if (Constants :: generateRealNumber(0, 100) < chosen_pass_option.pass_success_chance){
+        ball_coords = team_mate_coords;
+        chosen_pass_option.team_mate->setPossesion(true);
+    }
+    else{//If the pass is not successful, the ball is placed randomly around the team mate
+        //Getting the error radius for the ball placement
+        float error_radius = Constants :: getVal("PASS_ERROR_RADIUS");
+        //Getting the error bounds
+        float min_error_x = team_mate_coords.x - error_radius, max_error_x = team_mate_coords.x + error_radius,
+              min_error_y = team_mate_coords.y - error_radius, max_error_y = team_mate_coords.y + error_radius;
+        
+        //Placing the ball randomly around the team mate
+        ball_coords = team_mate_coords + vec2(Constants :: generateRealNumber(min_error_x, max_error_x),
+                                                     Constants :: generateRealNumber(min_error_y, max_error_y));
+    }
+    //The player no longer has the ball
+    this->has_ball = false;
+    
+}
+
 
 float MatchPlayer :: getPassingRange() const{
     //Coordinates of the top right corner of the pitch
@@ -271,52 +310,11 @@ float MatchPlayer :: getFinalPassChance(const PassingInfo& pass_info) const{
 }
 
 
-void MatchPlayer :: pass(vec2& ball_coords, const passing_options& passing_options){
-    PassingInfo chosen_pass_option = passing_options.at(0);
-    float max_final_chance = this->getFinalPassChance(chosen_pass_option);
-
-    //Choosing the best passing option based on the final pass chance
-    for (uint16_t i = 1; i < passing_options.size(); ++i){
-        const PassingInfo& pass_option = passing_options[i];
-        float final_pass_chance = this->getFinalPassChance(pass_option);
-
-        if (max_final_chance < final_pass_chance){
-            max_final_chance = final_pass_chance;
-            chosen_pass_option = pass_option;
-        }
-    }
-
-    vec2 team_mate_coords = chosen_pass_option.team_mate->getCoords();
-    //Trying to pass to the chosen team mate
-    if (Constants :: generateRealNumber(0, 100) < chosen_pass_option.pass_success_chance){
-        ball_coords = team_mate_coords;
-        chosen_pass_option.team_mate->setPossesion(true);
-    }
-    else{//If the pass is not successful, the ball is placed randomly around the team mate
-        //Getting the error radius for the ball placement
-        float error_radius = Constants :: getVal("PASS_ERROR_RADIUS");
-        //Getting the error bounds
-        float min_error_x = team_mate_coords.x - error_radius, max_error_x = team_mate_coords.x + error_radius,
-              min_error_y = team_mate_coords.y - error_radius, max_error_y = team_mate_coords.y + error_radius;
-        
-        //Placing the ball randomly around the team mate
-        ball_coords = team_mate_coords + vec2(Constants :: generateRealNumber(min_error_x, max_error_x),
-                                                     Constants :: generateRealNumber(min_error_y, max_error_y));
-    }
-    //The player no longer has the ball
-    this->has_ball = false;
-    
-}
-
-
-void MatchPlayer :: dribble(vec2& ball_coords, const MatchPlayer& opponent,
-                            const vec2& opp_gk_coords){
-    vec2 opp_coords = opponent.coords;
-    float dribble_chance = 100 - this->getTackleChance(opponent);
-
+void MatchPlayer :: dribble(vec2& ball_coords, const MatchPlayer& opponent, const vec2& opp_gk_coords,
+                            float dribble_chance){
     //Moving the player towards the opponent's goal and away from the opponent
     if (Constants :: generateRealNumber(0, 100) < dribble_chance)
-        this->moveTowards(opp_gk_coords + vec2(0, -opp_coords.y),
+        this->moveTowards(opp_gk_coords + vec2(0, -opponent.coords.y),
                           vec2(Constants :: generateRealNumber(2, 3), Constants :: generateRealNumber(2, 3)));
     else //Moving the player towards the opponent because the dribble was unsuccessful
         this->moveTowards(opponent.coords,
@@ -324,6 +322,7 @@ void MatchPlayer :: dribble(vec2& ball_coords, const MatchPlayer& opponent,
     //Moving the ball with the player                     
     ball_coords = this->coords;
 }
+
 
 void MatchPlayer :: tackle(vec2& ball_coords, MatchPlayer& opponent){
     float tackle_chance = this->getTackleChance(opponent);
@@ -335,14 +334,17 @@ void MatchPlayer :: tackle(vec2& ball_coords, MatchPlayer& opponent){
     }
 }
 
-void MatchPlayer :: shoot(vec2& ball_coords, MatchPlayer& opp_gk){
+
+bool MatchPlayer :: shoot(vec2& ball_coords, MatchPlayer& opp_gk){
     float scoring_chance = this->getScoringChance(opp_gk);
 
     if (Constants :: generateRealNumber(0, 100) < scoring_chance){
         ball_coords = opp_gk.getCoords();
-        this->has_ball = false;
         opp_gk.has_ball = true;
+        return false;
     }
+    this->has_ball = false;
+    return true;
 }
 
 
@@ -350,8 +352,12 @@ float MatchPlayer :: getScoringChance(const MatchPlayer& opp_gk) const{
     float gk_avg = (opp_gk.getPlayer()->getStat("REF") + opp_gk.getPlayer()->getStat("DIV") + 
                     opp_gk.getPlayer()->getStat("POS")) / 3;
     float player_avg = this->player->getStat("SHO");
-
-    return player_avg / (player_avg + gk_avg);
+    
+    float dist = glm :: distance(this->coords, opp_gk.getCoords()),
+          half_to_goal_dist = Constants :: getVal("TOUCHLINE_LENGTH") / 2,
+          max_sho = Constants :: getVal("MAX_STATS"),
+          chance = 100 - dist * (max_sho / half_to_goal_dist) + player_avg - gk_avg;
+    return chance;
 }
 
 

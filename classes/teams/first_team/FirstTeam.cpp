@@ -3,6 +3,7 @@
 #include "../../constants/Constants.h"
 #include "../../../functions/functions.h"
 #include <limits>
+#include <algorithm>
 
 using glm :: vec2, glm :: distance;
 float FirstTeam :: getElevenTotalStats()const{
@@ -61,7 +62,7 @@ void FirstTeam :: drawUnplaying(Shader& shader, const IBO& ibo, const Font& font
     //Converting the pitch coordinates to the pixel coordinate system
     pos = convertCoords(getSubsTextStartPos(), Constants :: getPitchProj(), Constants :: getPixelProj());
     for (const auto& p : this->subs){
-        p->drawUnplaying(shader, ibo, font, pos, MatchPlayer :: toTextDir(this->side));
+        p->drawUnplaying(shader, ibo, font, pos, this->side);
         //Moving the text position downwards for the next sub
         pos.y -= Constants :: getVal("FONT_SIZE");
     }
@@ -72,157 +73,22 @@ glm :: vec2 FirstTeam :: getSubsTextStartPos() const{
     float max_pitch_x = Constants :: getVal("TOUCHLINE_LENGTH") / 2,
           max_pitch_y = Constants :: getVal("GOAL_LINE_LENGTH") / 2,
           aspect_ratio = max_pitch_x / max_pitch_y,
-          padding_x = Constants :: getVal("PITCH_PADDING") * aspect_ratio;
+          padding_x = Constants :: getVal("PITCH_PADDING") * aspect_ratio,
+          padding_x_out = Constants :: getVal("PITCH_OUT_PADDING") * aspect_ratio;
     
     //Setting the position of the first sub depending on the side of the pitch
     if (this->side == MatchPlayer :: pitch_half :: first)
         return vec2(-max_pitch_x - padding_x, max_pitch_y);
-    return vec2(max_pitch_x + padding_x, max_pitch_y);
-}
-
-
-std :: pair<shared_m_player, shared_m_player> FirstTeam :: getClosest2Players(const vec2& target) const{
-    uint16_t closest1 = 0, closest2 = 0;
-    float min_dist1 = std :: numeric_limits<float>::max(),
-          min_dist2 = std :: numeric_limits<float>::max();
-
-    for (uint16_t i = 0; i < this->first_eleven.size(); ++i){
-        const shared_m_player& curr_player = this->first_eleven[i];
-        //Using it as a vec2 for convenience
-        vec2 player_coords = curr_player->getCoords();
-
-        //If the player is the target we ignore him
-        if (player_coords == target)
-            continue;
-
-        float dist = distance(curr_player->getCoords(), target);
-
-        if (dist < min_dist1){
-            min_dist2 = min_dist1;
-            closest2 = closest1;
-
-            min_dist1 = dist;
-            closest1 = i;
-        }
-        else if (dist < min_dist2){
-            min_dist2 = dist;
-            closest2 = i;
-        }
-    }
-
-    return {this->first_eleven[closest1], this->first_eleven[closest2]};
+    //Starting at the right side of the pitch
+    return vec2(max_pitch_x + padding_x_out, max_pitch_y);
 }
 
 
 shared_m_player FirstTeam :: getClosestPlayer(const vec2& target, const shared_m_squad& players){
-    uint16_t closest = 0;
-    float min_dist = std :: numeric_limits<float>::max();
-
-    for (uint16_t i = 0; i < players.size(); ++i){
-        const shared_m_player& curr_player = players[i];
-        //Using it as a vec2 for convenience
-        vec2 player_coords = curr_player->getCoords();
-        //If the player is the target we ignore him
-        if (player_coords == target)
-            continue;
-
-        float dist = distance(player_coords, target);
-
-        if (dist < min_dist){
-            min_dist = dist;
-            closest = i;
-        }
-    }
-
-    return players[closest];
+    return *std :: min_element(players.begin(), players.end(), [target](const shared_m_player& p1, const shared_m_player& p2){
+                               return p1->getCoords() != target && distance(p1->getCoords(), target) < distance(p2->getCoords(), target);
+                              });
 }
-
-
-void FirstTeam :: attack(vec2& ball_coords, const FirstTeam& opp_team){
-    //Moving the player with the ball
-    shared_m_player player_with_ball = this->getPlayerWithBall();
-    vec2 opp_gk_coords = opp_team.getGKCoords();
-    
-    //Moving the rest of the players
-    this->movePlayersWithoutBall(*player_with_ball, opp_team);
-    MatchPlayer :: passing_options passing_options = this->getPassingOptions(*player_with_ball, opp_team);
-    player_with_ball->decide(ball_coords, player_with_ball->getTacklingIntersections(opp_team.getFirstEleven()),
-                             passing_options, opp_gk_coords, *getClosestPlayer(player_with_ball->getCoords(),
-                             this->first_eleven));
-}
-
-
-void FirstTeam :: defend(vec2& ball_coords, const FirstTeam& opp_team){
-    shared_m_player closest_ball = getClosestPlayer(ball_coords, this->first_eleven),
-                    player_with_ball = opp_team.getPlayerWithBall();
-    
-    //If the player with the ball is in tackle range we tackle him
-    if (player_with_ball->inTackleRange(*closest_ball))
-        closest_ball->tackle(ball_coords, *player_with_ball);
-    else //Else we move towards him
-        closest_ball->p_move(ball_coords, *getClosestPlayer(closest_ball->getCoords(), this->first_eleven));
-
-    for (const auto& player : this->first_eleven)
-        //Ignoring the player with the ball and the GK
-        if (player->getPosition() != "GK" && player != closest_ball){
-            MatchPlayer :: OpponentIntersections
-                player_markers = player->getMarkingIntersections(opp_team.getFirstEleven());
-            
-            //Checking if the player is marking someone, and if that someone is only marked by him
-            //If so, he moves towards that player
-            if (player_markers.nr_intersections == 1 &&
-                player_markers.opponent->getMarkingIntersections(this->first_eleven).nr_intersections == 1)
-                player->p_move(player_markers.opponent->getCoords(), *getClosestPlayer(player->getCoords(),
-                               this->first_eleven));
-   
-            else{ //Else he moves towards the closest unmarked player
-                shared_m_squad unmarked_players = opp_team.getUnmarkedPlayers(*this);
-                player->p_move(FirstTeam :: getClosestPlayer(player->getCoords(), unmarked_players)->getCoords(),
-                               *getClosestPlayer(player->getCoords(), this->first_eleven));  
-            }
-        }
-}
-
-
-void FirstTeam :: getPossesion(vec2 ball_coords, const vec2& opp_gk_coords){
-    //Moving the closest player towards the ball
-    shared_m_player closest_player = getClosestPlayer(ball_coords, this->first_eleven);
-    closest_player->p_move(ball_coords, *getClosestPlayer(closest_player->getCoords(), this->first_eleven));
-
-    //Moving the rest of the players towards the opponent's goal
-    for (const auto&  player : this->first_eleven)
-        if (player != closest_player && player->getPosition() != "GK")
-            player->p_move(opp_gk_coords, *getClosestPlayer(player->getCoords(), this->first_eleven));
-}
-
-
-void FirstTeam :: movePlayersWithoutBall(const MatchPlayer& player_with_ball, const FirstTeam& opp_team){
-    for (auto& player : this->first_eleven){
-        //Ignoring the player with the ball, GK, and the CBs that passed the midline
-        if (player->getPlayer() == player_with_ball.getPlayer() || player->getPosition() == "GK" ||
-            (Constants :: getPosEquivalence(player->getPosition()) == "CB" && player->isPassedMidline(this->side)))
-            continue;
-
-        //Getting the player's and the player with the ball's coordinates
-        vec2 p_coords = player->getCoords(),
-                    p_ball_coords = player_with_ball.getCoords();
-                    
-        const shared_m_squad& opponents = opp_team.getFirstEleven();
-        vec2 opp_gk_coords = opp_team.getGKCoords();
-
-        //Getting the player's succesful pass chance
-        float pass_chance = player_with_ball.getPassChance(*player);
-
-        //If not within player's passing range we move him where the pass_chance is highest
-        if (pass_chance < Constants :: getVal("PASS_CHANCE_THRESHOLD"))
-            player->p_move(player_with_ball, *getClosestPlayer(p_coords, this->first_eleven), opponents);
-        else //If within passing range we move him towards the opponent's goal
-            player->p_move(opp_gk_coords, *getClosestPlayer(p_coords, this->first_eleven));
-    }
-        
-}
-
-
 
 
 MatchPlayer :: passing_options FirstTeam :: getPassingOptions(const MatchPlayer& player, const FirstTeam& opp_team) const{
@@ -230,7 +96,7 @@ MatchPlayer :: passing_options FirstTeam :: getPassingOptions(const MatchPlayer&
     passing_options.reserve(this->first_eleven.size() - 2);
 
     const shared_m_squad& opponents = opp_team.getFirstEleven();
-    vec2 opp_gk_coords = opp_team.getGKCoords();
+    vec2 opp_gk_coords = opp_team.getGK().getCoords();
 
     //Going through all the players except the one passed as argument
     for (const auto& team_mate : this->first_eleven)
@@ -245,20 +111,6 @@ MatchPlayer :: passing_options FirstTeam :: getPassingOptions(const MatchPlayer&
 
     return passing_options;
 }
-
-/*
-void FirstTeam :: setPitchMatrix(shared_m_matrix& pitch_matrix) const{
-    for (auto player : this->first_eleven){
-        vec2 p_coords = player->getPitchMatrixcoords();
-        //Setting the player in the pitch matrix(if coordinates are valid)
-        if (p_coords.x < pitch_matrix.size() && p_coords.y < pitch_matrix.at(p_coords.x).size())
-            pitch_matrix.at(p_coords.x).at(p_coords.y) = player;
-        else
-            throw MyRuntimeException(__FILE__, __func__, __LINE__, "Player's coordinates out of matrix range: " + 
-                                    to_string(p_coords.x) + " " + to_string(p_coords.y));
-    }
-}
-*/
 
 
 bool FirstTeam :: operator<(const FirstTeam& other) const{
@@ -276,7 +128,7 @@ std :: vector<shared_m_player> FirstTeam :: getUnmarkedPlayers(const FirstTeam& 
     std :: vector<shared_m_player> unmarked_players;
     unmarked_players.reserve(this->first_eleven.size());
     const shared_m_squad& opponents = opp_team.getFirstEleven();
-    
+
     for (const auto& player : this->first_eleven)
         if (player->getMarkingIntersections(opponents).nr_intersections == 0)
             unmarked_players.push_back(player);
@@ -290,4 +142,95 @@ shared_m_player FirstTeam :: getPlayerWithBall() const{
         if (player->hasBall())
             return player;
     return nullptr;
+}
+
+
+void FirstTeam :: resetPlayers(){
+    for (const auto& p : first_eleven)
+        p->setCoords(Constants :: getMPosCoords(p->getPosition()));
+}
+
+
+bool FirstTeam :: usePlayer(uint16_t index, glm :: vec2& ball_coords, const FirstTeam& opp_team){
+    if (index >= first_eleven.size())
+        throw MyRuntimeException(__FILE__, __func__, __LINE__, "Player index out of range: " + std :: to_string(index));
+
+    shared_m_player player = first_eleven[index],
+                    closest_ball = getClosestPlayer(ball_coords, this->first_eleven);
+
+    //case1: team is not in possesion
+    if (!closest_ball->hasBall()){
+        shared_m_player player_with_ball = opp_team.getPlayerWithBall();
+        //case 1.0: no team is in possesion so we get try to get possesion
+        if (player_with_ball == nullptr)
+            if (player != closest_ball) //player is not closest to the ball so he moves towards the goal
+                player->p_move(opp_team.getGK().getCoords(), *getClosestPlayer(player->getCoords(),
+                               this->first_eleven));
+            else
+                getPossesion(ball_coords, *player, *getClosestPlayer(ball_coords, opp_team.first_eleven));
+            
+        //case 1.1: player is the closest to the ball so he tries to tackle the opponent with the ball
+        else if (player == closest_ball)
+            tryTackle(ball_coords, *player, *player_with_ball);
+        //case 1.2: player is not closest to the ball so he marks the closest unmarked opponent
+        else
+            markPlayer(*player, opp_team);
+    }
+        
+    //case2: team is in possesion
+    else if (closest_ball == player) //case 2.1 player has the ball
+        return closest_ball->decide(ball_coords, closest_ball->getTacklingIntersections(opp_team.first_eleven),
+                                    getPassingOptions(*closest_ball, opp_team), opp_team.getGK(),
+                                    *getClosestPlayer(closest_ball->getCoords(), this->first_eleven));
+    //case 2.2 player doesn't have the ball so he tries to support the player with the ball
+    else
+        movePlayerWithoutBall(*player, *closest_ball, opp_team);
+    
+    return false;
+}
+
+
+void FirstTeam :: tryTackle(glm :: vec2 ball_coords, MatchPlayer& tackling_player, MatchPlayer& player_with_ball){
+    if(player_with_ball.inTackleRange(tackling_player))
+        tackling_player.tackle(ball_coords, player_with_ball);
+    else
+        tackling_player.p_move(ball_coords, *getClosestPlayer(tackling_player.getCoords(), this->first_eleven));
+}
+
+
+void FirstTeam :: markPlayer(MatchPlayer& marking_player, const FirstTeam& opp_team){
+    MatchPlayer :: OpponentIntersections player_markers = marking_player.getMarkingIntersections(opp_team.first_eleven);
+    const MatchPlayer& closest_team_mate = *getClosestPlayer(marking_player.getCoords(), this->first_eleven);
+
+    //Checking if the player is marking someone, and if that someone is only marked by him
+    //If so, he moves towards that player
+    if (player_markers.nr_intersections == 1 &&
+        player_markers.opponent->getMarkingIntersections(this->first_eleven).nr_intersections == 1)
+        marking_player.p_move(player_markers.opponent->getCoords(), closest_team_mate);
+
+    else{ //Else he moves towards the closest unmarked player
+        shared_m_squad unmarked_players = opp_team.getUnmarkedPlayers(*this);
+        marking_player.p_move(getClosestPlayer(marking_player.getCoords(), unmarked_players)->getCoords(),
+                              closest_team_mate);
+    }
+}
+
+
+void FirstTeam :: movePlayerWithoutBall(MatchPlayer& player, const MatchPlayer& player_with_ball,
+                                        const FirstTeam& opp_team){
+    //If not within player's passing range we move him where the pass_chance is highest
+    if (player_with_ball.getPassChance(player) < Constants :: getVal("PASS_CHANCE_THRESHOLD"))
+        player.p_move(player_with_ball, *getClosestPlayer(player.getCoords(), this->first_eleven), opp_team.first_eleven);
+    else //If within passing range we move him towards the opponent's goal
+        player.p_move(opp_team.getGK().getCoords(), *getClosestPlayer(player.getCoords(), this->first_eleven));
+}
+
+
+void FirstTeam :: getPossesion(glm :: vec2 ball_coords, MatchPlayer& player, const MatchPlayer& opponent){
+    //If the player is near the ball he tries to get possesion
+    if (player.isNearBall(ball_coords) )
+        player.setPossesion((!opponent.isNearBall(ball_coords) ||
+                             player.getPlayer()->getStat("PAC") > opponent.getPlayer()->getStat("PAC")));
+    else //Else he moves towards the ball
+        player.p_move(ball_coords, *getClosestPlayer(player.getCoords(), this->first_eleven));
 }

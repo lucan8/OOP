@@ -31,7 +31,7 @@ vec4 getPixelColor(vec2 curr_pixel, vec2 center,  float radius){
     vec4 color = texture(u_texture, v_texCoords);
     //If pixel is inside circle, return texture color
     if (dist > radius)
-        color.a = 0.0;
+        discard;
     return color;
     
 }
@@ -39,13 +39,13 @@ vec4 getPixelColor(vec2 curr_pixel, vec2 center,  float radius){
 //Returns the player's aura color if outside player radius(but inside aura radius)
 //or the texture color if inside player radius
 vec4 getPlayerPixelColor(vec2 curr_pixel, vec2 center,  float radius){
-    vec4 color = getPixelColor(curr_pixel, center, radius);
+    vec4 crest_color = getPixelColor(curr_pixel, center, radius);
     
     //Color is white, means we are inside the canvas, so we return the player's aura color
-    if (color == white)
+    if (crest_color == white)
         return u_aura_color;
     else
-        return color;
+        return crest_color;
 }
 
 

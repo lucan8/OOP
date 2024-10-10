@@ -15,8 +15,12 @@
 #include "../classes/IBO/IBO.h"
 #include "../classes/match/Match.h"
 #include <chrono>
+#include "../vendor/stb_truetype.h"
+#include "../classes/font/Font.h"
+#include "../classes/renderer/Renderer.h"
 
-//Undefined reff to VAO
+using namespace std;
+namespace fs = std :: filesystem; 
 
 //Unfinished, main only for testing purposes
 //External library Dasmig(see forked directory)
@@ -27,6 +31,7 @@
 void GLAPIENTRY MessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length,
                                 const GLchar* message, const void* userParam) {
     cout << "GL ERROR CALLBACK: " << "type: " << type << ", severity: " << severity << "\nmessage: " << message << '\n';
+    exit(1);
 }
 
 int main(){
@@ -60,63 +65,20 @@ int main(){
     glEnable(GL_DEBUG_OUTPUT);
     glDebugMessageCallback(MessageCallback, 0);
 
-    //Blending test
-    /*
-    float positions[] = {
-        -0.5f, -0.5f,
-         0.5f, -0.5f,
-         0.5f,  0.5f,
-        -0.5f,  0.5f
-    };
-
-    float positions1[] = {
-        -0.3f, -0.3f,
-         0.7f, -0.3f,
-         0.7f,  0.7f,
-        -0.3f,  0.7f
-    };
-
-    unsigned int indices[] = {
-        0, 1, 2,
-        2, 3, 0
-    };
-
-    const string vert_shader_path = (filesystem::current_path().parent_path() / "resources" / "shaders" / "vertex" / "").string(),
-                 frag_shader_path = (filesystem::current_path().parent_path() / "resources" / "shaders" / "fragment" / "").string();
-
-    //Loading the shaders
-    Shader pitch_shader((vert_shader_path + "pitch.glsl"), (frag_shader_path + "pitch.glsl"));
-    pitch_shader.bind();
-
-    GLint u_location = pitch_shader.getUniformLocation("u_Color");
-    assert(u_location != -1);
-
-    VBO vbo(positions, 4 * 2 * sizeof(float), GL_STATIC_DRAW),
-        vbo1(positions1, 4 * 2 * sizeof(float), GL_STATIC_DRAW);
-
-    VertexBufferLayout layout;
-    layout.addAttribute<float>(2);
-
-    VAO vao, vao1;
-    vao.addBuffer(vbo, layout);
-    vao1.addBuffer(vbo1, layout);
-
-    IBO ibo(indices, 6);
-    */
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     vector<string> team_names = Constants :: getTeamNames();
     shared_team t1(generateTeam(team_names)), t2(generateTeam(team_names));
     Match match(t1, t2);
-
+    
     int nr = 0;
     while (!glfwWindowShouldClose(window)){
         glClearColor(0.2f, 0.3f, 0.5f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
-
+        
         match.draw();
-        if (nr % 50 == 0)
+        if (nr % 30 == 0)
             match.play();
         nr++;
 
@@ -125,29 +87,7 @@ int main(){
     }
 
     glfwTerminate();
-    
-    // Constants :: init();
-    // vector<string> team_names = Constants :: getTeamNames();
-    // vector<unique_team> teams;
-    // teams.reserve(100);
-    // auto a = chrono :: high_resolution_clock::now();
 
-    // for (int i = 0; i < 20; ++i)
-    //     teams.push_back(unique_team(generateTeam(team_names)));
-    
-    // //test this
-    // for (const auto& t : teams){
-    //     shared_squad_split split_team = t->splitTeamPos();
-    //     printSplitTeam(split_team);
-    //     unique_first_team first_team = t->getFirstTeam();
-    //     cout << first_team->getFormation() << ", "
-    //          << first_team->getElevenTotalStats() << ", "
-    //          << first_team->getSubsOVR() << '\n';
-    //     cout << endl << endl;
-    // }
-    // auto b = chrono :: high_resolution_clock::now();
-
-    // cout << "took " << duration_cast<chrono :: seconds>(b - a).count() << " seconds" <<  endl;
 
 }
 

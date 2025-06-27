@@ -46,7 +46,7 @@ squad_ptr generateOutfields(){
             //Generating the player
             outfields.push_back(generatePlayer("OUTFIELD", age_type));
             //Choosing a random shirt number
-            uint16_t shirt_index = Constants :: generateNaturalNumber(start_shirt, end_shirt) - start_shirt;
+            uint16_t shirt_index = Constants :: generateNaturalNumber(0, shirt_numbers.size() - 1);
             outfields.back()->setShirt(shirt_numbers[shirt_index]);
             //Removing the chosen shirt number
             shirt_numbers.erase(shirt_numbers.begin() + shirt_index);

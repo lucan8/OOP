@@ -139,8 +139,8 @@ bool MatchPlayer :: decide(vec2& ball_coords, const OpponentIntersections& opp_i
           team_mate_scoring_chance = best_passing_option.team_mate->getScoringChance(opp_gk);
     
     //If the scoring chance is greater than the team mate's scoring chance, the player will shoot
-    if (scoring_chance > team_mate_scoring_chance)
-        return this->shoot(ball_coords, opp_gk);
+    // if (scoring_chance > team_mate_scoring_chance)
+    //     return this->shoot(ball_coords, opp_gk);
 
     switch (opp_intersections.nr_intersections){
         case 0:

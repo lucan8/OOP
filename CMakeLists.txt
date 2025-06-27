@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 3.25)
-project(FSIM LANGUAGES CXX)
+cmake_minimum_required(VERSION 3.10)
+project(FSIM1 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -21,15 +21,11 @@ FetchContent_Declare(
     GIT_TAG glew-cmake-2.2.0
 )
 
-
 FetchContent_Declare(
 	glm
 	GIT_REPOSITORY	https://github.com/g-truc/glm.git
 	GIT_TAG 	bf71a834948186f4097caa076cd2663c69a10e1e #refs/tags/1.0.1
 )
-
-set(GLFW_BUILD_DOCS OFF CACHE BOOL  "")
-set(GLFW_INSTALL OFF CACHE BOOL  "")
 
 FetchContent_MakeAvailable(glfw)
 FetchContent_MakeAvailable(fmt)
@@ -52,8 +48,9 @@ add_executable(fsim1    app/app.cpp
                         classes/match_players/match_player/MatchPlayer.cpp
                         classes/match_players/match_outfield/MatchOutfield.cpp
                         classes/match_players/match_goalkeeper/MatchGoalkeeper.cpp
-                        classes/first_team/FirstTeam.cpp
-                        classes/Teams/Team/Team.cpp
+                        classes/teams/first_team/FirstTeam.cpp
+                        classes/FirstTeamBuilder/FirstTeamBuilder.cpp
+                        classes/teams/team/Team.cpp
                         random_generated/player_generation/generate_player.cpp
                         random_generated/team_generation/generate_team.cpp
                         classes/match/Match.cpp
@@ -64,9 +61,10 @@ add_executable(fsim1    app/app.cpp
                         classes/VB_layout/VertexBufferLayout.cpp
                         classes/renderer/Renderer.cpp
                         classes/textures/Textures.cpp
-                        vendor/stb_image.cpp
+                        vendor/stb_implementation.cpp
+                        classes/font/Font.cpp
               )
-
+              
 target_link_libraries(fsim1 PRIVATE fmt)
 target_link_libraries(fsim1 PRIVATE glfw)
 target_link_libraries(fsim1 PRIVATE libglew_static)

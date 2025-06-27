@@ -10,13 +10,13 @@ This is a project for the **Object Oriented Programming** class and is inspired 
 
 ```
 
-`app`: Contains the main app file that just runs the game
-`classes`: Contains all the classes used for this project(ex: Player, Team, Season etc)
-`dasmig-src`: Forked directory used to generate the data
-`functions`: Contains common functions used throught the project
-`random_generated`: Contains functions used to generate teams and players
-`resources`: Contains files used for constants, fonts, shaders and textures
-`vendor`: Contains other external libraries
+app: Contains the main app file that just runs the game
+classes: Contains all the classes used for this project(ex: Player, Team, Season etc)
+dasmig-src: Forked directory used to generate the data
+functions: Contains common functions used throught the project
+random_generated: Contains functions used to generate teams and players
+resources: Contains files used for constants, fonts, shaders and textures
+vendor: Contains other external libraries
 
 ```
 

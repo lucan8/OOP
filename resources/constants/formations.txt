@@ -1,4 +1,3 @@
-//For a vertical pitch(will mostly use the horizontal one though)
 4-2-4
 LB RB LCB RCB LCM RCM LW RW LST RST
 GK LCB 10 -3

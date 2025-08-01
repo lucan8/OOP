@@ -1,8 +1,6 @@
 # FKHS - Football King of the Hill Simulator
 
-## This app will generate a league starting with 21 teams and will end with only the one who manages to survive
-
-### Reasoning and Inspiration
+## Reasoning and Inspiration
 
 This is a project for the **Object Oriented Programming** class and is inspired from the **FIFA games carrer mode**, main differences being that teams are "randomly generated" and that this app only simulates matches.
 
@@ -20,21 +18,17 @@ vendor: Contains other external libraries
 
 ```
 
-### What the app should do
+### What I managed to make
 
-The app starts by generating the teams and players for the league, every week teams will play matches, train their players and rest them.
-Mid season the **transfer window** emerges and teams can buy and sell players for a period of 4 weeks(4 matches). Mid season is also the time for **player potential** changes, the top half get potential boosts, the bottom half get nerfs. At the end of the season the last three teams are *relegated*(removed from the league) and so after a few seasons we will have our **KING TEAM**.
+- Create "fair" rules for player and team generation.
+- Make a simple algorithm for selecting the first eleven and the bench
+- Draw the pitch(texture), players(as circles with their team texture) and ball (circle with a ball texture)
+- Draw the substitutes names and numbers(with stb_truetype)
+- Implemnt moving, passing, marking, tackling and dribbling for players(shooting is also...there), each playertrying to make the best decision given their opponents, teammates and their positions, whether they have the ball or not, the distance from goal and so on (no it does not use AI, it's a "home-made algorithm I tought about myself)
+- Implement simple algorithm for training players
 
-### What the app does
+### How I made it
 
-The app currently only plays a match between two "randomly" generated teams. There is no timer, no corners, no outs, the teams are only fighting each other endlessly. The players can run, pass, dribble, tackle and mark.
+I made a small framework over OpenGL to abstract away stuff like loading shaders, fonts, textures(and using them) drawing players, and overall drawing stuff
 
-### App Features
-
-- [x] generates players and teams "randomly"
-- [ ] simulates matches between teams
-- [ ] keeps the history of every season played so far
-- [ ] eliminates after each season the last 3 teams in the league
-- [ ] dynamic potential for the players
-- [x] dynamic stats for players
-- [ ] dynamic team determination before match
+I also used external libraries for loading textures(stb_image), drawing characters(stb_truetype) and generating players(dasmig, which I also added changes too)

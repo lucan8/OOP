@@ -24,7 +24,7 @@ vendor: Contains other external libraries
 - Make a simple algorithm for selecting the first eleven and the bench
 - Draw the pitch(texture), players(as circles with their team texture) and ball (circle with a ball texture)
 - Draw the substitutes names and numbers(with stb_truetype)
-- Implemnt moving, passing, marking, tackling and dribbling for players(shooting is also...there), each playertrying to make the best decision given their opponents, teammates and their positions, whether they have the ball or not, the distance from goal and so on (no it does not use AI, it's a "home-made algorithm I tought about myself)
+- Implemnt moving, passing, marking, tackling and dribbling for players(shooting is also...there), each player trying to make the best decision given their opponents, teammates and their positions, whether they have the ball or not, the distance from goal and so on (no it does not use AI, it's a "home-made" algorithm I tought about myself)
 - Implement simple algorithm for training players
 
 ### How I made it
